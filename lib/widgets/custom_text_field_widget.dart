@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+
 class CustomTextFieldWidget extends StatelessWidget
 {
   final TextEditingController? editingController; // Made nullable
@@ -7,6 +8,7 @@ class CustomTextFieldWidget extends StatelessWidget
   final String? assetRef;
   final String? labelText;
   final bool? isObscure; // Made nullable
+  final TextStyle? textStyle; // Added for input text styling
 
 
   const CustomTextFieldWidget({
@@ -16,6 +18,7 @@ class CustomTextFieldWidget extends StatelessWidget
     this.assetRef,
     this.labelText,
     this.isObscure,
+    this.textStyle, // Added
 
   });
 
@@ -23,6 +26,7 @@ class CustomTextFieldWidget extends StatelessWidget
   Widget build(BuildContext context) {
     return TextField(
       controller: editingController,
+      style: textStyle, // Applied input text style
       decoration: InputDecoration(
         labelText: labelText,
         prefixIcon: iconData != null
@@ -31,8 +35,9 @@ class CustomTextFieldWidget extends StatelessWidget
                 padding: const EdgeInsets.all(8), // Added const
           child: Image.asset(assetRef.toString()),
         ),
-      labelStyle: const TextStyle(
-        fontSize: 18,
+      labelStyle: const TextStyle( // Modified labelStyle
+        fontSize: 16,
+        color: Colors.grey,
       ),
         enabledBorder: const OutlineInputBorder( // Added const
           borderRadius: BorderRadius.all(Radius.circular(22.0)),

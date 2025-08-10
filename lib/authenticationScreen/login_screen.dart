@@ -1,5 +1,7 @@
+import 'package:eavzappl/authenticationScreen/registration_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:eavzappl/widgets/custom_text_field_widget.dart';
+import 'package:get/get.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -121,9 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 InkWell(
                   onTap: ()
                   {
-                    // Get.to(
-                    //   () => const RegisterScreen(),
-                    // );
+                    Get.to(() => RegistrationScreen());
                   },
                   child: const Text(
                     " Register",
