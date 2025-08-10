@@ -35,14 +35,14 @@ class CustomTextFieldWidget extends StatelessWidget
         fontSize: 18,
       ),
         enabledBorder: const OutlineInputBorder( // Added const
-          borderRadius: BorderRadius.all(Radius.circular(6)),
+          borderRadius: BorderRadius.all(Radius.circular(22.0)),
           borderSide: BorderSide(
             color: Colors.grey,
             width: 1,
           ),
         ),
         focusedBorder: const OutlineInputBorder( // Added const
-          borderRadius: BorderRadius.all(Radius.circular(6)),
+          borderRadius: BorderRadius.all(Radius.circular(22.0)),
           borderSide: BorderSide(
             color: Colors.grey,
             width: 1,

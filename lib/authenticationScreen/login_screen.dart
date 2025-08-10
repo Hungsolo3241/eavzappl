@@ -27,6 +27,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 "images/logo.png",
             ),
 
+            const SizedBox(height: 1.0), // Added SizedBox for spacing
+
             const Text(
               "come inside",
               style: TextStyle(
@@ -42,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             //email
             SizedBox(
-              width: MediaQuery.of(context).size.width - 36,
+              width: MediaQuery.of(context).size.width - 40,
               height: 45,
               child: CustomTextFieldWidget(
                 editingController: emailController,
@@ -58,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             //password
             SizedBox(
-              width: MediaQuery.of(context).size.width - 36,
+              width: MediaQuery.of(context).size.width - 40,
               height: 45,
               child: CustomTextFieldWidget(
                 editingController: passwordController,
@@ -74,12 +76,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
             //login button
             Container(
-              width: MediaQuery.of(context).size.width - 36,
+              width: MediaQuery.of(context).size.width - 40,
               height: 35,
               decoration: const BoxDecoration(
                 color: Colors.grey,
                 borderRadius: BorderRadius.all(
-                  Radius.circular(12),
+                  Radius.circular(20),
                 ),
               ),
               child: InkWell(

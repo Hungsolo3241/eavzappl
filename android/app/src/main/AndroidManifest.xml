@@ -2,7 +2,8 @@
     <application
         android:label="eavzappl"
         android:name="${applicationName}"
-        android:icon="@mipmap/logo">
+        android:icon="@mipmap/icon_logo_adaptive"
+        android:roundIcon="@mipmap/icon_logo_adaptive_round">
         <activity
             android:name=".MainActivity"
             android:exported="true"
