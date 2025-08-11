@@ -18,7 +18,7 @@ pluginManagement {
 
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
-    id("com.android.application") version "8.4.1" apply false // Changed from 8.7.3
+    id("com.android.application") version "8.12.0" apply false // Changed from 8.7.3
     id("org.jetbrains.kotlin.android") version "2.1.0" apply false
 }
 

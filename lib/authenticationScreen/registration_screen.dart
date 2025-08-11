@@ -97,12 +97,11 @@ class _RegistrationScreenState extends State<RegistrationScreen>
       body: Stack( // Added Stack for background image
         children: <Widget>[
           // Background Image
-          Center( // Center the image
-            child: Image.asset(
-              'images/reg_background.png', // User provided path
-              fit: BoxFit.contain, // Use contain to fit the image without cropping, maintaining aspect ratio
-              // Removed width and height to allow natural sizing or scaling down
-            ),
+          Image.asset(
+            selectedOrientation == 'Eve' ? 'images/eves_background.jpeg' : 'images/adams_background.jpeg', // Dynamically set image
+            fit: BoxFit.cover, // Use cover to fit the image, maintaining aspect ratio, cropping if necessary
+            width: double.infinity,
+            height: double.infinity,
           ),
           // Original content
           SingleChildScrollView(
@@ -128,9 +127,11 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                     {
 
                     },
-                    child: const CircleAvatar(
+                    child: CircleAvatar( // Removed const
                       radius: 100,
-                      backgroundImage: AssetImage("images/adam_avatar.jpeg"),
+                      backgroundImage: selectedOrientation == 'Eve'
+                          ? const AssetImage("images/eves_avatar.jpeg")
+                          : const AssetImage("images/adam_avatar.jpeg"),
                       backgroundColor: Colors.black,
                     )
                   ),
@@ -337,7 +338,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                     child: CustomTextFieldWidget(
                       editingController: usernameController,
                       iconData: Icons.account_circle_outlined,
-                      labelText: "Alias",
+                      labelText: "Username",
                       isObscure: false,
                       textStyle: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
