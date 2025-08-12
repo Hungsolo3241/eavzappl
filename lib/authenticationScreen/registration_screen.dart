@@ -1,6 +1,11 @@
+import 'dart:io'; // Added for FileImage
 import 'package:flutter/material.dart';
+import 'package:get/get.dart'; // Added for Obx
 import 'package:eavzappl/widgets/custom_text_field_widget.dart';
 import 'package:eavzappl/authenticationScreen/login_screen.dart';
+
+import '../controllers/authentication_controller.dart';
+
 
 class RegistrationScreen extends StatefulWidget
 {
@@ -20,9 +25,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   TextEditingController? ageController = TextEditingController();
   TextEditingController? phoneNumberController = TextEditingController(); 
   String? selectedGender;
-  String? selectedOrientation; // Renamed from selectedSpecies
+  String? selectedOrientation;
+  bool _isOrientationFinalized = false; // Added to track if orientation is set
   List<String> genderOptions = ["Male", "Female"];
-  List<String> orientationOptions = ["Adam", "Eve"]; // Renamed from speciesOptions
+  List<String> orientationOptions = ["Adam", "Eve"];
 
   TextEditingController? usernameController = TextEditingController();
   String? selectedCountry;
@@ -56,7 +62,17 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   bool lookingForLongTerm = false;
   String? selectedProfession;
   List<String> professionOptions = ["Student", "Freelancer", "Professional"];
-  TextEditingController? professionalAtController = TextEditingController(); // Added
+
+  // Professional Venues
+  final List<String> _professionalVenueOptions = [
+    "The Grand - Sandton", "Blu Night - Haarties", "Royal Park - JHB", 
+    "XO Lounge - JHB", "Cheeky Tiger - JHB", "The Summit  - JHB", 
+    "Chivalry - JHB", "Diplomat -JHB", "Manhattan - Vaal", "White House - JHB",
+    "Mavericks - CPT", "Stilettos - CPT", "Lush - CPT", "The Pynk - DBN", "Wonder Lounge - DBN"
+  ];
+  final Map<String, bool> _selectedProfessionalVenues = {};
+  bool _professionalVenueOtherSelected = false;
+  final TextEditingController _professionalVenueOtherNameController = TextEditingController();
 
   //Appearance
   String? selectedHeight;
@@ -67,7 +83,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   //Lifestyle
   bool drinkSelection = false;
   bool smokeSelection = false;
-  bool meatSelection = false; // Added for the meat switch
+  bool meatSelection = false;
   bool greekSelection = false;
   bool hostSelection = false;
   bool travelSelection = false;
@@ -85,10 +101,57 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
   bool showProgressBar = false;
 
+  var authenticationController = AuthenticationController.authController;
+
+
+
   @override
   void initState() {
     super.initState();
     countriesList = africanLocations.keys.toList();
+    for (var venue in _professionalVenueOptions) {
+      _selectedProfessionalVenues[venue] = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    emailController?.dispose();
+    passwordController?.dispose();
+    nameController?.dispose();
+    ageController?.dispose();
+    phoneNumberController?.dispose();
+    usernameController?.dispose();
+    incomeController?.dispose();
+    nationalityController?.dispose();
+    languagesController?.dispose();
+    instagramController?.dispose();
+    twitterController?.dispose();
+    _professionalVenueOtherNameController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildVenueSwitch(String title, IconData iconData) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 5.0),
+      child: Row(
+        children: [
+          Icon(iconData, color: Colors.grey),
+          const SizedBox(width: 10),
+          Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 16))),
+          Switch(
+            value: _selectedProfessionalVenues[title] ?? false,
+            onChanged: (bool value) {
+              setState(() {
+                _selectedProfessionalVenues[title] = value;
+              });
+            },
+            activeColor: Colors.blueAccent,
+            inactiveThumbColor: Colors.grey,
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -125,18 +188,46 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   GestureDetector(
                     onTap: ()
                     {
-
+                      // Default action, can be overridden by specific icon buttons below
+                      // Or remove this if only icons should trigger actions
                     },
-                    child: CircleAvatar( // Removed const
+                    child: Obx(() => CircleAvatar( // Wrapped with Obx
                       radius: 100,
-                      backgroundImage: selectedOrientation == 'Eve'
-                          ? const AssetImage("images/eves_avatar.jpeg")
-                          : const AssetImage("images/adam_avatar.jpeg"),
+                      backgroundImage: authenticationController.profilePhoto != null
+                          ? FileImage(authenticationController.profilePhoto!)
+                          : (selectedOrientation == 'Eve'
+                              ? const AssetImage("images/eves_avatar.jpeg")
+                              : const AssetImage("images/adam_avatar.jpeg")) as ImageProvider,
                       backgroundColor: Colors.black,
-                    )
+                    )),
                   ),
 
-                  const SizedBox(height: 50,),
+                  // Icons for gallery and camera
+                  Padding( // Added padding for the icons row
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.photo_library, color: Colors.grey, size: 30),
+                          onPressed: () {
+                            authenticationController.pickImageFromGallery();
+                          },
+                          tooltip: 'Pick from Gallery',
+                        ),
+                        const SizedBox(width: 40), // Increased spacing
+                        IconButton(
+                          icon: const Icon(Icons.camera_alt, color: Colors.grey, size: 30),
+                          onPressed: () {
+                            authenticationController.captureImageFromPhoneCamera();
+                          },
+                          tooltip: 'Capture from Camera',
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20,), // Adjusted spacing after icons
 
                   // Personal Info Title
                   const SizedBox(height: 30),
@@ -278,52 +369,60 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                     width: MediaQuery.of(context).size.width - 40,
                     child: DropdownButtonFormField<String>(
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.swap_horiz_outlined, color: Colors.grey),
-                        hintText: "Orientation", 
-                        hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                        prefixIcon: Icon(Icons.swap_horiz_outlined, color: _isOrientationFinalized ? Colors.grey[700] : Colors.grey),
+                        hintText: "Orientation",
+                        hintStyle: TextStyle(color: _isOrientationFinalized ? Colors.grey[700] : Colors.grey, fontSize: 16),
+                        helperText: _isOrientationFinalized ? "Orientation selected and locked." : "Select carefully, this will be locked and cannot be changed later.",
+                        helperStyle: TextStyle(color: _isOrientationFinalized ? Colors.green : Colors.blueGrey, fontSize: 12),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                          borderSide: const BorderSide(
-                            color: Colors.grey,
+                          borderSide: BorderSide(
+                            color: _isOrientationFinalized ? Colors.grey[700]! : Colors.grey,
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                          borderSide: const BorderSide(
-                            color: Colors.grey,
+                          borderSide: BorderSide(
+                            color: _isOrientationFinalized ? Colors.grey[700]! : Colors.grey,
+                          ),
+                        ),
+                        disabledBorder: OutlineInputBorder( // Added for disabled state
+                          borderRadius: BorderRadius.all(Radius.circular(22.0)),
+                          borderSide: BorderSide(
+                            color: Colors.grey[700]!, 
                           ),
                         ),
                         contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10), 
                       ),
                       value: selectedOrientation,
                       isExpanded: true,
-                      icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                      icon: Icon(Icons.arrow_drop_down, color: _isOrientationFinalized ? Colors.grey[700] : Colors.grey),
                       dropdownColor: Colors.black,
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                      style: TextStyle(color: _isOrientationFinalized ? Colors.grey[700] : Colors.white, fontSize: 16),
                       items: orientationOptions.map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
                           child: Text(value),
                         );
                       }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          selectedOrientation = newValue;
-                          if (newValue != null && usernameController != null) {
-                            String prefix = "${newValue.toLowerCase()}.";
-                            String currentUsername = usernameController!.text;
-                            String suffix = "";
-                            if (currentUsername.startsWith("adam.")) {
-                              suffix = currentUsername.substring(5);
-                            } else if (currentUsername.startsWith("eve.")) {
-                              suffix = currentUsername.substring(4);
-                            } else {
-                              suffix = currentUsername;
-                            }
-                            usernameController!.text = prefix + suffix;
-                          }
-                        });
-                      },
+                      onChanged: _isOrientationFinalized 
+                          ? null 
+                          : (String? newValue) {
+                              setState(() {
+                                selectedOrientation = newValue;
+                                if (newValue != null && usernameController != null) {
+                                  String prefix = "${newValue.toLowerCase()}_";
+                                  String currentUsername = usernameController!.text;
+                                  // Check if the current username already has a prefix
+                                  if (currentUsername.startsWith("adam_") || currentUsername.startsWith("eve_")) {
+                                      // Remove the old prefix
+                                      currentUsername = currentUsername.substring(currentUsername.indexOf("_") + 1);
+                                  }
+                                  usernameController!.text = prefix + currentUsername;
+                                }
+                                // _isOrientationFinalized = true; // Removed: Lock only on create account press
+                              });
+                            },
                     ),
                   ),
 
@@ -893,17 +992,46 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                     if (selectedProfession == 'Professional') ...[
                       const SizedBox(height: 20),
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width - 40,
-                        height: 45,
-                        child: CustomTextFieldWidget(
-                          editingController: professionalAtController,
-                          iconData: Icons.domain_outlined,
-                          labelText: "Professional at:",
-                          isObscure: false,
-                          textStyle: const TextStyle(color: Colors.white, fontSize: 16),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Text("Venues:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey)),
+                      ),
+                      const SizedBox(height: 10),
+                      ..._professionalVenueOptions.map((venue) => _buildVenueSwitch(venue, Icons.nightlife)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 5.0),
+                        child: Row(
+                          children: [
+                            Icon(Icons.add_business_outlined, color: Colors.grey),
+                            const SizedBox(width: 10),
+                            const Expanded(child: Text("Other/Private Venue", style: TextStyle(color: Colors.white, fontSize: 16))),
+                            Switch(
+                              value: _professionalVenueOtherSelected,
+                              onChanged: (bool value) {
+                                setState(() {
+                                  _professionalVenueOtherSelected = value;
+                                });
+                              },
+                              activeColor: Colors.blueAccent,
+                              inactiveThumbColor: Colors.grey,
+                            ),
+                          ],
                         ),
                       ),
+                      if (_professionalVenueOtherSelected) ...[
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width - 40,
+                          height: 45,
+                          child: CustomTextFieldWidget(
+                            editingController: _professionalVenueOtherNameController,
+                            iconData: Icons.domain_verification_outlined,
+                            labelText: "Other Venue Name",
+                            isObscure: false,
+                            textStyle: const TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+                        ),
+                      ],
                     ],
 
                     const SizedBox(
@@ -1056,8 +1184,12 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                     height: 35,
                     child: ElevatedButton(
                       onPressed: () {
+                        setState(() {
+                          _isOrientationFinalized = true; // Lock orientation on create account press
+                        });
                         // TODO: Implement account creation logic
                         print("Create Account button pressed");
+                        print("Orientation is now: $selectedOrientation and is locked: $_isOrientationFinalized");
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey,
