@@ -15,7 +15,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Text(
           "Welcome to The Garden",
         style: TextStyle(
-          color: Colors.grey,
+          color: Colors.green,
           fontSize: 30,
           fontWeight: FontWeight.bold,
         ),

@@ -98,7 +98,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   TextEditingController nationalityController = TextEditingController();
   TextEditingController languagesController = TextEditingController();
   String? selectedEthnicity;
-  List<String> ethnicityOptions = ["Black", "White", "Mixed"];
+  List<String> ethnicityOptions = ["Black", "White", "Asian", "Mixed"];
 
   // Social Media
   TextEditingController instagramController = TextEditingController();
@@ -1218,27 +1218,27 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                         // 1. Validation
                         if (authenticationController.profilePhoto == null) {
-                          Get.snackbar("Missing Field", "Please select a profile photo.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
-                          setState(() { showProgressBar = false; }); 
+                          Get.snackbar("Missing Field", "Please select a profile photo.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                           setState(() { showProgressBar = false; }); 
                           return;
                         }
                         if (emailController.text.trim().isEmpty) {
-                          Get.snackbar("Missing Field", "Please enter your email.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please enter your email.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                         if (passwordController.text.trim().isEmpty) {
-                          Get.snackbar("Missing Field", "Please enter your password.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please enter your password.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                         if (nameController.text.trim().isEmpty) {
-                          Get.snackbar("Missing Field", "Please enter your name.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please enter your name.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                         if (ageController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field", "Please enter your age.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field", "Please enter your age.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                         }
@@ -1266,38 +1266,38 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                             return;
                         }
                         if (selectedGender == null) {
-                          Get.snackbar("Missing Field", "Please select your gender.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please select your gender.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                         if (selectedOrientation == null) {
-                          Get.snackbar("Missing Field", "Please select your orientation.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please select your orientation.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                          if (usernameController.text.trim().isEmpty) {
-                          Get.snackbar("Missing Field", "Please enter your username.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please enter your username.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                         // UPDATED phone number validation
                         if (normalizedPhoneNumber == null || normalizedPhoneNumber!.isEmpty) {
-                          Get.snackbar("Missing Field", "Please enter your phone number.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please enter your phone number.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                         if (selectedCountry == null) {
-                          Get.snackbar("Missing Field", "Please select your country.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please select your country.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                         if (selectedProvince == null) {
-                          Get.snackbar("Missing Field", "Please select your province/state.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please select your province/state.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                         if (selectedCity == null) {
-                          Get.snackbar("Missing Field", "Please select your city/town.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please select your city/town.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
@@ -1305,37 +1305,37 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         // Eve-specific field validation
                         if (selectedOrientation == 'Eve') {
                           if (selectedHeight == null) {
-                            Get.snackbar("Missing Field (Eve Profile)", "Please select your height.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field (Eve Profile)", "Please select your height.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (selectedBodyType == null) {
-                            Get.snackbar("Missing Field (Eve Profile)", "Please select your body type.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field (Eve Profile)", "Please select your body type.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (selectedProfession == null) {
-                            Get.snackbar("Missing Field (Eve Profile)", "Please select your profession.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field (Eve Profile)", "Please select your profession.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (incomeController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field (Eve Profile)", "Please enter your income range.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field (Eve Profile)", "Please enter your income range.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (nationalityController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field (Eve Profile)", "Please enter your nationality.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field (Eve Profile)", "Please enter your nationality.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (languagesController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field (Eve Profile)", "Please enter languages spoken.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field (Eve Profile)", "Please enter languages spoken.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (selectedEthnicity == null) {
-                            Get.snackbar("Missing Field (Eve Profile)", "Please select your ethnicity.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field (Eve Profile)", "Please select your ethnicity.", backgroundColor: Colors.redAccent, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
@@ -1397,19 +1397,40 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                             }
                           }
                           
-                          await authenticationController.createAccountAndSaveData(
+                          // Call createAccountAndSaveData and check its boolean result
+                          bool registrationSuccessful = await authenticationController.createAccountAndSaveData(
                             emailController.text.trim(),
                             passwordController.text.trim(),
                             authenticationController.profilePhoto,
                             userData,
                           );
+
+                          if (registrationSuccessful) {
+                            // Navigate to HomeScreen only if registration was successful
+                            Get.offAll(() => const HomeScreen());
+                            // No need to set showProgressBar to false here if navigating away
+                          } else {
+                            // If registration was not successful, the snackbar was already shown by the controller.
+                            // We just need to ensure the progress bar is hidden.
+                            if (mounted) {
+                              setState(() {
+                                showProgressBar = false;
+                              });
+                            }
+                          }
+
                         } catch (error) {
-                          Get.snackbar("Registration Failed", error.toString(), backgroundColor: Colors.blueGrey, colorText: Colors.white);
-                        } finally {
-                          setState(() {
-                            showProgressBar = false;
-                          });
-                        }
+                          // This catch block is for unexpected errors not caught by the controller,
+                          // or if createAccountAndSaveData itself threw something despite its own catches.
+                          Get.snackbar("Registration Failed", "An unexpected error occurred: ${error.toString()}", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                          if (mounted) { // Check if the widget is still in the tree
+                            setState(() {
+                              showProgressBar = false;
+                            });
+                          }
+                        } 
+                        // The finally block is removed as its logic is now handled by the if/else after the await
+                        // and within the catch block for hiding the progress bar.
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey,
@@ -1442,7 +1463,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const HomeScreen()));
+                           // Changed from HomeScreen to LoginScreen for "Already have an account?"
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
                         },
                         child: const Text(
                           "Login",
@@ -1456,7 +1478,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                     ],
                   ),
 
-                  const SizedBox(height: 30),
+                  // const SizedBox(height: 30),
 
                   showProgressBar == true
                       ? const CircularProgressIndicator(

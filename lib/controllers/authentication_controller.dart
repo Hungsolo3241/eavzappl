@@ -57,7 +57,7 @@ class AuthenticationController extends GetxController
     return downloadUrl;
   }
 
-  Future<void> createAccountAndSaveData(String email, String password, File? profileImageFile, Map<String, dynamic> userData) async {
+  Future<bool> createAccountAndSaveData(String email, String password, File? profileImageFile, Map<String, dynamic> userData) async {
     try {
       UserCredential credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email.trim(),
@@ -83,6 +83,7 @@ class AuthenticationController extends GetxController
           .set(firestoreUserData);
 
       Get.snackbar("Success", "Account created successfully!", backgroundColor: Colors.green, colorText: Colors.white);
+      return true; // Return true on success
 
     } on FirebaseAuthException catch (e) {
       String errorMessage = "An error occurred. Please try again.";
@@ -94,9 +95,11 @@ class AuthenticationController extends GetxController
         errorMessage = 'The email address is not valid.';
       }
       Get.snackbar("Account Creation Failed", errorMessage, backgroundColor: Colors.redAccent, colorText: Colors.white);
+      return false; // Return false on FirebaseAuthException
     }
     catch (error) {
-      Get.snackbar("Account Creation Failed", error.toString(), backgroundColor: Colors.redAccent, colorText: Colors.white);
+      Get.snackbar("Account Creation Failed", "An unexpected error occurred: ${error.toString()}", backgroundColor: Colors.redAccent, colorText: Colors.white);
+      return false; // Return false on other errors
     }
   }
 
@@ -155,7 +158,7 @@ class AuthenticationController extends GetxController
         // If this method were intended to create users, it would need the password for
         // UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: /* password_from_param */);
         // For now, if no user, we can't proceed to save data linked to a user.
-        Get.snackbar("Error", "User not authenticated. Cannot save profile data.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+        Get.snackbar("Error", "User not authenticated. Cannot save profile data.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
         return;
       }
 
@@ -216,7 +219,7 @@ class AuthenticationController extends GetxController
     }
     catch(e)
     {
-      Get.snackbar("Error Processing Account Data", e.toString(), backgroundColor: Colors.redAccent, colorText: Colors.white);
+      Get.snackbar("Error Processing Account Data", e.toString(), backgroundColor: Colors.blueGrey, colorText: Colors.white);
     }
   }
 }

@@ -23,13 +23,15 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           children: [
 
-            const SizedBox(height: 50,),
+            const SizedBox(height: 120,),
 
             Image.asset(
                 "images/logo.png",
+              width: 300,
+              height: 380,
             ),
 
-            const SizedBox(height: 1.0), // Added SizedBox for spacing
+            const SizedBox(height: 40), // Added SizedBox for spacing
 
             const Text(
               "come inside",
@@ -41,7 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
 
             const SizedBox(
-              height: 30,
+              height: 40,
             ),
 
             //email
