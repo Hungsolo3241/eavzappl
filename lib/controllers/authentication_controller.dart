@@ -94,11 +94,11 @@ class AuthenticationController extends GetxController
       } else if (e.code == 'invalid-email') {
         errorMessage = 'The email address is not valid.';
       }
-      Get.snackbar("Account Creation Failed", errorMessage, backgroundColor: Colors.redAccent, colorText: Colors.white);
+      Get.snackbar("Account Creation Failed", errorMessage, backgroundColor: Colors.blueGrey, colorText: Colors.white);
       return false; // Return false on FirebaseAuthException
     }
     catch (error) {
-      Get.snackbar("Account Creation Failed", "An unexpected error occurred: ${error.toString()}", backgroundColor: Colors.redAccent, colorText: Colors.white);
+      Get.snackbar("Account Creation Failed", "An unexpected error occurred: ${error.toString()}", backgroundColor: Colors.blueGrey, colorText: Colors.white);
       return false; // Return false on other errors
     }
   }

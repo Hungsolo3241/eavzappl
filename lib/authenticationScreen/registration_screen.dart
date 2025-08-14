@@ -70,10 +70,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
   // Professional Venues
   final List<String> _professionalVenueOptions = [
-    "The Grand - Sandton", "Blu Night - Haarties", "Royal Park - JHB",
-    "XO Lounge - JHB", "Cheeky Tiger - JHB", "The Summit  - JHB",
-    "Chivalry - JHB", "Diplomat -JHB", "Manhattan - Vaal", "White House - JHB",
-    "Mavericks - CPT", "Stilettos - CPT", "Lush - CPT", "The Pynk - DBN", "Wonder Lounge - DBN"
+    "The Grand Gentlemen's Club - JHB", "Blu Night Revue Bar - Haarties", "Royal Park Hotel - JHB",
+    "XO Lounge - JHB", "Cheeky Tiger Gentlemen's Club - JHB", "The Summit Club  - JHB",
+    "Chivalry Gentlemen's Lounge - JHB", "The Diplomat Club -JHB", "Manhattan - Vaal", "White House - JHB",
+    "Mavericks Revue Bar - CPT", "Stilettos Gentlemen's Club - CPT", "Lush Capetown - CPT", "The Pynk - DBN", "Wonder Lounge - DBN"
   ];
   final Map<String, bool> _selectedProfessionalVenues = {};
   bool _professionalVenueOtherSelected = false;
@@ -614,17 +614,22 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                     height: 20,
                   ),
 
+                  // Looking For - Switches
                   // Looking For - Heading
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20.0, 0.0, 20.0, 10.0),
                     child: Align(
-                      alignment: Alignment.center, // Changed to center
-                      child: Text("Looking For:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey)),
+                      alignment: Alignment.center,
+                      child: Text(
+                          selectedOrientation == 'Eve'
+                              ? "Available For:"
+                              : "Looking For:", // <<< MODIFIED LINE
+                          style: TextStyle(fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey)
+                      ),
                     ),
-                  ),
-
-                  // Looking For - Switches
-                  Padding(
+                  ),Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: Row(
                       children: [
@@ -1218,27 +1223,27 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                         // 1. Validation
                         if (authenticationController.profilePhoto == null) {
-                          Get.snackbar("Missing Field", "Please select a profile photo.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please select a profile photo.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                            setState(() { showProgressBar = false; }); 
                           return;
                         }
                         if (emailController.text.trim().isEmpty) {
-                          Get.snackbar("Missing Field", "Please enter your email.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please enter your email.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                         if (passwordController.text.trim().isEmpty) {
-                          Get.snackbar("Missing Field", "Please enter your password.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please enter your password.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                         if (nameController.text.trim().isEmpty) {
-                          Get.snackbar("Missing Field", "Please enter your name.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please enter your name.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                         if (ageController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field", "Please enter your age.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                            Get.snackbar("Missing Field", "Please enter your age.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                         }
@@ -1266,38 +1271,38 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                             return;
                         }
                         if (selectedGender == null) {
-                          Get.snackbar("Missing Field", "Please select your gender.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please select your gender.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                         if (selectedOrientation == null) {
-                          Get.snackbar("Missing Field", "Please select your orientation.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please select your orientation.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                          if (usernameController.text.trim().isEmpty) {
-                          Get.snackbar("Missing Field", "Please enter your username.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please enter your username.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                         // UPDATED phone number validation
                         if (normalizedPhoneNumber == null || normalizedPhoneNumber!.isEmpty) {
-                          Get.snackbar("Missing Field", "Please enter your phone number.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please enter your phone number.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                         if (selectedCountry == null) {
-                          Get.snackbar("Missing Field", "Please select your country.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please select your country.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                         if (selectedProvince == null) {
-                          Get.snackbar("Missing Field", "Please select your province/state.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please select your province/state.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
                         if (selectedCity == null) {
-                          Get.snackbar("Missing Field", "Please select your city/town.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                          Get.snackbar("Missing Field", "Please select your city/town.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                            setState(() { showProgressBar = false; });
                           return;
                         }
@@ -1305,37 +1310,37 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         // Eve-specific field validation
                         if (selectedOrientation == 'Eve') {
                           if (selectedHeight == null) {
-                            Get.snackbar("Missing Field (Eve Profile)", "Please select your height.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                            Get.snackbar("Missing Field (Eve Profile)", "Please select your height.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (selectedBodyType == null) {
-                            Get.snackbar("Missing Field (Eve Profile)", "Please select your body type.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                            Get.snackbar("Missing Field (Eve Profile)", "Please select your body type.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (selectedProfession == null) {
-                            Get.snackbar("Missing Field (Eve Profile)", "Please select your profession.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                            Get.snackbar("Missing Field (Eve Profile)", "Please select your profession.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (incomeController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field (Eve Profile)", "Please enter your income range.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                            Get.snackbar("Missing Field (Eve Profile)", "Please enter your income range.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (nationalityController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field (Eve Profile)", "Please enter your nationality.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                            Get.snackbar("Missing Field (Eve Profile)", "Please enter your nationality.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (languagesController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field (Eve Profile)", "Please enter languages spoken.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                            Get.snackbar("Missing Field (Eve Profile)", "Please enter languages spoken.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (selectedEthnicity == null) {
-                            Get.snackbar("Missing Field (Eve Profile)", "Please select your ethnicity.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+                            Get.snackbar("Missing Field (Eve Profile)", "Please select your ethnicity.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
