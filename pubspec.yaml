@@ -36,6 +36,13 @@ dependencies:
   cupertino_icons: ^1.0.8
   get:
   image_picker:
+  firebase_core:
+  firebase_auth:
+  firebase_storage:
+  firebase_database:
+  firebase_messaging:
+  cloud_firestore:
+  intl_phone_field:
 
 dev_dependencies:
   flutter_test:

@@ -1,8 +1,10 @@
 import 'dart:io'; // Added for FileImage
+import 'package:eavzappl/homeScreen/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart'; // Added for Obx
 import 'package:eavzappl/widgets/custom_text_field_widget.dart';
 import 'package:eavzappl/authenticationScreen/login_screen.dart';
+import 'package:intl_phone_field/intl_phone_field.dart'; // Added for IntlPhoneField
 
 import '../controllers/authentication_controller.dart';
 
@@ -19,18 +21,21 @@ class RegistrationScreen extends StatefulWidget
 class _RegistrationScreenState extends State<RegistrationScreen>
 {
   //Personal info
-  TextEditingController? emailController = TextEditingController();
-  TextEditingController? passwordController = TextEditingController();
-  TextEditingController? nameController = TextEditingController();
-  TextEditingController? ageController = TextEditingController();
-  TextEditingController? phoneNumberController = TextEditingController(); 
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+  TextEditingController nameController = TextEditingController();
+  TextEditingController ageController = TextEditingController();
+  // TextEditingController phoneNumberController = TextEditingController(); // REMOVED
+  String? completePhoneNumber; // To store the full international number like +27821234567
+  String? normalizedPhoneNumber; // To store the number like 27821234567 for wa.me
+
   String? selectedGender;
   String? selectedOrientation;
   bool _isOrientationFinalized = false; // Added to track if orientation is set
   List<String> genderOptions = ["Male", "Female"];
   List<String> orientationOptions = ["Adam", "Eve"];
 
-  TextEditingController? usernameController = TextEditingController();
+  TextEditingController usernameController = TextEditingController();
   String? selectedCountry;
   String? selectedProvince;
   String? selectedCity;
@@ -65,8 +70,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
   // Professional Venues
   final List<String> _professionalVenueOptions = [
-    "The Grand - Sandton", "Blu Night - Haarties", "Royal Park - JHB", 
-    "XO Lounge - JHB", "Cheeky Tiger - JHB", "The Summit  - JHB", 
+    "The Grand - Sandton", "Blu Night - Haarties", "Royal Park - JHB",
+    "XO Lounge - JHB", "Cheeky Tiger - JHB", "The Summit  - JHB",
     "Chivalry - JHB", "Diplomat -JHB", "Manhattan - Vaal", "White House - JHB",
     "Mavericks - CPT", "Stilettos - CPT", "Lush - CPT", "The Pynk - DBN", "Wonder Lounge - DBN"
   ];
@@ -87,17 +92,17 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   bool greekSelection = false;
   bool hostSelection = false;
   bool travelSelection = false;
-  TextEditingController? incomeController = TextEditingController();
+  TextEditingController incomeController = TextEditingController();
 
   // Background
-  TextEditingController? nationalityController = TextEditingController();
-  TextEditingController? languagesController = TextEditingController();
+  TextEditingController nationalityController = TextEditingController();
+  TextEditingController languagesController = TextEditingController();
   String? selectedEthnicity;
   List<String> ethnicityOptions = ["Black", "White", "Mixed"];
 
   // Social Media
-  TextEditingController? instagramController = TextEditingController();
-  TextEditingController? twitterController = TextEditingController();
+  TextEditingController instagramController = TextEditingController();
+  TextEditingController twitterController = TextEditingController();
 
   bool showProgressBar = false;
 
@@ -116,17 +121,17 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
   @override
   void dispose() {
-    emailController?.dispose();
-    passwordController?.dispose();
-    nameController?.dispose();
-    ageController?.dispose();
-    phoneNumberController?.dispose();
-    usernameController?.dispose();
-    incomeController?.dispose();
-    nationalityController?.dispose();
-    languagesController?.dispose();
-    instagramController?.dispose();
-    twitterController?.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    nameController.dispose();
+    ageController.dispose();
+    // phoneNumberController.dispose(); // REMOVED
+    usernameController.dispose();
+    incomeController.dispose();
+    nationalityController.dispose();
+    languagesController.dispose();
+    instagramController.dispose();
+    twitterController.dispose();
     _professionalVenueOtherNameController.dispose();
     super.dispose();
   }
@@ -209,7 +214,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.photo_library, color: Colors.grey, size: 30),
+                          icon: const Icon(Icons.photo_library, color: Colors.grey, size: 25),
                           onPressed: () {
                             authenticationController.pickImageFromGallery();
                           },
@@ -217,7 +222,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         ),
                         const SizedBox(width: 40), // Increased spacing
                         IconButton(
-                          icon: const Icon(Icons.camera_alt, color: Colors.grey, size: 30),
+                          icon: const Icon(Icons.camera_alt, color: Colors.grey, size: 25),
                           onPressed: () {
                             authenticationController.captureImageFromPhoneCamera();
                           },
@@ -233,7 +238,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   const SizedBox(height: 30),
                   const Text("Personal Info", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.grey)),
                   const SizedBox(height: 10),
-                  
+
                   // email
                   SizedBox(
                     width: MediaQuery.of(context).size.width - 40,
@@ -263,21 +268,48 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       textStyle: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ),
-                  
+
                   const SizedBox(
                     height: 20,
                   ),
 
-                  //phoneNumber
+                  //phoneNumber (using IntlPhoneField)
                   SizedBox(
                     width: MediaQuery.of(context).size.width - 40,
-                    height: 45,
-                    child: CustomTextFieldWidget(
-                      editingController: phoneNumberController,
-                      iconData: Icons.phone_outlined,
-                      labelText: "Phone",
-                      isObscure: false,
-                      textStyle: const TextStyle(color: Colors.white, fontSize: 16),
+                    // Height might adjust automatically or you can wrap IntlPhoneField if needed
+                    child: IntlPhoneField(
+                      decoration: InputDecoration(
+                        labelText: 'Phone Number',
+                        labelStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                        border: const OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(22.0)),
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        enabledBorder: const OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(22.0)),
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        focusedBorder: const OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(22.0)),
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10), // Adjust padding if needed
+                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                      dropdownTextStyle: const TextStyle(color: Colors.white, fontSize: 16), // For dropdown text
+                      dropdownIcon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                      initialCountryCode: 'ZA', // Set an initial default country if desired
+                      onChanged: (phone) {
+                        setState(() {
+                          if (phone.completeNumber.isNotEmpty) {
+                            completePhoneNumber = phone.completeNumber; // e.g., +27821234567
+                            normalizedPhoneNumber = phone.countryCode + phone.number; // e.g., 27821234567
+                          } else {
+                            completePhoneNumber = null;
+                            normalizedPhoneNumber = null;
+                          }
+                        });
+                      },
                     ),
                   ),
 
@@ -312,20 +344,21 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       labelText: "Age",
                       isObscure: false,
                       textStyle: const TextStyle(color: Colors.white, fontSize: 16),
+                      keyboardType: TextInputType.number,
                     ),
                   ),
 
                   const SizedBox(
                     height: 20,
                   ),
-                  
+
                   //gender Dropdown
                   SizedBox(
                     width: MediaQuery.of(context).size.width - 40,
                     child: DropdownButtonFormField<String>(
                       decoration: InputDecoration(
                         prefixIcon: Icon(Icons.wc_outlined, color: Colors.grey),
-                        hintText: "Gender", 
+                        hintText: "Gender",
                         hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(22.0)),
@@ -339,13 +372,13 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                             color: Colors.grey,
                           ),
                         ),
-                        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10), 
+                        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                       ),
                       value: selectedGender,
-                      isExpanded: true, 
-                      icon: Icon(Icons.arrow_drop_down, color: Colors.grey), 
-                      dropdownColor: Colors.black, 
-                      style: const TextStyle(color: Colors.white, fontSize: 16), 
+                      isExpanded: true,
+                      icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                      dropdownColor: Colors.black,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
                       items: genderOptions.map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
@@ -389,10 +422,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         disabledBorder: OutlineInputBorder( // Added for disabled state
                           borderRadius: BorderRadius.all(Radius.circular(22.0)),
                           borderSide: BorderSide(
-                            color: Colors.grey[700]!, 
+                            color: Colors.grey[700]!,
                           ),
                         ),
-                        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10), 
+                        contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                       ),
                       value: selectedOrientation,
                       isExpanded: true,
@@ -405,22 +438,19 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           child: Text(value),
                         );
                       }).toList(),
-                      onChanged: _isOrientationFinalized 
-                          ? null 
+                      onChanged: _isOrientationFinalized
+                          ? null
                           : (String? newValue) {
                               setState(() {
                                 selectedOrientation = newValue;
-                                if (newValue != null && usernameController != null) {
+                                if (newValue != null) { // usernameController is always non-null
                                   String prefix = "${newValue.toLowerCase()}_";
-                                  String currentUsername = usernameController!.text;
-                                  // Check if the current username already has a prefix
+                                  String currentUsername = usernameController.text;
                                   if (currentUsername.startsWith("adam_") || currentUsername.startsWith("eve_")) {
-                                      // Remove the old prefix
                                       currentUsername = currentUsername.substring(currentUsername.indexOf("_") + 1);
                                   }
-                                  usernameController!.text = prefix + currentUsername;
+                                  usernameController.text = prefix + currentUsername;
                                 }
-                                // _isOrientationFinalized = true; // Removed: Lock only on create account press
                               });
                             },
                     ),
@@ -479,8 +509,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       onChanged: (String? newValue) {
                         setState(() {
                           selectedCountry = newValue;
-                          provincesList = newValue != null && africanLocations.containsKey(newValue) 
-                                          ? africanLocations[newValue]!.keys.toList() 
+                          provincesList = newValue != null && africanLocations.containsKey(newValue)
+                                          ? africanLocations[newValue]!.keys.toList()
                                           : [];
                           selectedProvince = null;
                           citiesList = [];
@@ -526,8 +556,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       onChanged: (String? newValue) {
                         setState(() {
                           selectedProvince = newValue;
-                          if (selectedCountry != null && newValue != null && 
-                              africanLocations.containsKey(selectedCountry!) && 
+                          if (selectedCountry != null && newValue != null &&
+                              africanLocations.containsKey(selectedCountry!) &&
                               africanLocations[selectedCountry!]!.containsKey(newValue)) {
                             citiesList = africanLocations[selectedCountry!]![newValue]!;
                           } else {
@@ -683,7 +713,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(
                     height: 20,
                   ),
@@ -704,7 +734,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       child: DropdownButtonFormField<String>(
                         decoration: InputDecoration(
                           prefixIcon: Icon(Icons.height, color: Colors.grey),
-                          hintText: "Height", 
+                          hintText: "Height",
                           hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(22.0)),
@@ -718,13 +748,13 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                               color: Colors.grey,
                             ),
                           ),
-                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10), 
+                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                         ),
                         value: selectedHeight,
-                        isExpanded: true, 
-                        icon: Icon(Icons.arrow_drop_down, color: Colors.grey), 
-                        dropdownColor: Colors.black, 
-                        style: const TextStyle(color: Colors.white, fontSize: 16), 
+                        isExpanded: true,
+                        icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                        dropdownColor: Colors.black,
+                        style: const TextStyle(color: Colors.white, fontSize: 16),
                         items: heightOptions.map((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
@@ -749,7 +779,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       child: DropdownButtonFormField<String>(
                         decoration: InputDecoration(
                           prefixIcon: Icon(Icons.accessibility_new_outlined, color: Colors.grey),
-                          hintText: "Body Type", 
+                          hintText: "Body Type",
                           hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(22.0)),
@@ -763,13 +793,13 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                               color: Colors.grey,
                             ),
                           ),
-                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10), 
+                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                         ),
                         value: selectedBodyType,
-                        isExpanded: true, 
-                        icon: Icon(Icons.arrow_drop_down, color: Colors.grey), 
-                        dropdownColor: Colors.black, 
-                        style: const TextStyle(color: Colors.white, fontSize: 16), 
+                        isExpanded: true,
+                        icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                        dropdownColor: Colors.black,
+                        style: const TextStyle(color: Colors.white, fontSize: 16),
                         items: bodyTypeOptions.map((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
@@ -854,10 +884,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           SizedBox(width: 10),
                           Expanded(child: Text("Meat", style: const TextStyle(color: Colors.white, fontSize: 16))),
                           Switch(
-                            value: meatSelection, // Changed to meatSelection
+                            value: meatSelection, 
                             onChanged: (bool value) {
                               setState(() {
-                                meatSelection = value; // Changed to meatSelection
+                                meatSelection = value; 
                               });
                             },
                             activeColor: Colors.blueAccent,
@@ -1100,7 +1130,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       child: DropdownButtonFormField<String>(
                         decoration: InputDecoration(
                           prefixIcon: Icon(Icons.group_outlined, color: Colors.grey),
-                          hintText: "Ethnicity", 
+                          hintText: "Ethnicity",
                           hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(22.0)),
@@ -1114,13 +1144,13 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                               color: Colors.grey,
                             ),
                           ),
-                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10), 
+                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                         ),
                         value: selectedEthnicity,
-                        isExpanded: true, 
-                        icon: Icon(Icons.arrow_drop_down, color: Colors.grey), 
-                        dropdownColor: Colors.black, 
-                        style: const TextStyle(color: Colors.white, fontSize: 16), 
+                        isExpanded: true,
+                        icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                        dropdownColor: Colors.black,
+                        style: const TextStyle(color: Colors.white, fontSize: 16),
                         items: ethnicityOptions.map((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
@@ -1146,7 +1176,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       height: 45,
                       child: CustomTextFieldWidget(
                         editingController: instagramController,
-                        iconData: Icons.camera_alt_outlined, // Placeholder for Instagram icon
+                        iconData: Icons.camera_alt_outlined, 
                         labelText: "Instagram",
                         isObscure: false,
                         textStyle: const TextStyle(color: Colors.white, fontSize: 16),
@@ -1163,14 +1193,12 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       height: 45,
                       child: CustomTextFieldWidget(
                         editingController: twitterController,
-                        iconData: Icons.alternate_email_outlined, // Placeholder for Twitter icon
+                        iconData: Icons.alternate_email_outlined, 
                         labelText: "Twitter/X",
                         isObscure: false,
                         textStyle: const TextStyle(color: Colors.white, fontSize: 16),
                       ),
                     ),
-
-                    // Add a final SizedBox at the bottom for some padding when scrolled to the end
                     const SizedBox(
                       height: 30,
                     ),
@@ -1183,13 +1211,205 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                     width: MediaQuery.of(context).size.width - 40,
                     height: 35,
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async { 
                         setState(() {
-                          _isOrientationFinalized = true; // Lock orientation on create account press
+                          _isOrientationFinalized = true; 
                         });
-                        // TODO: Implement account creation logic
-                        print("Create Account button pressed");
-                        print("Orientation is now: $selectedOrientation and is locked: $_isOrientationFinalized");
+
+                        // 1. Validation
+                        if (authenticationController.profilePhoto == null) {
+                          Get.snackbar("Missing Field", "Please select a profile photo.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                          setState(() { showProgressBar = false; }); 
+                          return;
+                        }
+                        if (emailController.text.trim().isEmpty) {
+                          Get.snackbar("Missing Field", "Please enter your email.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                           setState(() { showProgressBar = false; });
+                          return;
+                        }
+                        if (passwordController.text.trim().isEmpty) {
+                          Get.snackbar("Missing Field", "Please enter your password.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                           setState(() { showProgressBar = false; });
+                          return;
+                        }
+                        if (nameController.text.trim().isEmpty) {
+                          Get.snackbar("Missing Field", "Please enter your name.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                           setState(() { showProgressBar = false; });
+                          return;
+                        }
+                        if (ageController.text.trim().isEmpty) {
+                            Get.snackbar("Missing Field", "Please enter your age.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            setState(() { showProgressBar = false; });
+                            return;
+                        }
+                        int? age = int.tryParse(ageController.text.trim());
+                        if (age == null) {
+                            Get.snackbar(
+                                "Validation Error",
+                                "Please enter a valid number for age.",
+                                backgroundColor: Colors.blueGrey,
+                                colorText: Colors.white);
+                            setState(() {
+                                showProgressBar = false;
+                            });
+                            return;
+                        }
+                        if (age < 18) {
+                            Get.snackbar(
+                                "Validation Error",
+                                "You must be at least 18 years old to register.",
+                                backgroundColor: Colors.redAccent,
+                                colorText: Colors.white);
+                            setState(() {
+                                showProgressBar = false;
+                            });
+                            return;
+                        }
+                        if (selectedGender == null) {
+                          Get.snackbar("Missing Field", "Please select your gender.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                           setState(() { showProgressBar = false; });
+                          return;
+                        }
+                        if (selectedOrientation == null) {
+                          Get.snackbar("Missing Field", "Please select your orientation.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                           setState(() { showProgressBar = false; });
+                          return;
+                        }
+                         if (usernameController.text.trim().isEmpty) {
+                          Get.snackbar("Missing Field", "Please enter your username.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                           setState(() { showProgressBar = false; });
+                          return;
+                        }
+                        // UPDATED phone number validation
+                        if (normalizedPhoneNumber == null || normalizedPhoneNumber!.isEmpty) {
+                          Get.snackbar("Missing Field", "Please enter your phone number.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                           setState(() { showProgressBar = false; });
+                          return;
+                        }
+                        if (selectedCountry == null) {
+                          Get.snackbar("Missing Field", "Please select your country.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                           setState(() { showProgressBar = false; });
+                          return;
+                        }
+                        if (selectedProvince == null) {
+                          Get.snackbar("Missing Field", "Please select your province/state.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                           setState(() { showProgressBar = false; });
+                          return;
+                        }
+                        if (selectedCity == null) {
+                          Get.snackbar("Missing Field", "Please select your city/town.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                           setState(() { showProgressBar = false; });
+                          return;
+                        }
+
+                        // Eve-specific field validation
+                        if (selectedOrientation == 'Eve') {
+                          if (selectedHeight == null) {
+                            Get.snackbar("Missing Field (Eve Profile)", "Please select your height.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            setState(() { showProgressBar = false; });
+                            return;
+                          }
+                          if (selectedBodyType == null) {
+                            Get.snackbar("Missing Field (Eve Profile)", "Please select your body type.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            setState(() { showProgressBar = false; });
+                            return;
+                          }
+                          if (selectedProfession == null) {
+                            Get.snackbar("Missing Field (Eve Profile)", "Please select your profession.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            setState(() { showProgressBar = false; });
+                            return;
+                          }
+                          if (incomeController.text.trim().isEmpty) {
+                            Get.snackbar("Missing Field (Eve Profile)", "Please enter your income range.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            setState(() { showProgressBar = false; });
+                            return;
+                          }
+                          if (nationalityController.text.trim().isEmpty) {
+                            Get.snackbar("Missing Field (Eve Profile)", "Please enter your nationality.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            setState(() { showProgressBar = false; });
+                            return;
+                          }
+                          if (languagesController.text.trim().isEmpty) {
+                            Get.snackbar("Missing Field (Eve Profile)", "Please enter languages spoken.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            setState(() { showProgressBar = false; });
+                            return;
+                          }
+                          if (selectedEthnicity == null) {
+                            Get.snackbar("Missing Field (Eve Profile)", "Please select your ethnicity.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            setState(() { showProgressBar = false; });
+                            return;
+                          }
+                        }
+                        
+                        setState(() {
+                          showProgressBar = true;
+                        });
+
+                        try {
+                          Map<String, dynamic> userData = {
+                            'name': nameController.text.trim(),
+                            'age': age, 
+                            'phoneNumber': normalizedPhoneNumber, // Use the normalized number
+                            'gender': selectedGender,
+                            'orientation': selectedOrientation,
+                            'username': usernameController.text.trim(),
+                            'city': selectedCity,
+                            'country': selectedCountry,
+                            'province': selectedProvince,
+                            'lookingForBreakfast': lookingForBreakfast,
+                            'lookingForLunch': lookingForLunch,
+                            'lookingForDinner': lookingForDinner,
+                            'lookingForLongTerm': lookingForLongTerm,
+                            'publishedDateTime': DateTime.now().millisecondsSinceEpoch,
+                          };
+
+                          if (selectedOrientation == 'Eve') {
+                            userData.addAll({
+                              'height': selectedHeight,
+                              'bodyType': selectedBodyType,
+                              'drinkSelection': drinkSelection,
+                              'smokeSelection': smokeSelection,
+                              'meatSelection': meatSelection,
+                              'greekSelection': greekSelection,
+                              'hostSelection': hostSelection,
+                              'travelSelection': travelSelection,
+                              'profession': selectedProfession,
+                              'income': incomeController.text.trim(),
+                              'nationality': nationalityController.text.trim(),
+                              'languages': languagesController.text.trim(),
+                              'ethnicity': selectedEthnicity,
+                              'instagram': instagramController.text.trim(),
+                              'twitter': twitterController.text.trim(),
+                            });
+
+                            if (selectedProfession == 'Professional') {
+                              List<String> venues = [];
+                              _selectedProfessionalVenues.forEach((key, value) {
+                                if (value == true) {
+                                  venues.add(key);
+                                }
+                              });
+                              if (_professionalVenueOtherSelected &&
+                                  _professionalVenueOtherNameController.text.trim().isNotEmpty) {
+                                venues.add("Other: ${_professionalVenueOtherNameController.text.trim()}");
+                              }
+                              userData['professionalVenues'] = venues;
+                            }
+                          }
+                          
+                          await authenticationController.createAccountAndSaveData(
+                            emailController.text.trim(),
+                            passwordController.text.trim(),
+                            authenticationController.profilePhoto,
+                            userData,
+                          );
+                        } catch (error) {
+                          Get.snackbar("Registration Failed", error.toString(), backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                        } finally {
+                          setState(() {
+                            showProgressBar = false;
+                          });
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey,
@@ -1210,7 +1430,6 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                   const SizedBox(height: 10),
 
-                  // Login option
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -1223,7 +1442,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const HomeScreen()));
                         },
                         child: const Text(
                           "Login",
@@ -1245,7 +1464,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   )
                       : Container(),
 
-                  const SizedBox(height: 30), // Extra padding at the very bottom
+                  const SizedBox(height: 30), 
 
                 ],
               ),

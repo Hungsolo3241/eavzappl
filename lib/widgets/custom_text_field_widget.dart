@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 
-
-class CustomTextFieldWidget extends StatelessWidget
-{
-  final TextEditingController? editingController; // Made nullable
+class CustomTextFieldWidget extends StatelessWidget {
+  final TextEditingController? editingController;
   final IconData? iconData;
   final String? assetRef;
   final String? labelText;
-  final bool? isObscure; // Made nullable
-  final TextStyle? textStyle; // Added for input text styling
-
+  final bool? isObscure;
+  final TextStyle? textStyle;
+  final TextInputType? keyboardType; // Added keyboardType field
 
   const CustomTextFieldWidget({
     super.key,
@@ -18,45 +16,44 @@ class CustomTextFieldWidget extends StatelessWidget
     this.assetRef,
     this.labelText,
     this.isObscure,
-    this.textStyle, // Added
-
+    this.textStyle,
+    this.keyboardType, // Added keyboardType to constructor
   });
 
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: editingController,
-      style: textStyle, // Applied input text style
+      style: textStyle,
+      keyboardType: keyboardType, // Applied keyboardType to the TextField
       decoration: InputDecoration(
         labelText: labelText,
         prefixIcon: iconData != null
             ? Icon(iconData)
             : Padding(
-                padding: const EdgeInsets.all(8), // Added const
-          child: Image.asset(assetRef.toString()),
+                padding: const EdgeInsets.all(8),
+                child: Image.asset(assetRef.toString()),
+              ),
+        labelStyle: const TextStyle(
+          fontSize: 16,
+          color: Colors.grey,
         ),
-      labelStyle: const TextStyle( // Modified labelStyle
-        fontSize: 16,
-        color: Colors.grey,
+        enabledBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(22.0)),
+          borderSide: BorderSide(
+            color: Colors.grey,
+            width: 1,
+          ),
+        ),
+        focusedBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(22.0)),
+          borderSide: BorderSide(
+            color: Colors.grey,
+            width: 1,
+          ),
+        ),
       ),
-        enabledBorder: const OutlineInputBorder( // Added const
-          borderRadius: BorderRadius.all(Radius.circular(22.0)),
-          borderSide: BorderSide(
-            color: Colors.grey,
-            width: 1,
-          ),
-        ),
-        focusedBorder: const OutlineInputBorder( // Added const
-          borderRadius: BorderRadius.all(Radius.circular(22.0)),
-          borderSide: BorderSide(
-            color: Colors.grey,
-            width: 1,
-          ),
-        ),
-
-    ),
-      obscureText: isObscure!, // Now correct with nullable isObscure
-
+      obscureText: isObscure ?? false, // Use ?? false for a default value
     );
   }
 }
