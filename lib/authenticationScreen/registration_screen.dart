@@ -314,7 +314,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   ),
 
                   const SizedBox(
-                    height: 20,
+                    height: 10,
                   ),
 
                   //name
@@ -444,10 +444,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                               setState(() {
                                 selectedOrientation = newValue;
                                 if (newValue != null) { // usernameController is always non-null
-                                  String prefix = "${newValue.toLowerCase()}_";
+                                  String prefix = "$newValue ○ ";
                                   String currentUsername = usernameController.text;
-                                  if (currentUsername.startsWith("adam_") || currentUsername.startsWith("eve_")) {
-                                      currentUsername = currentUsername.substring(currentUsername.indexOf("_") + 1);
+                                  if (currentUsername.startsWith("Adam ○") || currentUsername.startsWith("Eve ○")) {
+                                      currentUsername = currentUsername.substring(currentUsername.indexOf("○") + 1);
                                   }
                                   usernameController.text = prefix + currentUsername;
                                 }

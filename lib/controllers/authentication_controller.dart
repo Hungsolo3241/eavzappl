@@ -11,6 +11,43 @@ class AuthenticationController extends GetxController
 {
   static AuthenticationController authController = Get.find();
 
+  Future<bool> loginUser(String email, String password) async {
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password.trim(),
+      );
+      Get.snackbar("Login Successful", "Welcome back!", backgroundColor: Colors.green, colorText: Colors.white);
+      return true;
+    } on FirebaseAuthException catch (e) {
+      // These print statements are helpful for debugging if new codes appear
+      print("Firebase Auth Error Code: ${e.code}");
+      print("Firebase Auth Error Message: ${e.message}");
+
+      String errorMessage = "An error occurred. Please try again."; // Default message
+
+      // Conditions based on observed Firebase error codes
+      if (e.code == 'invalid-credential') { // For wrong password or user not found
+        errorMessage = 'Invalid credentials. Please check your email and password.';
+      } else if (e.code == 'invalid-email') { // For badly formatted email
+        errorMessage = 'The email address is not valid.';
+      } else if (e.code == 'user-disabled') {
+        errorMessage = 'This user account has been disabled.';
+      }
+      // You can add other specific Firebase Auth error codes here if needed
+
+      Get.snackbar("Login Failed", errorMessage, backgroundColor: Colors.blueGrey, colorText: Colors.white);
+      return false;
+    } catch (error) {
+      // This print is also helpful for unexpected issues
+      print("Generic Catch Error in loginUser: $error");
+      Get.snackbar("Login Failed", "An unexpected error occurred: ${error.toString()}", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+      return false;
+    }
+  }
+
+
+
   late final Rx<File?> _pickedFile = Rx<File?>(null); // Initialize with null
   File? get profilePhoto => _pickedFile.value;
 
@@ -78,6 +115,11 @@ class AuthenticationController extends GetxController
       firestoreUserData['email'] = email.trim();
       firestoreUserData['profilePhoto'] = downloadUrl ?? "";
 
+      // Convert 'orientation' to lowercase if it exists in the userData map
+      if (firestoreUserData.containsKey('orientation') && firestoreUserData['orientation'] is String) {
+        firestoreUserData['orientation'] = (firestoreUserData['orientation'] as String).toLowerCase();
+      }
+
       await FirebaseFirestore.instance.collection("users")
           .doc(credential.user!.uid)
           .set(firestoreUserData);
@@ -113,7 +155,7 @@ class AuthenticationController extends GetxController
       String ageString, // RENAMED from 'age' to 'ageString' for clarity
       String phoneNumber,
       String gender,
-      String orientation,
+      String orientation, // This is the parameter from the form
       String username,
       String country,
       String province,
@@ -149,15 +191,9 @@ class AuthenticationController extends GetxController
   {
     try
     {
-      // This method now assumes user is already authenticated or auth is handled by the caller,
-      // as 'password' is no longer a direct parameter for Firebase Auth user creation here.
-      // Primary user creation is handled by 'createAccountAndSaveData'.
       User? currentUser = FirebaseAuth.instance.currentUser;
 
       if (currentUser == null) {
-        // If this method were intended to create users, it would need the password for
-        // UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: /* password_from_param */);
-        // For now, if no user, we can't proceed to save data linked to a user.
         Get.snackbar("Error", "User not authenticated. Cannot save profile data.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
         return;
       }
@@ -169,20 +205,18 @@ class AuthenticationController extends GetxController
         ageAsInt = int.tryParse(ageString.trim());
         if (ageAsInt == null) {
           Get.snackbar("Data Error", "Invalid age format: '$ageString'. Age will not be saved.", backgroundColor: Colors.orangeAccent, colorText: Colors.white);
-          // Decide if you want to return or proceed without age
         }
       }
 
       personModel.Person personInstance = personModel.Person(
-        uid: currentUser.uid, // Use current user's UID
+        uid: currentUser.uid, 
         profilePhoto: profilePhotoUrl,
         email: email,
-        // password: password, // REMOVED password field from Person model
         name: name,
-        age: ageAsInt, // Pass the parsed int?
+        age: ageAsInt, 
         phoneNumber: phoneNumber,
         gender: gender,
-        orientation: orientation,
+        orientation: orientation.toLowerCase(), // Convert to lowercase here
         username: username,
         country: country,
         province: province,
