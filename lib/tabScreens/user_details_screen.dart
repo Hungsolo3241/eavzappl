@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eavzappl/authenticationScreen/login_screen.dart';
 import 'package:eavzappl/controllers/profile_controller.dart';
-import 'package:eavzappl/models/person.dart' as model;// Import UserSettingsScreen
+import 'package:eavzappl/models/person.dart' as model; // Import UserSettingsScreen
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -20,14 +20,8 @@ class UserDetailsScreen extends StatefulWidget {
 }
 
 class _UserDetailsScreenState extends State<UserDetailsScreen> {
-  model.Person? _user;
-  List<String> _sliderImages = [];
-  bool _isLoading = true;
-  bool _userFound = true;
   String _effectiveUserID = '';
-
   ProfileController? _profileController;
-
   late PageController _pageController;
   Timer? _carouselTimer;
 
@@ -44,11 +38,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     } catch (e) {
       print("UserDetailsScreen: Could not find ProfileController. Obscuring logic might not work as expected. Error: $e");
     }
-    _determineUserIDAndFetchData().then((_) {
-      if (mounted && _userFound && _sliderImages.isNotEmpty) {
-        _startAutoScroll();
-      }
-    });
+    _determineEffectiveUserID();
   }
 
   @override
@@ -58,9 +48,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     super.dispose();
   }
 
-  void _startAutoScroll() {
+  void _startAutoScroll(List<String> images) {
     _carouselTimer?.cancel();
-    if (!mounted || _sliderImages.isEmpty) return;
+    if (!mounted || images.isEmpty || !_pageController.hasClients) return;
 
     _carouselTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
       if (!mounted || !_pageController.hasClients || _pageController.page == null) {
@@ -68,7 +58,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
         return;
       }
       int nextPage = _pageController.page!.round() + 1;
-      if (nextPage >= _sliderImages.length) {
+      if (nextPage >= images.length) {
         nextPage = 0;
       }
       _pageController.animateToPage(
@@ -94,71 +84,47 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     }
   }
 
-  Future<void> _determineUserIDAndFetchData() async {
-    String? idToFetch = widget.userID;
-    if (idToFetch == null || idToFetch.isEmpty) {
+  void _determineEffectiveUserID() {
+    String? idToUse = widget.userID;
+    if (idToUse == null || idToUse.isEmpty) {
+      // If no userID is passed (e.g., from the "Profile" tab),
+      // default to the currently logged-in user.
       User? currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null) {
-        idToFetch = currentUser.uid;
-      } else {
-        if (mounted) setState(() { _isLoading = false; _userFound = false; });
-        return;
+        idToUse = currentUser.uid;
       }
     }
-    _effectiveUserID = idToFetch;
-    if (_effectiveUserID.isEmpty) {
-      if (mounted) setState(() { _isLoading = false; _userFound = false; });
-      return;
-    }
-    await _retrieveUserData(_effectiveUserID);
+    // If idToUse is still null here (e.g., widget.userID was null AND no user is logged in),
+    // _effectiveUserID will become '', and the "User ID not available" message will show.
+    setState(() {
+      _effectiveUserID = idToUse ?? '';
+    });
   }
 
-  Future<void> _retrieveUserData(String userIDToFetch) async {
-    if (userIDToFetch.isEmpty) {
-      if (mounted) setState(() { _isLoading = false; _userFound = false; });
-      return;
-    }
-    if (mounted) setState(() { _isLoading = true; });
-    try {
-      final DocumentSnapshot snapshot = await FirebaseFirestore.instance
-          .collection("users")
-          .doc(userIDToFetch)
-          .get();
+  List<String> _extractSliderImages(Map<String, dynamic> data, String? orientation) {
+    List<String> images = [];
+    String placeholderUrlToUse;
+    final String? lowerOrientation = orientation?.toLowerCase();
 
-      if (mounted && snapshot.exists && snapshot.data() != null) {
-        _user = model.Person.fromDataSnapshot(snapshot);
-        final data = snapshot.data() as Map<String, dynamic>;
-        List<String> images = [];
-        String placeholderUrlToUse;
-        final String? orientation = _user?.orientation?.toLowerCase();
-        if (orientation == 'eve') {
-          placeholderUrlToUse = evePlaceholderUrl;
-        } else if (orientation == 'adam') {
-          placeholderUrlToUse = adamPlaceholderUrl;
-        } else {
-          placeholderUrlToUse = genericPlaceholderUrl;
-        }
-        for (int i = 1; i <= 5; i++) {
-          String? imageUrl = data['urlImage$i'] as String?;
-          if (imageUrl != null && imageUrl.isNotEmpty) {
-            images.add(imageUrl);
-          } else {
-            images.add(placeholderUrlToUse);
-          }
-        }
-        _sliderImages = images;
-        _userFound = true;
+    if (lowerOrientation == 'eve') {
+      placeholderUrlToUse = evePlaceholderUrl;
+    } else if (lowerOrientation == 'adam') {
+      placeholderUrlToUse = adamPlaceholderUrl;
+    } else {
+      placeholderUrlToUse = genericPlaceholderUrl;
+    }
+    for (int i = 1; i <= 5; i++) {
+      String? imageUrl = data['urlImage$i'] as String?;
+      if (imageUrl != null && imageUrl.isNotEmpty) {
+        images.add(imageUrl);
       } else {
-        _userFound = false;
-      }
-    } catch (e) {
-      print("Error retrieving user data for ID $userIDToFetch: $e");
-      _userFound = false;
-    } finally {
-      if (mounted) {
-        setState(() { _isLoading = false; });
+        images.add(placeholderUrlToUse);
       }
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if(mounted) _startAutoScroll(images);
+    });
+    return images;
   }
 
   String _getDisplayImageUrl(String? mainProfilePhoto, String? orientation) {
@@ -207,12 +173,19 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     return _buildDetailRow(context, label, value ? "Yes" : "No");
   }
 
-  Widget _buildImageCarousel() {
-    List<String> imagesToShow = _sliderImages;
-    if (imagesToShow.length != 5) {
-      print("UserDetailsScreen: WARNING - _sliderImages length is not 5. Forcing 5 placeholders.");
-      String fallbackPlaceholder = _getDisplayImageUrl(null, _user?.orientation);
+  Widget _buildImageCarousel(List<String> sliderImages, String? orientationForPlaceholder) {
+    List<String> imagesToShow = sliderImages;
+    if (imagesToShow.isEmpty) {
+      String fallbackPlaceholder = _getDisplayImageUrl(null, orientationForPlaceholder);
       imagesToShow = List.generate(5, (_) => fallbackPlaceholder);
+    } else if (imagesToShow.length != 5) {
+      print("UserDetailsScreen: WARNING - sliderImages length is ${imagesToShow.length}. Adjusting to 5.");
+      String fallbackPlaceholder = _getDisplayImageUrl(null, orientationForPlaceholder);
+      List<String> adjustedImages = List.from(imagesToShow);
+      while(adjustedImages.length < 5) {
+        adjustedImages.add(fallbackPlaceholder);
+      }
+      imagesToShow = adjustedImages.sublist(0,5);
     }
 
     return Container(
@@ -236,11 +209,12 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   value: loadingProgress.expectedTotalBytes != null
                       ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
                       : null,
+                  color: Colors.green,
                 ));
               },
               errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
                 print("Error loading image in carousel: ${imagesToShow[index]}, Exception: $exception");
-                return Image.network(_getDisplayImageUrl(null, _user?.orientation), fit: BoxFit.cover);
+                return Image.network(_getDisplayImageUrl(null, orientationForPlaceholder), fit: BoxFit.cover);
               },
             );
           },
@@ -267,133 +241,135 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     final appBarIconTheme = const IconThemeData(color: Colors.green);
     final appBarBackgroundColor = Colors.black54;
 
-    if (_isLoading) {
+    if (_effectiveUserID.isEmpty) {
       return Scaffold(
+        appBar: AppBar(title: const Text("Profile Information"), centerTitle: true, titleTextStyle: appBarTitleTextStyle, iconTheme: appBarIconTheme, backgroundColor: appBarBackgroundColor),
+        body: const Center(child: Text("User ID not available. Cannot display profile.", style: TextStyle(fontSize: 18, color: Colors.green))),
+      );
+    }
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection("users").doc(_effectiveUserID).snapshots(),
+      builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+              appBar: AppBar(title: const Text("Loading Profile..."), centerTitle: true, titleTextStyle: appBarTitleTextStyle, iconTheme: appBarIconTheme, backgroundColor: appBarBackgroundColor),
+              body: const Center(child: CircularProgressIndicator(color: Colors.green)));
+        }
+
+        if (snapshot.hasError) {
+          print("Error in UserDetailsScreen StreamBuilder: ${snapshot.error}");
+          return Scaffold(
+              appBar: AppBar(title: const Text("Error"), centerTitle: true, titleTextStyle: appBarTitleTextStyle, iconTheme: appBarIconTheme, backgroundColor: appBarBackgroundColor),
+              body: const Center(child: Text("Error loading profile.", style: TextStyle(color: Colors.red, fontSize: 18))));
+        }
+
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          String message = "Profile for user ID '$_effectiveUserID' not found.";
+          return Scaffold(
+              appBar: AppBar(title: const Text("Profile Not Found"), centerTitle: true, titleTextStyle: appBarTitleTextStyle, iconTheme: appBarIconTheme, backgroundColor: appBarBackgroundColor),
+              body: Center(child: Text(message, style: const TextStyle(fontSize: 18, color: Colors.green), textAlign: TextAlign.center,)));
+        }
+
+        final userDoc = snapshot.data!;
+        final user = model.Person.fromDataSnapshot(userDoc);
+        final userDataMap = userDoc.data() as Map<String, dynamic>;
+        final List<String> sliderImages = _extractSliderImages(userDataMap, user.orientation);
+
+        final bool isCurrentUserProfile = (FirebaseAuth.instance.currentUser?.uid == _effectiveUserID);
+
+        bool shouldObscureDetails = false;
+        if (!isCurrentUserProfile && _profileController?.currentUserProfile.value != null) {
+          final String? viewerOrientation = _profileController!.currentUserProfile.value!.orientation?.toLowerCase();
+          final String? viewedProfileOrientation = user.orientation?.toLowerCase();
+          if (viewerOrientation == 'adam' && viewedProfileOrientation == 'eve') {
+            shouldObscureDetails = true;
+          }
+        }
+        final bool isAdamProfile = user.orientation?.toLowerCase() == 'adam';
+
+        return Scaffold(
           appBar: AppBar(
-              title: const Text("Loading Profile..."), centerTitle: true,
-              titleTextStyle: appBarTitleTextStyle, iconTheme: appBarIconTheme, backgroundColor: appBarBackgroundColor),
-          body: const Center(child: CircularProgressIndicator(color: Colors.green)));
-    }
-
-    if (!_userFound || _user == null) {
-      String message = "User details could not be loaded.";
-      if (FirebaseAuth.instance.currentUser == null && widget.userID == null) {
-        message = "Please log in to see your profile.";
-      } else if (!_userFound && _effectiveUserID.isNotEmpty) {
-        message = "Profile for user ID '$_effectiveUserID' not found.";
-      } else if (!_userFound) {
-        message = "User not found.";
-      }
-      return Scaffold(
-          appBar: AppBar(
-              title: const Text("Profile Information"), centerTitle: true,
-              titleTextStyle: appBarTitleTextStyle, iconTheme: appBarIconTheme, backgroundColor: appBarBackgroundColor),
-          body: Center(
-            child: Text(
-              message,
-              style: const TextStyle(fontSize: 18, color: Colors.green),
-              textAlign: TextAlign.center,
-            ),
-          ));
-    }
-
-    final user = _user!;
-    final bool isCurrentUserProfile = (widget.userID == null || widget.userID!.isEmpty || widget.userID == FirebaseAuth.instance.currentUser?.uid) &&
-        FirebaseAuth.instance.currentUser?.uid == _effectiveUserID;
-
-    bool shouldObscureDetails = false;
-    if (!isCurrentUserProfile && _profileController?.currentUserProfile.value != null) {
-      final String? viewerOrientation = _profileController!.currentUserProfile.value!.orientation?.toLowerCase();
-      final String? viewedProfileOrientation = user.orientation?.toLowerCase();
-      if (viewerOrientation == 'adam' && viewedProfileOrientation == 'eve') {
-        shouldObscureDetails = true;
-      }
-    }
-
-    final bool isAdamProfile = user.orientation?.toLowerCase() == 'adam';
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isCurrentUserProfile ? "My Profile" : (user.name ?? "User Profile")),
-        centerTitle: true,
-        titleTextStyle: appBarTitleTextStyle,
-        iconTheme: appBarIconTheme, // For back arrow if not current user's profile
-        backgroundColor: appBarBackgroundColor,
-        actions: <Widget>[
-          if (isCurrentUserProfile) ...[ // Use spread operator for multiple conditional widgets
-            IconButton(
-              icon: const Icon(Icons.settings, color: Colors.green), // Settings Icon
-              tooltip: 'Settings',
-              onPressed: () {
-                Get.to(() => const UserSettingsScreen()); // Navigate to UserSettingsScreen
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.logout, color: Colors.green),
-              tooltip: 'Logout',
-              onPressed: () {
-                _signOutUser();
-              },
-            ),
-          ]
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            _buildImageCarousel(),
-            _buildSectionTitle(context, "Personal Information"),
-            _buildDetailRow(context, "Name", user.name),
-            if (user.age != null) _buildDetailRow(context, "Age", user.age.toString()),
-            _buildDetailRow(context, "Gender", user.gender),
-            _buildDetailRow(context, "Email", shouldObscureDetails ? "Protected" : user.email),
-            _buildDetailRow(context, "Phone", shouldObscureDetails ? "Protected" : user.phoneNumber),
-            _buildDetailRow(context, "Country", user.country),
-            _buildDetailRow(context, "Province", user.province),
-            _buildDetailRow(context, "City", user.city),
-            _buildDetailRow(context, "Profession", user.profession),
-            _buildDetailRow(context, "Income", user.income),
-            if (user.publishedDateTime != null)
-              _buildDetailRow(context, "Joined", DateFormat.yMMMd().add_jm().format(DateTime.fromMillisecondsSinceEpoch(user.publishedDateTime!))),
-
-            _buildSectionTitle(context, "Looking/Available For"),
-            _buildBooleanDetailRow(context, "Breakfast", user.lookingForBreakfast),
-            _buildBooleanDetailRow(context, "Lunch", user.lookingForLunch),
-            _buildBooleanDetailRow(context, "Dinner", user.lookingForDinner),
-            _buildBooleanDetailRow(context, "Long Term", user.lookingForLongTerm),
-
-            if (!isAdamProfile) ...[
-              _buildSectionTitle(context, "Appearance"),
-              _buildDetailRow(context, "Height", user.height),
-              _buildDetailRow(context, "Body Type", user.bodyType),
-              _buildBooleanDetailRow(context, "Drinks Alcohol", user.drinkSelection),
-              _buildBooleanDetailRow(context, "Smokes", user.smokeSelection),
-              _buildBooleanDetailRow(context, "Likes Meat", user.meatSelection),
-              _buildBooleanDetailRow(context, "Likes Greek", user.greekSelection),
-              _buildBooleanDetailRow(context, "Can Host", user.hostSelection),
-              _buildBooleanDetailRow(context, "Able to Travel", user.travelSelection),
-              if (user.professionalVenues != null && user.professionalVenues!.isNotEmpty)
-                _buildDetailRow(context, "Professional Venues", user.professionalVenues!.join(", ")),
-              _buildDetailRow(context, "Private Venue", user.otherProfessionalVenue),
+            title: Text(isCurrentUserProfile ? "My Profile" : (user.name ?? "User Profile")),
+            centerTitle: true,
+            titleTextStyle: appBarTitleTextStyle,
+            iconTheme: appBarIconTheme,
+            backgroundColor: appBarBackgroundColor,
+            actions: <Widget>[
+              if (isCurrentUserProfile) ...[
+                IconButton(
+                  icon: const Icon(Icons.settings, color: Colors.green),
+                  tooltip: 'Settings',
+                  onPressed: () {
+                    Get.to(() => const UserSettingsScreen());
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.logout, color: Colors.green),
+                  tooltip: 'Logout',
+                  onPressed: _signOutUser,
+                ),
+              ]
             ],
+          ),
+          body: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                _buildImageCarousel(sliderImages.isNotEmpty ? sliderImages : [_getDisplayImageUrl(user.profilePhoto, user.orientation)], user.orientation),
+                _buildSectionTitle(context, "Personal Information"),
+                _buildDetailRow(context, "Name", user.name),
+                if (user.age != null) _buildDetailRow(context, "Age", user.age.toString()),
+                _buildDetailRow(context, "Gender", user.gender),
+                _buildDetailRow(context, "Email", shouldObscureDetails ? "Protected" : user.email),
+                _buildDetailRow(context, "Phone", shouldObscureDetails ? "Protected" : user.phoneNumber),
+                _buildDetailRow(context, "Country", user.country),
+                _buildDetailRow(context, "Province", user.province),
+                _buildDetailRow(context, "City", user.city),
+                _buildDetailRow(context, "Profession", user.profession),
+                _buildDetailRow(context, "Income", user.income),
+                if (user.publishedDateTime != null)
+                  _buildDetailRow(context, "Joined", DateFormat.yMMMd().add_jm().format(DateTime.fromMillisecondsSinceEpoch(user.publishedDateTime!))),
 
-            if (!isAdamProfile) ...[
-              _buildSectionTitle(context, "Background"),
-              _buildDetailRow(context, "Ethnicity", user.ethnicity),
-              _buildDetailRow(context, "Nationality", user.nationality),
-              _buildDetailRow(context, "Languages", user.languages),
-            ],
+                _buildSectionTitle(context, "Looking/Available For"),
+                _buildBooleanDetailRow(context, "Breakfast", user.lookingForBreakfast),
+                _buildBooleanDetailRow(context, "Lunch", user.lookingForLunch),
+                _buildBooleanDetailRow(context, "Dinner", user.lookingForDinner),
+                _buildBooleanDetailRow(context, "Long Term", user.lookingForLongTerm),
 
-            if (!isAdamProfile) ...[
-              _buildSectionTitle(context, "Social Media"),
-              _buildDetailRow(context, "Instagram", user.instagram, isLink: true),
-              _buildDetailRow(context, "Twitter", user.twitter, isLink: true),
-            ],
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
+                if (!isAdamProfile) ...[
+                  _buildSectionTitle(context, "Appearance"),
+                  _buildDetailRow(context, "Height", user.height),
+                  _buildDetailRow(context, "Body Type", user.bodyType),
+                  _buildBooleanDetailRow(context, "Drinks Alcohol", user.drinkSelection),
+                  _buildBooleanDetailRow(context, "Smokes", user.smokeSelection),
+                  _buildBooleanDetailRow(context, "Likes Meat", user.meatSelection),
+                  _buildBooleanDetailRow(context, "Likes Greek", user.greekSelection),
+                  _buildBooleanDetailRow(context, "Can Host", user.hostSelection),
+                  _buildBooleanDetailRow(context, "Able to Travel", user.travelSelection),
+                  if (user.professionalVenues != null && user.professionalVenues!.isNotEmpty)
+                    _buildDetailRow(context, "Professional Venues", user.professionalVenues!.join(", ")),
+                  _buildDetailRow(context, "Private Venue", user.otherProfessionalVenue),
+                ],
+
+                if (!isAdamProfile) ...[
+                  _buildSectionTitle(context, "Background"),
+                  _buildDetailRow(context, "Ethnicity", user.ethnicity),
+                  _buildDetailRow(context, "Nationality", user.nationality),
+                  _buildDetailRow(context, "Languages", user.languages),
+                ],
+
+                if (!isAdamProfile) ...[
+                  _buildSectionTitle(context, "Social Media"),
+                  _buildDetailRow(context, "Instagram", user.instagram, isLink: true),
+                  _buildDetailRow(context, "Twitter", user.twitter, isLink: true),
+                ],
+                const SizedBox(height: 20),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
