@@ -113,6 +113,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   @override
   void initState() {
     super.initState();
+    authenticationController.resetProfilePhoto(); // Reset profile photo on init
     countriesList = africanLocations.keys.toList();
     for (var venue in _professionalVenueOptions) {
       _selectedProfessionalVenues[venue] = false;
@@ -1411,6 +1412,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           );
 
                           if (registrationSuccessful) {
+                            authenticationController.resetProfilePhoto(); // Reset profile photo on successful registration
                             // Navigate to HomeScreen only if registration was successful
                             Get.offAll(() => const HomeScreen());
                             // No need to set showProgressBar to false here if navigating away

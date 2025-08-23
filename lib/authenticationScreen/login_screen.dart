@@ -51,7 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Login was successful
         // Ensure splash is visible, wait for 5 seconds
         print("Login successful, starting 5-second delay..."); // For debugging
-        await Future.delayed(const Duration(seconds: 10));
+        await Future.delayed(const Duration(seconds: 8));
         print("5-second delay finished."); // For debugging
 
         // Check if the widget is still mounted before navigating

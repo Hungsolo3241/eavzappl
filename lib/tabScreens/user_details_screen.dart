@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eavzappl/controllers/profile_controller.dart'; // Import ProfileController
-import 'package:eavzappl/models/person.dart' as model; // aliased to avoid conflict
+import 'package:eavzappl/authenticationScreen/login_screen.dart'; // Import LoginScreen
+import 'package:eavzappl/controllers/profile_controller.dart';
+import 'package:eavzappl/models/person.dart' as model;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart'; // Import Get for Get.find
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 class UserDetailsScreen extends StatefulWidget {
@@ -21,26 +22,37 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   bool _userFound = true;
   String _effectiveUserID = '';
 
+  ProfileController? _profileController;
+
   final String evePlaceholderUrl = 'https://firebasestorage.googleapis.com/v0/b/eavzappl-32891.firebasestorage.app/o/placeholder%2Feves_avatar.jpeg?alt=media&token=75b9c3f5-72c1-42db-be5c-471cc0d88c05';
   final String adamPlaceholderUrl = 'https://firebasestorage.googleapis.com/v0/b/eavzappl-32891.firebasestorage.app/o/placeholder%2Fadam_avatar.jpeg?alt=media&token=997423ec-96a4-42d6-aea8-c8cb80640ca0';
   final String genericPlaceholderUrl = 'https://via.placeholder.com/400?text=No+Image';
 
-  // Lazy initialization for ProfileController
-  ProfileController? _profileController;
-
   @override
   void initState() {
     super.initState();
-    // It's generally safer to ensure GetX bindings are ready if finding immediately.
-    // However, ProfileController is likely put by an earlier screen (SwipingScreen or HomeScreen).
-    // If there's a risk of it not being ready, consider WidgetsBinding.instance.addPostFrameCallback
     try {
       _profileController = Get.find<ProfileController>();
     } catch (e) {
       print("UserDetailsScreen: Could not find ProfileController. Obscuring logic might not work as expected. Error: $e");
-      // Proceed without it, obscuring logic will default to not obscuring based on viewer.
     }
     _determineUserIDAndFetchData();
+  }
+
+  Future<void> _signOutUser() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      // Navigate to Login Screen and remove all previous routes
+      Get.offAll(() => const LoginScreen());
+    } catch (e) {
+      print("Error signing out: $e");
+      Get.snackbar(
+        "Logout Failed",
+        "An error occurred while trying to sign out. Please try again.",
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    }
   }
 
   Future<void> _determineUserIDAndFetchData() async {
@@ -203,7 +215,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final appBarTitleTextStyle = const TextStyle(color: Colors.green, fontSize: 20, fontWeight: FontWeight.bold);
-    final appBarIconTheme = const IconThemeData(color: Colors.green);
+    final appBarIconTheme = const IconThemeData(color: Colors.green); // For back arrow
     final appBarBackgroundColor = Colors.black54;
 
     if (_isLoading) {
@@ -234,7 +246,6 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     final bool isCurrentUserProfile = (widget.userID == null || widget.userID!.isEmpty || widget.userID == FirebaseAuth.instance.currentUser?.uid) &&
         FirebaseAuth.instance.currentUser?.uid == _effectiveUserID;
 
-    // Obscuring Logic
     bool shouldObscureDetails = false;
     if (!isCurrentUserProfile && _profileController?.currentUserProfile.value != null) {
       final String? viewerOrientation = _profileController!.currentUserProfile.value!.orientation?.toLowerCase();
@@ -247,14 +258,23 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
       print("UserDetailsScreen: Obscuring email/phone for Adam viewing Eve's profile.");
     }
 
-
     return Scaffold(
       appBar: AppBar(
         title: Text(isCurrentUserProfile ? "My Profile" : (user.name ?? "User Profile")),
         centerTitle: true,
         titleTextStyle: appBarTitleTextStyle,
-        iconTheme: appBarIconTheme,
+        iconTheme: appBarIconTheme, // Applies to back arrow if present
         backgroundColor: appBarBackgroundColor,
+        actions: <Widget>[ // Add actions list for the AppBar
+          if (isCurrentUserProfile) // Conditionally add Logout button
+            IconButton(
+              icon: const Icon(Icons.logout, color: Colors.green), // Logout icon, styled
+              tooltip: 'Logout',
+              onPressed: () {
+                _signOutUser(); // Call the sign out method
+              },
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -263,10 +283,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
             _buildImageCarousel(),
             _buildSectionTitle(context, "Personal Information"),
             _buildDetailRow(context, "Name", user.name),
-            _buildDetailRow(context, "Username", user.username),
             if (user.age != null) _buildDetailRow(context, "Age", user.age.toString()),
             _buildDetailRow(context, "Gender", user.gender),
-            _buildDetailRow(context, "Orientation", user.orientation),
             _buildDetailRow(context, "Email", shouldObscureDetails ? "Protected" : user.email),
             _buildDetailRow(context, "Phone", shouldObscureDetails ? "Protected" : user.phoneNumber),
             _buildDetailRow(context, "Country", user.country),
@@ -274,7 +292,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
             _buildDetailRow(context, "City", user.city),
             if (user.publishedDateTime != null)
               _buildDetailRow(context, "Joined", DateFormat.yMMMd().add_jm().format(DateTime.fromMillisecondsSinceEpoch(user.publishedDateTime!))),
-            _buildSectionTitle(context, "Looking For"),
+            _buildSectionTitle(context, "Looking/Available For"),
             _buildBooleanDetailRow(context, "Breakfast", user.lookingForBreakfast),
             _buildBooleanDetailRow(context, "Lunch", user.lookingForLunch),
             _buildBooleanDetailRow(context, "Dinner", user.lookingForDinner),
@@ -286,13 +304,13 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
             _buildDetailRow(context, "Income", user.income),
             _buildBooleanDetailRow(context, "Drinks Alcohol", user.drinkSelection),
             _buildBooleanDetailRow(context, "Smokes", user.smokeSelection),
-            _buildBooleanDetailRow(context, "Eats Meat", user.meatSelection),
-            _buildBooleanDetailRow(context, "Likes Greek Food", user.greekSelection),
+            _buildBooleanDetailRow(context, "Likes Meat", user.meatSelection),
+            _buildBooleanDetailRow(context, "Likes Greek", user.greekSelection),
             _buildBooleanDetailRow(context, "Can Host", user.hostSelection),
-            _buildBooleanDetailRow(context, "Enjoys Traveling", user.travelSelection),
+            _buildBooleanDetailRow(context, "Able to Travel", user.travelSelection),
             if (user.professionalVenues != null && user.professionalVenues!.isNotEmpty)
               _buildDetailRow(context, "Professional Venues", user.professionalVenues!.join(", ")),
-            _buildDetailRow(context, "Other Venue", user.otherProfessionalVenue),
+            _buildDetailRow(context, "Private Venue", user.otherProfessionalVenue),
             _buildSectionTitle(context, "Background"),
             _buildDetailRow(context, "Ethnicity", user.ethnicity),
             _buildDetailRow(context, "Nationality", user.nationality),
@@ -307,3 +325,4 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     );
   }
 }
+

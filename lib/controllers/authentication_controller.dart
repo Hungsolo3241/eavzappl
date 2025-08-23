@@ -51,6 +51,12 @@ class AuthenticationController extends GetxController
   late final Rx<File?> _pickedFile = Rx<File?>(null); // Initialize with null
   File? get profilePhoto => _pickedFile.value;
 
+  void resetProfilePhoto() {
+    _pickedFile.value = null;
+    // _pickedFile.refresh(); // Not strictly necessary if Obx is used correctly, but won't hurt
+    print("AuthenticationController: Profile photo reset.");
+  }
+
   pickImageFromGallery() async
   {
     final imageFile = await ImagePicker().pickImage(source: ImageSource.gallery);
