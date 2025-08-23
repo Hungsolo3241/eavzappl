@@ -153,8 +153,6 @@ class _SwipingScreenState extends State<SwipingScreen> {
                             children: [
                               if (eachProfileInfo.profession != null && eachProfileInfo.profession!.isNotEmpty)
                                 _buildInfoPill(eachProfileInfo.profession!),
-                              if (eachProfileInfo.ethnicity != null && eachProfileInfo.ethnicity!.isNotEmpty)
-                                _buildInfoPill(eachProfileInfo.ethnicity!),
                               if (eachProfileInfo.travelSelection == true)
                                 _buildInfoPill("Travels"),
                               if (eachProfileInfo.hostSelection == true)
@@ -174,7 +172,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
                               IconButton(
                                 icon: Image.asset('images/default_fave.png', width: 45, height: 45, color: Colors.black54),
                                 onPressed: () {
-                                  print('Like button tapped for ${eachProfileInfo.name}');
+                                  print('Favorite button tapped for ${eachProfileInfo.name}');
                                   // TODO: Implement like functionality
                                 },
                                 tooltip: 'Like',
@@ -190,13 +188,14 @@ class _SwipingScreenState extends State<SwipingScreen> {
                               IconButton(
                                 icon: Image.asset('images/default_like.png', width: 45, height: 45, color: Colors.black54),
                                 onPressed: () {
-                                  print('Favorite button tapped for ${eachProfileInfo.name}');
+                                  print('Like button tapped for ${eachProfileInfo.name}');
                                   // TODO: Implement favorite functionality
                                 },
                                 tooltip: 'Favorite',
                               ),
                             ],
                           ),
+                          const SizedBox(height: 16.0), // Space before the action buttons
                         ],
                       ),
                     ),

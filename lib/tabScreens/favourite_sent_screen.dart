@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class FavouriteSentFavouriteReceivedScreen extends StatefulWidget {
-  const FavouriteSentFavouriteReceivedScreen({super.key});
+class FavouriteSentScreen extends StatefulWidget {
+  const FavouriteSentScreen({super.key});
 
   @override
-  State<FavouriteSentFavouriteReceivedScreen> createState() => _FavouriteSentFavouriteReceivedScreenState();
+  State<FavouriteSentScreen> createState() => _FavouriteSentScreenState();
 }
 
-class _FavouriteSentFavouriteReceivedScreenState extends State<FavouriteSentFavouriteReceivedScreen> {
+class _FavouriteSentScreenState extends State<FavouriteSentScreen> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(

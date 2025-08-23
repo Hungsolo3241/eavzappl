@@ -45,6 +45,7 @@ dependencies:
   intl_phone_field:
   intl:
   flutter_image_slider:
+  image_cropper:
 
 dev_dependencies:
   flutter_test:

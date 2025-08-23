@@ -43,6 +43,31 @@ class ProfileController extends GetxController {
     super.onClose();
   }
 
+  likeSentAndReceived(String toUserId, String fromUserName) async
+  {
+      var document = await FirebaseFirestore.instance.collection("users")
+          .doc(toUserId)
+          .collection("likesReceived")
+          .doc(fromUserName).get();
+
+      // remove like from database if it already exists
+      if (document.exists) {
+        await FirebaseFirestore.instance.collection("users")
+            .doc(toUserId)
+            .collection("likesReceived")
+            .doc(fromUserName).delete();
+      } else {
+        await FirebaseFirestore.instance.collection("users")
+            .doc(toUserId)
+            .collection("likesReceived")
+            .doc(fromUserName).set({});
+
+        //   send notification to user
+      }
+
+      update();
+
+  }
   Future<void> _initializeAndStreamProfiles() async {
     // Clear old data first to avoid showing stale profiles briefly
     // usersProfileList.value = []; // Handled by authStateChanges listener for logout

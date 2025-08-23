@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class ViewSentViewReceivedScreen extends StatefulWidget {
-  const ViewSentViewReceivedScreen({super.key});
+class ViewReceivedScreen extends StatefulWidget {
+  const ViewReceivedScreen({super.key});
 
   @override
-  State<ViewSentViewReceivedScreen> createState() => _ViewSentViewReceivedScreenState();
+  State<ViewReceivedScreen> createState() => _ViewReceivedScreenState();
 }
 
-class _ViewSentViewReceivedScreenState extends State<ViewSentViewReceivedScreen> {
+class _ViewReceivedScreenState extends State<ViewReceivedScreen> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../tabScreens/favourite_sent_favourite_received_screen.dart';
+import '../tabScreens/favourite_sent_screen.dart';
 import '../tabScreens/like_sent_like_received_screen.dart';
 import '../tabScreens/swiping_screen.dart';
 import '../tabScreens/user_details_screen.dart';
-import '../tabScreens/view_sent_view_received_screen.dart';
+import '../tabScreens/view_received_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,8 +20,8 @@ class _HomeScreenState extends State<HomeScreen>
   List tabScreensList =
   [
     SwipingScreen(),
-    ViewSentViewReceivedScreen(),
-    FavouriteSentFavouriteReceivedScreen(),
+    ViewReceivedScreen(),
+    FavouriteSentScreen(),
     LikeSentLikeReceivedScreen(),
     UserDetailsScreen(userID: '')
   ];
