@@ -46,6 +46,7 @@ dependencies:
   intl:
   flutter_image_slider:
   image_cropper:
+  path:
 
 dev_dependencies:
   flutter_test:

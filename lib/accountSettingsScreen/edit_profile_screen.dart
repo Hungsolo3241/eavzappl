@@ -39,7 +39,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _professionalVenueOtherSelected = false;
   late TextEditingController _professionalVenueOtherNameController;
 
-  final List<String> _mainProfessionCategoriesList = ["Student", "Freelancer", "Professional at:"];
+  final List<String> _mainProfessionCategoriesList = ["Student", "Freelancer", "Professional"];
 
   final Map<String, Map<String, List<String>>> africanLocations = {
     'South Africa': {
@@ -62,6 +62,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String? _selectedProvince;
   String? _selectedCity;
 
+  // Ethnicity
+  final List<String> _ethnicityOptions = [
+    "Black", "White", "Asian", "Mixed", "Other", "Prefer not to say"
+  ];
+  String? _selectedEthnicity;
+
   final ImagePicker _picker = ImagePicker();
   List<File?> _pickedImages = List.filled(5, null);
   List<String?> _imageUrls = List.filled(5, null);
@@ -72,8 +78,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final String evePlaceholderUrl = 'https://firebasestorage.googleapis.com/v0/b/eavzappl-32891.firebasestorage.app/o/placeholder%2Feves_avatar.jpeg?alt=media&token=75b9c3f5-72c1-42db-be5c-471cc0d88c05';
   final String adamPlaceholderUrl = 'https://firebasestorage.googleapis.com/v0/b/eavzappl-32891.firebasestorage.app/o/placeholder%2Fadam_avatar.jpeg?alt=media&token=997423ec-96a4-42d6-aea8-c8cb80640ca0';
   final String genericPlaceholderUrl = 'https://via.placeholder.com/150?text=Slot';
-  // final String genericAvatarPlaceholder = 'https://via.placeholder.com/150/CCCCCC/FFFFFF?Text=Profile'; // Was used in a previous version for CircleAvatar background
-
 
   @override
   void initState() {
@@ -119,10 +123,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _ageController.text = _currentUserData?.age?.toString() ?? '';
           _phoneController.text = _currentUserData?.phoneNumber ?? '';
 
-          print("Attempting to load profilePhoto from Firestore data: ${data['profilePhoto']}"); // DEBUG LINE & CORRECTED FIELD NAME
-          _currentMainProfileImageUrl = data['profilePhoto'] as String?; // CORRECTED FIELD NAME
-          print("Loaded _currentMainProfileImageUrl: $_currentMainProfileImageUrl"); // DEBUG LINE
-
+          print("Attempting to load profilePhoto from Firestore data: \${data['profilePhoto']}");
+          _currentMainProfileImageUrl = data['profilePhoto'] as String?;
+          print("Loaded _currentMainProfileImageUrl: \$_currentMainProfileImageUrl");
 
           _selectedCountry = _currentUserData?.country;
           if (_selectedCountry != null && africanLocations.containsKey(_selectedCountry)) {
@@ -142,13 +145,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             _provincesList = []; _citiesList = [];
           }
 
+          _selectedEthnicity = _currentUserData?.ethnicity; // Load ethnicity
+
           String? currentProfession = _currentUserData?.profession;
           if (_currentUserData?.orientation?.toLowerCase() == 'eve') {
             if (currentProfession == "Student" || currentProfession == "Freelancer") {
               _mainProfessionCategory = currentProfession;
               _professionController.clear();
             } else if (currentProfession != null && currentProfession.isNotEmpty) {
-              _mainProfessionCategory = "Professional at:";
+              _mainProfessionCategory = "Professional";
               _professionController.text = currentProfession;
             } else {
               _mainProfessionCategory = null;
@@ -172,14 +177,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           }
 
           for (int i = 0; i < 5; i++) {
-            _imageUrls[i] = data['urlImage${i + 1}'] as String?;
+            _imageUrls[i] = data['urlImage\${i + 1}'] as String?;
           }
         } else {
           Get.snackbar("Error", "Could not load user profile. Document does not exist or has no data.", colorText: Colors.white, backgroundColor: Colors.red);
         }
       } catch (e) {
         print("Error loading profile: $e");
-        Get.snackbar("Error", "Failed to load profile data: ${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
+        Get.snackbar("Error", "Failed to load profile data: \${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
       }
     } else {
       Get.snackbar("Error", "No user logged in.", colorText: Colors.white, backgroundColor: Colors.red);
@@ -190,7 +195,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String _getPlaceholderUrlForSlot(int index) {
     if (_currentUserData?.orientation?.toLowerCase() == 'eve') return evePlaceholderUrl;
     if (_currentUserData?.orientation?.toLowerCase() == 'adam') return adamPlaceholderUrl;
-    return '${genericPlaceholderUrl}&index=${index + 1}';
+    return '\${genericPlaceholderUrl}&index=\${index + 1}';
   }
 
   Future<void> _pickMainProfileImage() async {
@@ -202,7 +207,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         });
       }
     } catch (e) {
-      Get.snackbar("Image Error", "Failed to pick main profile image: ${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar("Image Error", "Failed to pick main profile image: \${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
     }
   }
 
@@ -216,7 +221,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           compressQuality: 70, maxWidth: 600, maxHeight: 600,
           uiSettings: [
             AndroidUiSettings(toolbarTitle: 'Crop Image', toolbarColor: Colors.black54,
-                toolbarWidgetColor: Colors.green, initAspectRatio: CropAspectRatioPreset.square, lockAspectRatio: true),
+                toolbarWidgetColor: Colors.blueGrey, initAspectRatio: CropAspectRatioPreset.square, lockAspectRatio: true),
             IOSUiSettings(title: 'Crop Image', aspectRatioLockEnabled: true, resetAspectRatioEnabled: false,
                 aspectRatioPickerButtonHidden: true, doneButtonTitle: "Crop", cancelButtonTitle: "Cancel"),
           ],);
@@ -225,16 +230,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
       }
     } catch (e) {
-      Get.snackbar("Image Error", "Failed to pick or crop image: ${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar("Image Error", "Failed to pick or crop image: \${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
     }
   }
 
   void _showGalleryImageSourceActionSheet(int slotIndex) {
     showModalBottomSheet(context: context, builder: (BuildContext context) {
       return SafeArea(child: Wrap(children: <Widget>[
-        ListTile(leading: const Icon(Icons.photo_library, color: Colors.green), title: const Text('Photo Library', style: TextStyle(color: Colors.green)),
+        ListTile(leading: const Icon(Icons.photo_library, color: Colors.blueGrey), title: const Text('Photo Library', style: TextStyle(color: Colors.green)),
             onTap: () { _pickGalleryImage(slotIndex, ImageSource.gallery); Navigator.of(context).pop(); }),
-        ListTile(leading: const Icon(Icons.photo_camera, color: Colors.green), title: const Text('Camera', style: TextStyle(color: Colors.green)),
+        ListTile(leading: const Icon(Icons.photo_camera, color: Colors.blueGrey), title: const Text('Camera', style: TextStyle(color: Colors.green)),
             onTap: () { _pickGalleryImage(slotIndex, ImageSource.camera); Navigator.of(context).pop(); }),
       ],));
     },);
@@ -255,31 +260,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       Container(width: 120, height: 120, margin: const EdgeInsets.all(4.0),
           decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(8.0)),
           clipBehavior: Clip.antiAlias, child: imageWidget),
-      ElevatedButton(onPressed: () => _showGalleryImageSourceActionSheet(index), style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+      ElevatedButton(onPressed: () => _showGalleryImageSourceActionSheet(index), style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
           child: const Text("Change", style: TextStyle(color: Colors.white))),
     ],);
   }
 
   Future<String?> _uploadGalleryFileToFirebaseStorage(File file, String userId, int slotIndex) async {
     try {
-      String fileName = 'gallery_image_${slotIndex}_${DateTime.now().millisecondsSinceEpoch}${path.extension(file.path)}';
+      String fileName = 'gallery_image_\${slotIndex}_\${DateTime.now().millisecondsSinceEpoch}\${path.extension(file.path)}';
       Reference ref = FirebaseStorage.instance.ref().child('gallery_images/$userId/$fileName');
       TaskSnapshot task = await ref.putFile(file);
       return await task.ref.getDownloadURL();
     } catch (e) {
-      Get.snackbar("Upload Error", "Failed to upload gallery image $slotIndex: ${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar("Upload Error", "Failed to upload gallery image $slotIndex: \${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
       return null;
     }
   }
 
   Future<String?> _uploadMainProfileFileToFirebaseStorage(File file, String userId) async {
     try {
-      String fileName = 'main_profile_pic_${DateTime.now().millisecondsSinceEpoch}${path.extension(file.path)}';
+      String fileName = 'main_profile_pic_\${DateTime.now().millisecondsSinceEpoch}\${path.extension(file.path)}';
       Reference ref = FirebaseStorage.instance.ref().child('main_profile_pictures/$userId/$fileName');
       TaskSnapshot task = await ref.putFile(file);
       return await task.ref.getDownloadURL();
     } catch (e) {
-      Get.snackbar("Upload Error", "Failed to upload main profile picture: ${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar("Upload Error", "Failed to upload main profile picture: \${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
       return null;
     }
   }
@@ -319,13 +324,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_currentUserData?.orientation?.toLowerCase() == 'eve') {
       if (_mainProfessionCategory == "Student" || _mainProfessionCategory == "Freelancer") {
         professionToSave = _mainProfessionCategory ?? "";
-      } else if (_mainProfessionCategory == "Professional at:") {
+      } else if (_mainProfessionCategory == "Professional") {
         professionToSave = _professionController.text.trim();
       }
-      if(_mainProfessionCategory == "Professional at:") {
+      if(_mainProfessionCategory == "Professional") {
         _selectedProfessionalVenues.forEach((venueName, isSelected) { if (isSelected) updatedProfessionalVenues.add(venueName); });
-        if (_professionalVenueOtherSelected) updatedOtherProfessionalVenue = _professionalVenueOtherNameController.text.trim();
-        else updatedOtherProfessionalVenue = null;
+        if (_professionalVenueOtherSelected) {
+          updatedOtherProfessionalVenue = _professionalVenueOtherNameController.text.trim();
+        } else {
+          updatedOtherProfessionalVenue = null;
+        }
       }
     } else {
       professionToSave = _professionController.text.trim();
@@ -336,14 +344,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       'age': int.tryParse(_ageController.text.trim()),
       'phoneNumber': _phoneController.text.trim(),
       'country': _selectedCountry, 'province': _selectedProvince, 'city': _selectedCity,
+      'ethnicity': _selectedEthnicity, // Save ethnicity
       'profession': professionToSave,
-      'profilePhoto': newMainProfilePicUrl, // CORRECTED FIELD NAME
+      'profilePhoto': newMainProfilePicUrl,
       'urlImage1': finalImageUrls[0], 'urlImage2': finalImageUrls[1],
       'urlImage3': finalImageUrls[2], 'urlImage4': finalImageUrls[3],
       'urlImage5': finalImageUrls[4],
     };
 
-    if (_currentUserData?.orientation?.toLowerCase() == 'eve' && _mainProfessionCategory == "Professional at:") {
+    if (_currentUserData?.orientation?.toLowerCase() == 'eve' && _mainProfessionCategory == "Professional") {
       dataToUpdate['professionalVenues'] = updatedProfessionalVenues;
       dataToUpdate['otherProfessionalVenue'] = updatedOtherProfessionalVenue;
     } else if (_currentUserData?.orientation?.toLowerCase() == 'eve') {
@@ -353,7 +362,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     if (dataToUpdate['age'] == null && _ageController.text.trim().isEmpty) dataToUpdate.remove('age');
     else if (dataToUpdate['age'] == null && _ageController.text.trim().isNotEmpty) dataToUpdate['age'] = null;
-    if (professionToSave.isEmpty && (_mainProfessionCategory == "Professional at:" || _currentUserData?.orientation?.toLowerCase() != 'eve')) {
+    if (professionToSave.isEmpty && (_mainProfessionCategory == "Professional" || _currentUserData?.orientation?.toLowerCase() != 'eve')) {
       dataToUpdate['profession'] = "";
     }
 
@@ -368,7 +377,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       Get.snackbar("Success", "Profile updated successfully!", colorText: Colors.white, backgroundColor: Colors.green);
       Get.back(result: true);
     } catch (e) {
-      Get.snackbar("Save Error", "Failed to update profile: ${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar("Save Error", "Failed to update profile: \${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
     } finally {
       setState(() { _isLoading = false; });
     }
@@ -384,10 +393,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       child: TextFormField(
         controller: controller, enabled: enabled,
         decoration: InputDecoration(
-          labelText: label, labelStyle: TextStyle(color: Colors.green),
-          prefixIcon: icon != null ? Icon(icon, color: Colors.green) : null,
+          labelText: label, labelStyle: TextStyle(color: Colors.blueGrey),
+          prefixIcon: icon != null ? Icon(icon, color: Colors.blueGrey) : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
+          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.blueGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
           enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(8.0)),
           disabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8.0)),
         ),
@@ -407,10 +416,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: DropdownButtonFormField<T>(
         decoration: InputDecoration(
-          labelText: label, labelStyle: TextStyle(color: Colors.green),
-          prefixIcon: icon != null ? Icon(icon, color: Colors.green) : null,
+          labelText: label, labelStyle: TextStyle(color: Colors.blueGrey),
+          prefixIcon: icon != null ? Icon(icon, color: Colors.blueGrey) : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.green, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
+          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.blueGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
           enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(8.0)),
           disabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8.0)),
         ),
@@ -422,17 +431,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print("Building EditProfileScreen. _currentMainProfileImageUrl: $_currentMainProfileImageUrl"); // DEBUG LINE
+    print("Building EditProfileScreen. _currentMainProfileImageUrl: \$_currentMainProfileImageUrl");
     final bool isEveOrientation = _currentUserData?.orientation?.toLowerCase() == 'eve';
 
     return Scaffold(
       appBar: AppBar(
           title: const Text("Edit Profile"), centerTitle: true,
-          titleTextStyle: const TextStyle(color: Colors.green, fontSize: 20, fontWeight: FontWeight.bold),
-          iconTheme: const IconThemeData(color: Colors.green), backgroundColor: Colors.black54,
-          actions: [IconButton(icon: const Icon(Icons.save, color: Colors.green), onPressed: _isLoading ? null : _saveProfileChanges, tooltip: "Save Changes")]),
+          titleTextStyle: const TextStyle(color: Colors.blueGrey, fontSize: 20, fontWeight: FontWeight.bold),
+          iconTheme: const IconThemeData(color: Colors.blueGrey), backgroundColor: Colors.black54,
+          actions: [IconButton(icon: const Icon(Icons.save, color: Colors.blueGrey), onPressed: _isLoading ? null : _saveProfileChanges, tooltip: "Save Changes")]),
       body: _isLoading && _currentUserData == null
-          ? const Center(child: CircularProgressIndicator(color: Colors.green))
+          ? const Center(child: CircularProgressIndicator(color: Colors.blueGrey))
           : _currentUserData == null
           ? const Center(child: Text("Could not load user profile.", style: TextStyle(color: Colors.red, fontSize: 16)))
           : SingleChildScrollView(
@@ -445,7 +454,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               Center(
                 child: Column(
                   children: [
-                    Text("Main Profile Picture", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.green)),
+                    Text("Main Profile Picture", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
                     const SizedBox(height: 10),
                     GestureDetector(
                       onTap: _pickMainProfileImage,
@@ -464,28 +473,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     TextButton(
                       onPressed: _pickMainProfileImage,
-                      child: const Text("Change Main Photo", style: TextStyle(color: Colors.green)),
+                      child: const Text("Change Main Photo", style: TextStyle(color: Colors.blueGrey)),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 20),
-              Divider(color: Colors.grey.shade600),
+              Divider(color: Colors.blueGrey, thickness: 2),
               const SizedBox(height: 20),
 
-              Text("Profile Gallery Images (Max 5)", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.green)),
+              Text("Profile Gallery Images", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
               const SizedBox(height: 8),
-              Text("Note: 'Orientation' (${_currentUserData?.orientation ?? 'N/A'}) is not editable.", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.orangeAccent, fontStyle: FontStyle.italic)),
+              Text("Note: Only upload genuine images of yourself. Misleading profiles (catfishing) may lead to a permanent ban.", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.blueAccent, fontStyle: FontStyle.italic)),
               const SizedBox(height: 10),
               Wrap(spacing: 8.0, runSpacing: 8.0, alignment: WrapAlignment.center, children: List.generate(5, (index) => _buildGalleryImageSlot(index))),
               const SizedBox(height: 24),
-              Text("Profile Details", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.green)),
+              Text("Profile Details", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
               const SizedBox(height: 16),
 
               _buildTextFormField(controller: _nameController, label: "Name", icon: Icons.person, validator: (v) => (v == null || v.trim().isEmpty) ? 'Name cannot be empty' : null),
               _buildTextFormField(controller: _ageController, label: "Age", icon: Icons.cake, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], validator: (v) {
                 if (v == null || v.trim().isEmpty) return null; final age = int.tryParse(v.trim()); if (age == null) return 'Invalid age'; if (age < 18) return 'Must be 18 or older'; if (age > 120) return 'Invalid age'; return null; }),
-              _buildTextFormField(controller: _phoneController, label: "Phone Number", icon: Icons.phone, keyboardType: TextInputType.phone, validator: (v) { if (v == null || v.trim().isEmpty) return null; if (v.replaceAll(RegExp(r'\D'), '').length < 7) return 'Enter a valid phone number'; return null; }),
+              _buildTextFormField(controller: _phoneController, label: "Phone Number", icon: Icons.phone, keyboardType: TextInputType.phone, validator: (v) { if (v == null || v.trim().isEmpty) return null; if (v.replaceAll(RegExp(r'\\D'), '').length < 7) return 'Enter a valid phone number'; return null; }),
 
               _buildDropdownFormField<String>(
                 label: "Country", icon: Icons.public, value: _selectedCountry,
@@ -510,6 +519,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 onChanged: (newValue) { setState(() { _selectedCity = newValue; }); },
                 validator: (value) => _selectedProvince != null && value == null ? 'Please select a city' : null,
               ),
+              
+              _buildDropdownFormField<String>( // Ethnicity Dropdown
+                label: "Ethnicity", icon: Icons.diversity_3, value: _selectedEthnicity,
+                items: _ethnicityOptions.map((ethnicity) => DropdownMenuItem(value: ethnicity, child: Text(ethnicity, style: TextStyle(color: Colors.white70)))).toList(),
+                onChanged: (newValue) { setState(() { _selectedEthnicity = newValue; }); },
+                validator: (value) => null, // Optional: make it required if needed
+              ),
 
               if (isEveOrientation) ...[
                 _buildDropdownFormField<String>(
@@ -517,35 +533,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   items: _mainProfessionCategoriesList.map((type) => DropdownMenuItem(value: type, child: Text(type, style: TextStyle(color: Colors.white70)))).toList(),
                   onChanged: (newValue) { setState(() {
                     _mainProfessionCategory = newValue;
-                    if (newValue != "Professional at:") {
+                    if (newValue != "Professional") {
                       _professionController.clear();
                     }
                   }); },
                   validator: (value) => value == null ? 'Please select a category' : null,
                 ),
-                if (_mainProfessionCategory == "Professional at:")
+                if (_mainProfessionCategory == "Professional")
                   _buildTextFormField(controller: _professionController, label: "Specific Profession", icon: Icons.business_center,
                     validator: (value) => (value == null || value.trim().isEmpty) ? 'Please specify your profession' : null,),
               ] else ...[
                 _buildTextFormField(controller: _professionController, label: "Profession", icon: Icons.work, validator: (v) => null),
               ],
 
-              if (isEveOrientation && _mainProfessionCategory == "Professional at:") ...[
+              if (isEveOrientation && _mainProfessionCategory == "Professional") ...[
                 const SizedBox(height: 24),
-                Text("Preferred Professional Venues", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.green, fontWeight: FontWeight.bold)),
+                Text("Preferred Professional Venues", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.blueGrey, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 ..._professionalVenueOptions.map((venueName) {
                   return SwitchListTile(
                       title: Text(venueName, style: TextStyle(color: Colors.white70)),
                       value: _selectedProfessionalVenues[venueName] ?? false,
                       onChanged: (bool value) { setState(() { _selectedProfessionalVenues[venueName] = value; }); },
-                      activeColor: Colors.green, inactiveThumbColor: Colors.grey, inactiveTrackColor: Colors.grey.shade700);
+                      activeColor: Colors.blueAccent, inactiveThumbColor: Colors.grey, inactiveTrackColor: Colors.grey.shade700);
                 }).toList(),
                 SwitchListTile(
                     title: const Text("Other Venue", style: TextStyle(color: Colors.white70)),
                     value: _professionalVenueOtherSelected,
                     onChanged: (bool value) { setState(() { _professionalVenueOtherSelected = value; if (!value) _professionalVenueOtherNameController.clear(); }); },
-                    activeColor: Colors.green, inactiveThumbColor: Colors.grey, inactiveTrackColor: Colors.grey.shade700),
+                    activeColor: Colors.blueAccent, inactiveThumbColor: Colors.grey, inactiveTrackColor: Colors.grey.shade700),
                 if (_professionalVenueOtherSelected)
                   _buildTextFormField(controller: _professionalVenueOtherNameController, label: "Specify Other Venue", icon: Icons.storefront,
                       validator: (value) => (_professionalVenueOtherSelected && (value == null || value.trim().isEmpty)) ? 'Please specify the venue name' : null),
@@ -553,12 +569,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 20),
               Padding(padding: const EdgeInsets.symmetric(vertical: 8.0), child: Row(children: [
-                Text("Orientation: ", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.green, fontWeight: FontWeight.bold)),
-                Text(_currentUserData?.orientation ?? "Not set", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.green)),
+                Text("Orientation: ", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.blueGrey, fontWeight: FontWeight.bold)),
+                Text(_currentUserData?.orientation ?? "Not set", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.blueGrey)),
               ],),),
               const SizedBox(height: 30),
-              Center(child: _isLoading ? const CircularProgressIndicator(color: Colors.green)
-                  : ElevatedButton(onPressed: _saveProfileChanges, style: ElevatedButton.styleFrom(backgroundColor: Colors.green, padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15)),
+              Center(child: _isLoading ? const CircularProgressIndicator(color: Colors.blueGrey)
+                  : ElevatedButton(onPressed: _saveProfileChanges, style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey, padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15)),
                 child: const Text("Save Changes", style: TextStyle(fontSize: 16, color: Colors.white)),
               ),),
             ],
@@ -568,4 +584,3 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 }
-

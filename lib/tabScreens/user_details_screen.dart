@@ -150,7 +150,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
             '$label: ',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.green,
+              color: Colors.blueGrey,
             ),
           ),
           const SizedBox(width: 8),
@@ -158,7 +158,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
             child: Text(
               value,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.green,
+                color: Colors.blueGrey,
                 decoration: isLink ? TextDecoration.underline : null,
               ),
             ),
@@ -179,7 +179,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
       String fallbackPlaceholder = _getDisplayImageUrl(null, orientationForPlaceholder);
       imagesToShow = List.generate(5, (_) => fallbackPlaceholder);
     } else if (imagesToShow.length != 5) {
-      print("UserDetailsScreen: WARNING - sliderImages length is ${imagesToShow.length}. Adjusting to 5.");
+      print("UserDetailsScreen: WARNING - sliderImages length is \${imagesToShow.length}. Adjusting to 5.");
       String fallbackPlaceholder = _getDisplayImageUrl(null, orientationForPlaceholder);
       List<String> adjustedImages = List.from(imagesToShow);
       while(adjustedImages.length < 5) {
@@ -209,11 +209,11 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   value: loadingProgress.expectedTotalBytes != null
                       ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
                       : null,
-                  color: Colors.green,
+                  color: Colors.blueGrey,
                 ));
               },
               errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
-                print("Error loading image in carousel: ${imagesToShow[index]}, Exception: $exception");
+                print("Error loading image in carousel: \${imagesToShow[index]}, Exception: $exception");
                 return Image.network(_getDisplayImageUrl(null, orientationForPlaceholder), fit: BoxFit.cover);
               },
             );
@@ -229,7 +229,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
         title,
         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
           fontWeight: FontWeight.bold,
-          color: Colors.green,
+          color: Colors.blueGrey,
         ),
       ),
     );
@@ -237,14 +237,14 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final appBarTitleTextStyle = const TextStyle(color: Colors.green, fontSize: 20, fontWeight: FontWeight.bold);
-    final appBarIconTheme = const IconThemeData(color: Colors.green);
+    final appBarTitleTextStyle = const TextStyle(color: Colors.blueGrey, fontSize: 20, fontWeight: FontWeight.bold);
+    final appBarIconTheme = const IconThemeData(color: Colors.blueGrey);
     final appBarBackgroundColor = Colors.black54;
 
     if (_effectiveUserID.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: const Text("Profile Information"), centerTitle: true, titleTextStyle: appBarTitleTextStyle, iconTheme: appBarIconTheme, backgroundColor: appBarBackgroundColor),
-        body: const Center(child: Text("User ID not available. Cannot display profile.", style: TextStyle(fontSize: 18, color: Colors.green))),
+        body: const Center(child: Text("User ID not available. Cannot display profile.", style: TextStyle(fontSize: 18, color: Colors.blueGrey))),
       );
     }
 
@@ -254,11 +254,11 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
               appBar: AppBar(title: const Text("Loading Profile..."), centerTitle: true, titleTextStyle: appBarTitleTextStyle, iconTheme: appBarIconTheme, backgroundColor: appBarBackgroundColor),
-              body: const Center(child: CircularProgressIndicator(color: Colors.green)));
+              body: const Center(child: CircularProgressIndicator(color: Colors.blueGrey)));
         }
 
         if (snapshot.hasError) {
-          print("Error in UserDetailsScreen StreamBuilder: ${snapshot.error}");
+          print("Error in UserDetailsScreen StreamBuilder: \${snapshot.error}");
           return Scaffold(
               appBar: AppBar(title: const Text("Error"), centerTitle: true, titleTextStyle: appBarTitleTextStyle, iconTheme: appBarIconTheme, backgroundColor: appBarBackgroundColor),
               body: const Center(child: Text("Error loading profile.", style: TextStyle(color: Colors.red, fontSize: 18))));
@@ -268,7 +268,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
           String message = "Profile for user ID '$_effectiveUserID' not found.";
           return Scaffold(
               appBar: AppBar(title: const Text("Profile Not Found"), centerTitle: true, titleTextStyle: appBarTitleTextStyle, iconTheme: appBarIconTheme, backgroundColor: appBarBackgroundColor),
-              body: Center(child: Text(message, style: const TextStyle(fontSize: 18, color: Colors.green), textAlign: TextAlign.center,)));
+              body: Center(child: Text(message, style: const TextStyle(fontSize: 18, color: Colors.blueGrey), textAlign: TextAlign.center,)));
         }
 
         final userDoc = snapshot.data!;
@@ -278,14 +278,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
 
         final bool isCurrentUserProfile = (FirebaseAuth.instance.currentUser?.uid == _effectiveUserID);
 
-        bool shouldObscureDetails = false;
-        if (!isCurrentUserProfile && _profileController?.currentUserProfile.value != null) {
-          final String? viewerOrientation = _profileController!.currentUserProfile.value!.orientation?.toLowerCase();
-          final String? viewedProfileOrientation = user.orientation?.toLowerCase();
-          if (viewerOrientation == 'adam' && viewedProfileOrientation == 'eve') {
-            shouldObscureDetails = true;
-          }
-        }
+        // If it's not the current user's profile, obscure the details.
+        bool shouldObscureDetails = !isCurrentUserProfile;
+        
         final bool isAdamProfile = user.orientation?.toLowerCase() == 'adam';
 
         return Scaffold(
@@ -298,14 +293,14 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
             actions: <Widget>[
               if (isCurrentUserProfile) ...[
                 IconButton(
-                  icon: const Icon(Icons.settings, color: Colors.green),
+                  icon: const Icon(Icons.settings, color: Colors.blueGrey),
                   tooltip: 'Settings',
                   onPressed: () {
                     Get.to(() => const UserSettingsScreen());
                   },
                 ),
                 IconButton(
-                  icon: const Icon(Icons.logout, color: Colors.green),
+                  icon: const Icon(Icons.logout, color: Colors.blueGrey),
                   tooltip: 'Logout',
                   onPressed: _signOutUser,
                 ),
@@ -327,7 +322,11 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                 _buildDetailRow(context, "Province", user.province),
                 _buildDetailRow(context, "City", user.city),
                 _buildDetailRow(context, "Profession", user.profession),
+                 _buildDetailRow(context, "Ethnicity", user.ethnicity), // MOVED HERE
                 _buildDetailRow(context, "Income", user.income),
+                if (user.professionalVenues != null && user.professionalVenues!.isNotEmpty)
+                  _buildDetailRow(context, "Professional Venues", user.professionalVenues!.join(", ")),
+                _buildDetailRow(context, "Private Venue", user.otherProfessionalVenue),
                 if (user.publishedDateTime != null)
                   _buildDetailRow(context, "Joined", DateFormat.yMMMd().add_jm().format(DateTime.fromMillisecondsSinceEpoch(user.publishedDateTime!))),
 
@@ -337,32 +336,32 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                 _buildBooleanDetailRow(context, "Dinner", user.lookingForDinner),
                 _buildBooleanDetailRow(context, "Long Term", user.lookingForLongTerm),
 
-                if (!isAdamProfile) ...[
-                  _buildSectionTitle(context, "Appearance"),
-                  _buildDetailRow(context, "Height", user.height),
-                  _buildDetailRow(context, "Body Type", user.bodyType),
-                  _buildBooleanDetailRow(context, "Drinks Alcohol", user.drinkSelection),
-                  _buildBooleanDetailRow(context, "Smokes", user.smokeSelection),
-                  _buildBooleanDetailRow(context, "Likes Meat", user.meatSelection),
-                  _buildBooleanDetailRow(context, "Likes Greek", user.greekSelection),
-                  _buildBooleanDetailRow(context, "Can Host", user.hostSelection),
-                  _buildBooleanDetailRow(context, "Able to Travel", user.travelSelection),
-                  if (user.professionalVenues != null && user.professionalVenues!.isNotEmpty)
-                    _buildDetailRow(context, "Professional Venues", user.professionalVenues!.join(", ")),
-                  _buildDetailRow(context, "Private Venue", user.otherProfessionalVenue),
-                ],
-
-                if (!isAdamProfile) ...[
+                // Display Appearance, non-Adam Background, and Social Media only if not an Adam profile OR if it's the current user's profile
+                if (!isAdamProfile || isCurrentUserProfile) ...[
+                  if (!isAdamProfile) ...[ // Only show these full sections if profile type is Eve-like
+                     _buildSectionTitle(context, "Appearance"),
+                    _buildDetailRow(context, "Height", user.height),
+                    _buildDetailRow(context, "Body Type", user.bodyType),
+                    _buildSectionTitle(context, "Lifestyle"),
+                    _buildBooleanDetailRow(context, "Drinks Alcohol", user.drinkSelection),
+                    _buildBooleanDetailRow(context, "Smokes", user.smokeSelection),
+                    _buildBooleanDetailRow(context, "Likes Meat", user.meatSelection),
+                    _buildBooleanDetailRow(context, "Likes Greek", user.greekSelection),
+                    _buildBooleanDetailRow(context, "Can Host", user.hostSelection),
+                    _buildBooleanDetailRow(context, "Able to Travel", user.travelSelection),
+                  ],
+                  // Background section that now shows for Eves, or for Adam if it's his own profile
+                  // Nationality and Languages remain conditional on !isAdamProfile OR isCurrentUserProfile
                   _buildSectionTitle(context, "Background"),
-                  _buildDetailRow(context, "Ethnicity", user.ethnicity),
+                  // Ethnicity is now in Personal Info, so it's removed from here.
                   _buildDetailRow(context, "Nationality", user.nationality),
                   _buildDetailRow(context, "Languages", user.languages),
-                ],
-
-                if (!isAdamProfile) ...[
-                  _buildSectionTitle(context, "Social Media"),
-                  _buildDetailRow(context, "Instagram", user.instagram, isLink: true),
-                  _buildDetailRow(context, "Twitter", user.twitter, isLink: true),
+                  
+                  if (!isAdamProfile) ...[ // Social media still Eve-specific for viewing
+                    _buildSectionTitle(context, "Social Media"),
+                    _buildDetailRow(context, "Instagram", user.instagram, isLink: true),
+                    _buildDetailRow(context, "Twitter", user.twitter, isLink: true),
+                  ]
                 ],
                 const SizedBox(height: 20),
               ],

@@ -104,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   "  come inside",
                   style: TextStyle(
                     fontSize: 30,
-                    color: Colors.grey,
+                    color: Colors.blueGrey,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -180,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: const Text(
                         " Register",
                         style: TextStyle(
-                          color: Colors.grey,
+                          color: Colors.blueGrey,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),

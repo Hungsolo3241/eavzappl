@@ -1,19 +1,98 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eavzappl/models/person.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart'; // Unused import removed
 import 'package:get/get.dart';
 import 'dart:async';
+import 'package:eavzappl/models/filter_preferences.dart';
 
 class ProfileController extends GetxController {
   final Rx<List<Person>> usersProfileList = Rx<List<Person>>([]);
   List<Person> get allUsersProfileList => usersProfileList.value;
 
   final Rx<Person?> currentUserProfile = Rx<Person?>(null);
-  Rx<String?> get currentUserOrientation => _currentUserOrientation; // Allow read access if needed
+  Rx<String?> get currentUserOrientation => _currentUserOrientation;
   final Rx<String?> _currentUserOrientation = Rx<String?>(null);
 
   StreamSubscription<User?>? _authStateSubscription;
+
+  // --- Filter Logic Additions ---
+  final Rx<FilterPreferences> activeFilters = Rx<FilterPreferences>(FilterPreferences());
+
+  void updateFilters(FilterPreferences newFilters) {
+    activeFilters.value = newFilters;
+    print("Filters updated in ProfileController. New filters: Age ${newFilters.ageRange}, Ethnicity ${newFilters.ethnicity}, Profession ${newFilters.profession}, Country ${newFilters.country}, Host ${newFilters.wantsHost}, Travel ${newFilters.wantsTravel}");
+    usersProfileList.refresh();
+  }
+
+  List<Person> get filteredUsersProfileList {
+    List<Person> filteredList = allUsersProfileList;
+    final filters = activeFilters.value;
+
+    // Apply Age Filter
+    if (filters.ageRange != null) {
+      filteredList = filteredList.where((person) {
+        if (person.age == null) return false;
+        return person.age! >= filters.ageRange!.start.round() &&
+               person.age! <= filters.ageRange!.end.round();
+      }).toList();
+    }
+
+    // Apply Ethnicity Filter
+    if (filters.ethnicity != null && filters.ethnicity != "Any") {
+      filteredList = filteredList.where((person) =>
+        person.ethnicity?.toLowerCase() == filters.ethnicity!.toLowerCase()
+      ).toList();
+    }
+
+    // Apply Wants Host Filter (Corrected to use person.hostSelection)
+    if (filters.wantsHost != null) {
+      filteredList = filteredList.where((person) =>
+        person.hostSelection == filters.wantsHost
+      ).toList();
+    }
+
+    // Apply Wants Travel Filter (Corrected to use person.travelSelection)
+    if (filters.wantsTravel != null) {
+      filteredList = filteredList.where((person) =>
+        person.travelSelection == filters.wantsTravel
+      ).toList();
+    }
+
+    // Apply Profession Filter
+    if (filters.profession != null && filters.profession != "Any") {
+      filteredList = filteredList.where((person) =>
+        person.profession?.toLowerCase() == filters.profession!.toLowerCase()
+      ).toList();
+    }
+    
+    // Apply Country Filter
+    if (filters.country != null && filters.country != "Any" && filters.country!.isNotEmpty) {
+        filteredList = filteredList.where((person) =>
+        person.country?.toLowerCase() == filters.country!.toLowerCase()
+        ).toList();
+    }
+
+    // Apply Province/State Filter (only if country is also specified)
+    if (filters.country != null && filters.country != "Any" && filters.country!.isNotEmpty &&
+        filters.province != null && filters.province != "Any" && filters.province!.isNotEmpty) {
+        filteredList = filteredList.where((person) =>
+        person.province?.toLowerCase() == filters.province!.toLowerCase()
+        ).toList();
+    }
+
+    // Apply City Filter (only if country and province are also specified)
+    if (filters.country != null && filters.country != "Any" && filters.country!.isNotEmpty &&
+        filters.province != null && filters.province != "Any" && filters.province!.isNotEmpty &&
+        filters.city != null && filters.city != "Any" && filters.city!.isNotEmpty) {
+        filteredList = filteredList.where((person) =>
+        person.city?.toLowerCase() == filters.city!.toLowerCase()
+        ).toList();
+    }
+    print("Filtered list count after applying all filters: ${filteredList.length}");
+    return filteredList;
+  }
+  // --- End of Filter Logic Additions ---
 
   @override
   void onInit() {
@@ -24,22 +103,18 @@ class ProfileController extends GetxController {
         usersProfileList.value = [];
         currentUserProfile.value = null;
         _currentUserOrientation.value = null;
+        activeFilters.value = FilterPreferences(); 
       } else {
         print("ProfileController: User is signed in! UID: ${user.uid}. Initializing/Refreshing profiles.");
-        _initializeAndStreamProfiles(); // Re-initialize when auth state changes to a new user
+        _initializeAndStreamProfiles();
+        activeFilters.value = FilterPreferences(); 
       }
     });
-    // Optional: If a user might already be logged in when controller initializes,
-    // and authStateChanges might not fire immediately for an existing session.
-    // However, authStateChanges usually fires on listen with the current state.
-    // if (FirebaseAuth.instance.currentUser != null) {
-    //   _initializeAndStreamProfiles();
-    // }
   }
 
   @override
   void onClose() {
-    _authStateSubscription?.cancel(); // Cancel subscription when controller is disposed
+    _authStateSubscription?.cancel();
     super.onClose();
   }
 
@@ -50,7 +125,6 @@ class ProfileController extends GetxController {
           .collection("likesReceived")
           .doc(fromUserName).get();
 
-      // remove like from database if it already exists
       if (document.exists) {
         await FirebaseFirestore.instance.collection("users")
             .doc(toUserId)
@@ -61,19 +135,11 @@ class ProfileController extends GetxController {
             .doc(toUserId)
             .collection("likesReceived")
             .doc(fromUserName).set({});
-
-        //   send notification to user
       }
-
-      update();
-
+      update(); 
   }
-  Future<void> _initializeAndStreamProfiles() async {
-    // Clear old data first to avoid showing stale profiles briefly
-    // usersProfileList.value = []; // Handled by authStateChanges listener for logout
-    // currentUserProfile.value = null; // Handled by authStateChanges listener for logout
-    // _currentUserOrientation.value = null; // Handled by authStateChanges listener for logout
 
+  Future<void> _initializeAndStreamProfiles() async {
     String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
     if (currentUserId == null) {
@@ -125,7 +191,6 @@ class ProfileController extends GetxController {
 
       print("ProfileController: User '$currentUserId' orientation (lowercase): ${_currentUserOrientation.value}, fetching $targetOrientation profiles.");
 
-      // bindStream will replace the old stream if called again.
       usersProfileList.bindStream(
         FirebaseFirestore.instance
             .collection("users")

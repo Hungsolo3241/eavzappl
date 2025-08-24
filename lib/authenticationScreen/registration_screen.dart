@@ -183,7 +183,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                     "Create Account",
                     style: TextStyle(
                       fontSize: 30,
-                      color: Colors.grey,
+                      color: Colors.blueGrey,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -215,7 +215,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.photo_library, color: Colors.grey, size: 25),
+                          icon: const Icon(Icons.photo_library, color: Colors.blueGrey, size: 25),
                           onPressed: () {
                             authenticationController.pickImageFromGallery();
                           },
@@ -223,7 +223,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         ),
                         const SizedBox(width: 40), // Increased spacing
                         IconButton(
-                          icon: const Icon(Icons.camera_alt, color: Colors.grey, size: 25),
+                          icon: const Icon(Icons.camera_alt, color: Colors.blueGrey, size: 25),
                           onPressed: () {
                             authenticationController.captureImageFromPhoneCamera();
                           },
@@ -237,7 +237,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                   // Personal Info Title
                   const SizedBox(height: 30),
-                  const Text("Personal Info", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.grey)),
+                  const Text("Personal Info", style: TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
                   const SizedBox(height: 10),
 
                   // email
@@ -627,7 +628,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                               : "Looking For:", // <<< MODIFIED LINE
                           style: TextStyle(fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.grey)
+                              color: Colors.blueGrey)
                       ),
                     ),
                   ),Padding(
@@ -727,7 +728,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                   if (selectedOrientation == 'Eve') ...[
                     // Appearance Title
                     const SizedBox(height: 30),
-                    const Text("Appearance", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.grey)),
+                    const Text("Appearance", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
                     const SizedBox(height: 10),
 
                     const SizedBox(
@@ -822,7 +823,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                     // Lifestyle Title
                     const SizedBox(height: 30),
-                    const Text("Lifestyle", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.grey)),
+                    const Text("Lifestyle", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
                     const SizedBox(height: 10),
 
                     const SizedBox(
@@ -1089,7 +1090,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                     // Background Title
                     const SizedBox(height: 30),
-                    const Text("Background", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.grey)),
+                    const Text("Background", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
                     const SizedBox(height: 10),
 
                     const SizedBox(
@@ -1173,7 +1174,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                     // Social Media Title
                     const SizedBox(height: 30),
-                    const Text("Social Media", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.grey)),
+                    const Text("Social Media", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
                     const SizedBox(height: 10),
 
                     // Instagram
@@ -1477,7 +1478,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           "Login",
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.white,
+                            color: Colors.blueGrey,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

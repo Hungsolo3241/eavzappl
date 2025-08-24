@@ -1,5 +1,6 @@
 // GEMINI_WRITE_TEST
 import 'package:eavzappl/controllers/profile_controller.dart';
+import 'package:eavzappl/models/filter_preferences.dart';
 import 'package:eavzappl/models/person.dart';
 import 'package:eavzappl/tabScreens/user_details_screen.dart'; // Import UserDetailsScreen
 import 'package:flutter/material.dart';
@@ -16,9 +17,12 @@ class _SwipingScreenState extends State<SwipingScreen> {
   final ProfileController profileController = Get.put(ProfileController());
 
   // Placeholder URLs
-  final String evePlaceholderUrl = 'https://firebasestorage.googleapis.com/v0/b/eavzappl-32891.firebasestorage.app/o/placeholder%2Feves_avatar.jpeg?alt=media&token=75b9c3f5-72c1-42db-be5c-471cc0d88c05';
-  final String adamPlaceholderUrl = 'https://firebasestorage.googleapis.com/v0/b/eavzappl-32891.firebasestorage.app/o/placeholder%2Fadam_avatar.jpeg?alt=media&token=997423ec-96a4-42d6-aea8-c8cb80640ca0';
-  final String genericPlaceholderUrl = 'https://via.placeholder.com/400?text=No+Image';
+  final String evePlaceholderUrl =
+      'https://firebasestorage.googleapis.com/v0/b/eavzappl-32891.appspot.com/o/placeholder%2Feves_avatar.jpeg?alt=media&token=75b9c3f5-72c1-42db-be5c-471cc0d88c05';
+  final String adamPlaceholderUrl =
+      'https://firebasestorage.googleapis.com/v0/b/eavzappl-32891.appspot.com/o/placeholder%2Fadam_avatar.jpeg?alt=media&token=997423ec-96a4-42d6-aea8-c8cb80640ca0';
+  final String genericPlaceholderUrl =
+      'https://via.placeholder.com/400?text=No+Image';
 
   String _getImageUrl(Person profile) {
     if (profile.profilePhoto != null && profile.profilePhoto!.isNotEmpty) {
@@ -40,13 +44,43 @@ class _SwipingScreenState extends State<SwipingScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
       margin: const EdgeInsets.only(right: 6.0, bottom: 6.0),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.5),
+        color: Colors.black.withAlpha((255 * 0.6).round()), // Updated withAlpha
         borderRadius: BorderRadius.circular(15.0),
       ),
       child: Text(
         text,
-        style: const TextStyle(color: Colors.white, fontSize: 12.0),
+        style: const TextStyle(color: Colors.blueGrey, fontSize: 12.0),
       ),
+    );
+  }
+
+  void _showFilterModalBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6, // Start at 60% of screen height
+          minChildSize: 0.3,   // Min at 30%
+          maxChildSize: 0.9,   // Max at 90%
+          builder: (_, controller) {
+            return Container(
+              decoration: BoxDecoration( // Keep BoxDecoration for rounded corners
+                color: Colors.black.withOpacity(0.8), // MODIFIED: Semi-transparent black
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20.0),
+                  topRight: Radius.circular(20.0),
+                ),
+              ),
+              child: _FilterSheetContent(
+                profileController: profileController,
+                scrollController: controller,
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -58,24 +92,33 @@ class _SwipingScreenState extends State<SwipingScreen> {
       body: Stack(
         children: [
           Obx(() {
-            if (profileController.allUsersProfileList.isEmpty) {
+            if (profileController.allUsersProfileList.isEmpty &&
+                profileController.filteredUsersProfileList.isEmpty) {
               return const Center(
                 child: Text(
                   "Finding profiles...",
                   style: TextStyle(fontSize: 18, color: Colors.grey),
                 ),
               );
+            } else if (profileController.filteredUsersProfileList.isEmpty) {
+              return const Center(
+                child: Text(
+                  "No profiles match your criteria.",
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
+                ),
+              );
             }
 
             return PageView.builder(
-              itemCount: profileController.allUsersProfileList.length,
+              itemCount: profileController.filteredUsersProfileList.length,
               controller: PageController(
                 initialPage: 0,
                 viewportFraction: 1.0,
               ),
               scrollDirection: Axis.horizontal,
               itemBuilder: (context, index) {
-                final Person eachProfileInfo = profileController.allUsersProfileList[index];
+                final Person eachProfileInfo =
+                    profileController.filteredUsersProfileList[index];
                 final String imageUrl = _getImageUrl(eachProfileInfo);
 
                 return Stack(
@@ -87,7 +130,8 @@ class _SwipingScreenState extends State<SwipingScreen> {
                           image: NetworkImage(imageUrl),
                           fit: BoxFit.cover,
                           onError: (exception, stackTrace) {
-                            print('Error loading image for ${eachProfileInfo.name}: $exception');
+                            print(
+                                'Error loading image for ${eachProfileInfo.name}: $exception');
                           },
                         ),
                       ),
@@ -99,15 +143,15 @@ class _SwipingScreenState extends State<SwipingScreen> {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.1),
-                            Colors.black.withOpacity(0.7),
+                            Colors.black.withAlpha((255 * 0.1).round()), // Updated withAlpha
+                            Colors.black.withAlpha((255 * 0.7).round()), // Updated withAlpha
                           ],
                           stops: const [0.5, 0.7, 1.0],
                         ),
                       ),
                     ),
                     Positioned(
-                      bottom: 20.0, // Adjusted bottom padding to make space for buttons
+                      bottom: 20.0,
                       left: 16.0,
                       right: 16.0,
                       child: Column(
@@ -117,32 +161,42 @@ class _SwipingScreenState extends State<SwipingScreen> {
                           InkWell(
                             onTap: () {
                               if (eachProfileInfo.uid != null) {
-                                Get.to(() => UserDetailsScreen(userID: eachProfileInfo.uid!));
+                                Get.to(() => UserDetailsScreen(
+                                    userID: eachProfileInfo.uid!));
                               } else {
-                                Get.snackbar("Error", "User ID is missing, cannot open details.",
-                                    backgroundColor: Colors.redAccent, colorText: Colors.white);
+                                Get.snackbar(
+                                    "Error", "User ID is missing, cannot open details.",
+                                    backgroundColor: Colors.redAccent,
+                                    colorText: Colors.white);
                               }
                             },
                             child: Text(
                               eachProfileInfo.name ?? 'N/A',
                               style: const TextStyle(
-                                color: Colors.green,
+                                color: Colors.blueGrey,
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
                                 shadows: [
-                                  Shadow(blurRadius: 0.0, color: Colors.black54, offset: Offset(1, 1)),
+                                  Shadow(
+                                      blurRadius: 0.0,
+                                      color: Colors.black87,
+                                      offset: Offset(0, 0)),
                                 ],
                               ),
                             ),
                           ),
                           const SizedBox(height: 4.0),
                           Text(
-                            '${eachProfileInfo.age?.toString() ?? ''}${eachProfileInfo.age != null && eachProfileInfo.city != null && eachProfileInfo.city!.isNotEmpty ? ' • ' : ''}${eachProfileInfo.city ?? ''}'.trim(),
+                            '${eachProfileInfo.age?.toString() ?? ''}${eachProfileInfo.age != null && eachProfileInfo.city != null && eachProfileInfo.city!.isNotEmpty ? ' • ' : ''}${eachProfileInfo.city ?? ''}'
+                                .trim(),
                             style: const TextStyle(
-                              color: Colors.green,
+                              color: Colors.blueGrey,
                               fontSize: 18,
                               shadows: [
-                                Shadow(blurRadius: 1.0, color: Colors.black45, offset: Offset(1, 1)),
+                                Shadow(
+                                    blurRadius: 1.0,
+                                    color: Colors.black87,
+                                    offset: Offset(0, 0)),
                               ],
                             ),
                           ),
@@ -151,7 +205,8 @@ class _SwipingScreenState extends State<SwipingScreen> {
                             spacing: 6.0,
                             runSpacing: 4.0,
                             children: [
-                              if (eachProfileInfo.profession != null && eachProfileInfo.profession!.isNotEmpty)
+                              if (eachProfileInfo.profession != null &&
+                                  eachProfileInfo.profession!.isNotEmpty)
                                 _buildInfoPill(eachProfileInfo.profession!),
                               if (eachProfileInfo.travelSelection == true)
                                 _buildInfoPill("Travels"),
@@ -165,37 +220,40 @@ class _SwipingScreenState extends State<SwipingScreen> {
                                 _buildInfoPill("Smokes"),
                             ],
                           ),
-                          const SizedBox(height: 8.0), // Space before the action buttons
+                          const SizedBox(height: 8.0),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               IconButton(
-                                icon: Image.asset('images/default_fave.png', width: 45, height: 45, color: Colors.black54),
+                                icon: Image.asset('images/default_fave.png',
+                                    width: 45, height: 45, color: Colors.blueGrey),
                                 onPressed: () {
-                                  print('Favorite button tapped for ${eachProfileInfo.name}');
-                                  // TODO: Implement like functionality
+                                  print(
+                                      'Favorite button tapped for ${eachProfileInfo.name}');
                                 },
                                 tooltip: 'Like',
                               ),
                               IconButton(
-                                icon: Image.asset('images/default_message.png', width: 90, height: 90, color: Colors.black54),
+                                icon: Image.asset('images/default_message.png',
+                                    width: 90, height: 90, color: Colors.blueGrey),
                                 onPressed: () {
-                                  print('Message button tapped for ${eachProfileInfo.name}');
-                                  // TODO: Implement message functionality
+                                  print(
+                                      'Message button tapped for ${eachProfileInfo.name}');
                                 },
                                 tooltip: 'Message',
                               ),
                               IconButton(
-                                icon: Image.asset('images/default_like.png', width: 45, height: 45, color: Colors.black54),
+                                icon: Image.asset('images/default_like.png',
+                                    width: 45, height: 45, color: Colors.blueGrey),
                                 onPressed: () {
-                                  print('Like button tapped for ${eachProfileInfo.name}');
-                                  // TODO: Implement favorite functionality
+                                  print(
+                                      'Like button tapped for ${eachProfileInfo.name}');
                                 },
                                 tooltip: 'Favorite',
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16.0), // Space before the action buttons
+                          const SizedBox(height: 16.0),
                         ],
                       ),
                     ),
@@ -209,14 +267,14 @@ class _SwipingScreenState extends State<SwipingScreen> {
             right: 8.0,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withAlpha((255 * 0.3).round()), // Updated withAlpha
                 shape: BoxShape.circle,
               ),
               child: IconButton(
                 icon: const Icon(Icons.filter_list, color: Colors.white),
                 tooltip: 'Filter Profiles',
                 onPressed: () {
-                  print("Filter button tapped!");
+                  _showFilterModalBottomSheet(context);
                 },
               ),
             ),
@@ -227,3 +285,281 @@ class _SwipingScreenState extends State<SwipingScreen> {
   }
 }
 
+class _FilterSheetContent extends StatefulWidget {
+  final ProfileController profileController;
+  final ScrollController scrollController;
+
+  const _FilterSheetContent({
+    required this.profileController,
+    required this.scrollController,
+  });
+
+  @override
+  State<_FilterSheetContent> createState() => _FilterSheetContentState();
+}
+
+class _FilterSheetContentState extends State<_FilterSheetContent> {
+  late RangeValues _currentAgeRange;
+  String? _selectedEthnicity;
+  bool? _wantsHost;
+  bool? _wantsTravel;
+  String? _selectedProfession;
+  String? _selectedCountry;
+  String? _selectedProvince;
+  String? _selectedCity;
+
+  // Define your locations map here. This is a simplified example.
+  // "Any" should be an option if you want to allow not selecting a specific location.
+  final Map<String, Map<String, List<String>>> africanLocations = {
+    "Any": {},
+    "Nigeria": {
+      "Any": [],
+      "Lagos": ["Any", "Ikeja", "Lekki", "Victoria Island"],
+      "Abuja": ["Any", "Central Business District", "Garki", "Wuse"],
+      "Kano": ["Any", "Dala", "Fagge", "Nassarawa"]
+    },
+    "Kenya": {
+      "Any": [],
+      "Nairobi": ["Any", "Westlands", "Kilimani", "CBD"],
+      "Mombasa": ["Any", "Nyali", "Old Town", "Likoni"],
+      "Kisumu": ["Any", "Milimani", "CBD"]
+    },
+    "South Africa": {
+      "Any": [],
+      "Gauteng": ["Any", "Johannesburg", "Pretoria", "Sandton"],
+      "Western Cape": ["Any", "Cape Town", "Stellenbosch", "George"],
+      "KwaZulu-Natal": ["Any", "Durban", "Pietermaritzburg", "Richards Bay"]
+    },
+    // Add more countries, provinces/states, and cities as needed
+  };
+
+  List<String> _countries = [];
+  List<String> _provinces = [];
+  List<String> _cities = [];
+
+  final List<String> _ethnicities = [
+    "Any", "Asian", "Black", "Mixed", "White", "Other"
+  ];
+  final List<String> _professions = [
+    "Any", "Student", "Freelancer", "Professional"
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    final currentFilters = widget.profileController.activeFilters.value;
+    _currentAgeRange = currentFilters.ageRange ?? const RangeValues(18, 65);
+    _selectedEthnicity = currentFilters.ethnicity ?? "Any";
+    _wantsHost = currentFilters.wantsHost;
+    _wantsTravel = currentFilters.wantsTravel;
+    _selectedProfession = currentFilters.profession ?? "Any";
+    _selectedCountry = currentFilters.country ?? "Any";
+
+    _countries = africanLocations.keys.toList();
+
+    if (_selectedCountry != null && _selectedCountry != "Any" && africanLocations.containsKey(_selectedCountry)) {
+      _provinces = africanLocations[_selectedCountry!]!.keys.toList();
+      _selectedProvince = currentFilters.province ?? "Any";
+      if (_selectedProvince != null && _selectedProvince != "Any" && africanLocations[_selectedCountry!]!.containsKey(_selectedProvince)) {
+        _cities = africanLocations[_selectedCountry!]![_selectedProvince!]!;
+         _selectedCity = currentFilters.city ?? "Any";
+         if(!_cities.contains(_selectedCity)){ // Ensure current city is valid for selected province
+            _selectedCity = "Any";
+         }
+      } else {
+        _cities = [];
+        _selectedCity = "Any";
+      }
+    } else {
+      _provinces = [];
+      _cities = [];
+      _selectedProvince = "Any";
+      _selectedCity = "Any";
+    }
+  }
+
+  void _updateProvinces(String? country) {
+    setState(() {
+      _selectedCountry = country;
+      _selectedProvince = "Any";
+      _selectedCity = "Any";
+      if (country != null && country != "Any" && africanLocations.containsKey(country)) {
+        _provinces = africanLocations[country]!.keys.toList();
+      } else {
+        _provinces = [];
+      }
+      _cities = []; // Reset cities when country changes
+    });
+  }
+
+  void _updateCities(String? province) {
+    setState(() {
+      _selectedProvince = province;
+      _selectedCity = "Any";
+      if (_selectedCountry != null && _selectedCountry != "Any" &&
+          province != null && province != "Any" &&
+          africanLocations.containsKey(_selectedCountry) &&
+          africanLocations[_selectedCountry!]!.containsKey(province)) {
+        _cities = africanLocations[_selectedCountry!]![province]!;
+      } else {
+        _cities = [];
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      controller: widget.scrollController,
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Center(
+            child: Text(
+              'Filter Profiles',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Age Range
+          Text('Age Range: ${_currentAgeRange.start.round()} - ${_currentAgeRange.end.round()}', style: const TextStyle(fontSize: 16)),
+          RangeSlider(
+            values: _currentAgeRange,
+            min: 18,
+            max: 100,
+            divisions: 82,
+            labels: RangeLabels(
+              _currentAgeRange.start.round().toString(),
+              _currentAgeRange.end.round().toString(),
+            ),
+            onChanged: (RangeValues values) {
+              setState(() {
+                _currentAgeRange = values;
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Profession
+          _buildDropdown("Profession", _selectedProfession, _professions, (val) {
+            setState(() { _selectedProfession = val; });
+          }),
+          const SizedBox(height: 16),
+
+          // Ethnicity
+          _buildDropdown("Ethnicity", _selectedEthnicity, _ethnicities, (val) {
+            setState(() { _selectedEthnicity = val; });
+          }),
+          const SizedBox(height: 16),
+
+          
+          // Country Dropdown
+          _buildDropdown("Country", _selectedCountry, _countries, _updateProvinces),
+          const SizedBox(height: 16),
+
+          // Province Dropdown
+          if (_selectedCountry != null && _selectedCountry != "Any")
+            _buildDropdown("State/Province", _selectedProvince, _provinces, _updateCities),
+          const SizedBox(height: 16),
+
+          // City Dropdown
+          if (_selectedProvince != null && _selectedProvince != "Any")
+            _buildDropdown("City", _selectedCity, _cities, (val) {
+              setState(() { _selectedCity = val; });
+            }),
+          const SizedBox(height: 16),
+
+
+          // Wants Host
+          SwitchListTile(
+            title: const Text('Wants to Host', style: TextStyle(fontSize: 16)),
+            value: _wantsHost ?? false, // Default to false if null
+            onChanged: (bool value) {
+              setState(() {
+                _wantsHost = value;
+              });
+            },
+            secondary: Icon(_wantsHost == true ? Icons.night_shelter : Icons.night_shelter_outlined),
+          ),
+
+          // Wants Travel
+          SwitchListTile(
+            title: const Text('Wants to Travel', style: TextStyle(fontSize: 16)),
+            value: _wantsTravel ?? false, // Default to false if null
+            onChanged: (bool value) {
+              setState(() {
+                _wantsTravel = value;
+              });
+            },
+            secondary: Icon(_wantsTravel == true ? Icons.flight_takeoff : Icons.flight_land),
+          ),
+          const SizedBox(height: 24),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _currentAgeRange = const RangeValues(18, 65);
+                    _selectedEthnicity = "Any";
+                    _wantsHost = null; // Cleared to null (no preference)
+                    _wantsTravel = null; // Cleared to null (no preference)
+                    _selectedProfession = "Any";
+                    _selectedCountry = "Any";
+                    _selectedProvince = "Any";
+                    _selectedCity = "Any";
+                    _provinces = [];
+                    _cities = [];
+                  });
+                  widget.profileController.updateFilters(FilterPreferences()); // Apply default filters
+                  // No need to pop here, let user see cleared state or apply again
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[300]),
+                child: const Text('Clear Filters', style: TextStyle(color: Colors.black87)),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final newFilters = FilterPreferences(
+                    ageRange: _currentAgeRange,
+                    ethnicity: _selectedEthnicity == "Any" ? null : _selectedEthnicity,
+                    wantsHost: _wantsHost,
+                    wantsTravel: _wantsTravel,
+                    profession: _selectedProfession == "Any" ? null : _selectedProfession,
+                    country: _selectedCountry == "Any" ? null : _selectedCountry,
+                    province: _selectedProvince == "Any" ? null : _selectedProvince,
+                    city: _selectedCity == "Any" ? null : _selectedCity,
+                  );
+                  widget.profileController.updateFilters(newFilters);
+                  Navigator.pop(context); // Close the modal sheet
+                },
+                child: const Text('Apply Filters'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDropdown(String label, String? currentValue, List<String> items, ValueChanged<String?> onChanged) {
+    return DropdownButtonFormField<String>(
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      ),
+      value: items.contains(currentValue) ? currentValue : (items.isNotEmpty ? items.first : null), // Ensure value is valid
+      isExpanded: true,
+      items: items.map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+      onChanged: onChanged,
+    );
+  }
+}
