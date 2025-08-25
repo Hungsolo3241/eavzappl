@@ -54,9 +54,9 @@ class _LikeSentLikeReceivedScreenState extends State<LikeSentLikeReceivedScreen>
 
                   },
                   child: Text(
-                    "Like Sent",
+                    "Liked",
                     style: TextStyle(
-                      color: isLikeSent ? Colors.green : Colors.grey,
+                      color: isLikeSent ? Colors.blueGrey : Colors.green,
                       fontWeight: isLikeSent ? FontWeight.bold : FontWeight.normal,
                       fontSize: 20,
                     ),
@@ -66,7 +66,7 @@ class _LikeSentLikeReceivedScreenState extends State<LikeSentLikeReceivedScreen>
               const Text(
                 '  |  ',
                 style: TextStyle(
-                  color: Colors.grey,
+                  color: Colors.blueGrey,
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
                 ),
@@ -78,9 +78,9 @@ class _LikeSentLikeReceivedScreenState extends State<LikeSentLikeReceivedScreen>
 
                   },
                   child: Text(
-                    "Liked By:",
+                    "Likes",
                     style: TextStyle(
-                      color: isLikeSent ? Colors.green : Colors.grey,
+                      color: isLikeSent ? Colors.blueGrey : Colors.green ,
                       fontWeight: isLikeSent ? FontWeight.bold : FontWeight.normal,
                       fontSize: 20,
                     ),
@@ -95,7 +95,7 @@ class _LikeSentLikeReceivedScreenState extends State<LikeSentLikeReceivedScreen>
           child: Text(
             "Like Sent Like Received",
             style: TextStyle(
-              color: Colors.green,
+              color: Colors.blueGrey,
               fontSize: 30,
               fontWeight: FontWeight.bold,
             ),

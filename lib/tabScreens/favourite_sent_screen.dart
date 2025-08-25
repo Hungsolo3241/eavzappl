@@ -15,7 +15,7 @@ class _FavouriteSentScreenState extends State<FavouriteSentScreen> {
           child: Text(
             "Favourite Sent",
             style: TextStyle(
-              color: Colors.green,
+              color: Colors.blueGrey,
               fontSize: 30,
               fontWeight: FontWeight.bold,
             ),

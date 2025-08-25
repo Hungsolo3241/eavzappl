@@ -47,6 +47,7 @@ dependencies:
   flutter_image_slider:
   image_cropper:
   path:
+  firebase_app_check:
 
 dev_dependencies:
   flutter_test:

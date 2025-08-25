@@ -4,7 +4,7 @@ import '../tabScreens/favourite_sent_screen.dart';
 import '../tabScreens/like_sent_like_received_screen.dart';
 import '../tabScreens/swiping_screen.dart';
 import '../tabScreens/user_details_screen.dart';
-import '../tabScreens/view_received_screen.dart';
+import '../tabScreens/view_received.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

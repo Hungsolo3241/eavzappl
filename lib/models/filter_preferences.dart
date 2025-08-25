@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class FilterPreferences {
   RangeValues? ageRange;
+  String? gender;
   String? ethnicity; // "Any" will be represented by null or a specific string
   bool? wantsHost;    // true for "Yes", false for "No", null for "Any"
   bool? wantsTravel;  // true for "Yes", false for "No", null for "Any"
@@ -12,6 +13,7 @@ class FilterPreferences {
 
   FilterPreferences({
     this.ageRange,
+    this.gender,
     this.ethnicity = "Any", // Default to "Any"
     this.wantsHost,
     this.wantsTravel,
@@ -25,6 +27,7 @@ class FilterPreferences {
   bool isDefault() {
     return ageRange == null &&
         (ethnicity == null || ethnicity == "Any") &&
+        (gender == null || gender == "Any") &&
         wantsHost == null &&
         wantsTravel == null &&
         (profession == null || profession == "Any") &&
@@ -37,6 +40,7 @@ class FilterPreferences {
   FilterPreferences copyWith({
     RangeValues? ageRange,
     String? ethnicity,
+    String? gender,
     bool? wantsHost,
     bool? wantsTravel,
     String? profession,
@@ -45,6 +49,7 @@ class FilterPreferences {
     String? city,
     bool clearAgeRange = false,
     bool clearEthnicity = false,
+    bool clearGender = false,
     bool clearWantsHost = false,
     bool clearWantsTravel = false,
     bool clearProfession = false,
@@ -55,6 +60,7 @@ class FilterPreferences {
     return FilterPreferences(
       ageRange: clearAgeRange ? null : ageRange ?? this.ageRange,
       ethnicity: clearEthnicity ? "Any" : ethnicity ?? this.ethnicity,
+      gender: clearGender ? "Any" : gender ?? this.gender,
       wantsHost: clearWantsHost ? null : wantsHost ?? this.wantsHost,
       wantsTravel: clearWantsTravel ? null : wantsTravel ?? this.wantsTravel,
       profession: clearProfession ? "Any" : profession ?? this.profession,

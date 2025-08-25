@@ -1,42 +1,39 @@
-import 'dart:io'; // Keep for Platform.isAndroid
-
 import 'package:eavzappl/authenticationScreen/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core/firebase_core.dart'; // Ensure this is imported
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:eavzappl/controllers/authentication_controller.dart';
 import 'package:eavzappl/controllers/profile_controller.dart';
 import 'homeScreen/home_screen.dart';
 
+// Import App Check
+import 'package:firebase_app_check/firebase_app_check.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Define the FirebaseOptions for Android if needed
-  const FirebaseOptions androidOptions = FirebaseOptions(
-      apiKey: "AIzaSyBz0limZkm4u8KRp-qCnKLX8l1N7HvVeBQ",
-      authDomain: "eavzappl-32891.firebaseapp.com",
-      projectId: "eavzappl-32891",
-      storageBucket: "eavzappl-32891.firebasestorage.app",
-      messagingSenderId: "884472216905",
-      appId: "1:884472216905:web:21026ec4ef01278436ae98",
-      measurementId: "G-FP2ZLTCB9N"
-  );
+  // Simplest Firebase Initialization.
+  // This relies on your project's `google-services.json` (for Android)
+  // or `GoogleService-Info.plist` (for iOS) being correctly set up
+  // and providing all necessary Firebase options.
+  // The Firebase SDK should handle cases where native initialization already occurred.
+  await Firebase.initializeApp();
 
-  // Initialize Firebase ONCE.
-  // Pass options directly if on Android, otherwise use default initialization
-  // (which relies on google-services.json for Android if no options passed,
-  // or GoogleService-Info.plist for iOS, or firebase_options.dart).
-  if (Platform.isAndroid) {
-    await Firebase.initializeApp(options: androidOptions);
-  } else {
-    // For iOS and other platforms, initialize without explicit options.
-    // This assumes you have GoogleService-Info.plist set up for iOS,
-    // or are using `firebase_options.dart` from `flutterfire configure`.
-    await Firebase.initializeApp();
+  // Activate Firebase App Check AFTER Firebase.initializeApp()
+  try {
+    await FirebaseAppCheck.instance.activate(
+      androidProvider: AndroidProvider.playIntegrity,
+      // appleProvider: AppleProvider.appAttest, // For iOS, if you implement it
+    );
+    print('Firebase App Check activated successfully.');
+  } catch (e) {
+    print('Error activating Firebase App Check: $e');
+    // It's crucial to handle App Check activation failure in a real app.
+    // For now, this just prints the error.
   }
 
-  // Initialize your GetX controllers after Firebase is successfully initialized.
+  // Initialize your GetX controllers AFTER Firebase and App Check are ready.
   Get.put(AuthenticationController());
   Get.put(ProfileController());
 

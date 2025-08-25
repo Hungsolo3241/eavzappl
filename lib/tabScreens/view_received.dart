@@ -15,7 +15,7 @@ class _ViewReceivedScreenState extends State<ViewReceivedScreen> {
           child: Text(
             "View Sent View Received",
             style: TextStyle(
-              color: Colors.green,
+              color: Colors.blueGrey,
               fontSize: 30,
               fontWeight: FontWeight.bold,
             ),

@@ -301,6 +301,7 @@ class _FilterSheetContent extends StatefulWidget {
 class _FilterSheetContentState extends State<_FilterSheetContent> {
   late RangeValues _currentAgeRange;
   String? _selectedEthnicity;
+  String? _selectedGender; // New state variable for Gender
   bool? _wantsHost;
   bool? _wantsTravel;
   String? _selectedProfession;
@@ -308,8 +309,6 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
   String? _selectedProvince;
   String? _selectedCity;
 
-  // Define your locations map here. This is a simplified example.
-  // "Any" should be an option if you want to allow not selecting a specific location.
   final Map<String, Map<String, List<String>>> africanLocations = {
     "Any": {},
     "Nigeria": {
@@ -320,7 +319,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
     },
     "Kenya": {
       "Any": [],
-      "Nairobi": ["Any", "Westlands", "Kilimani", "CBD"],
+      "Nairobi": ["Any", "Westlands", "Kilimani", "Nairobi CBD"],
       "Mombasa": ["Any", "Nyali", "Old Town", "Likoni"],
       "Kisumu": ["Any", "Milimani", "CBD"]
     },
@@ -330,7 +329,6 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
       "Western Cape": ["Any", "Cape Town", "Stellenbosch", "George"],
       "KwaZulu-Natal": ["Any", "Durban", "Pietermaritzburg", "Richards Bay"]
     },
-    // Add more countries, provinces/states, and cities as needed
   };
 
   List<String> _countries = [];
@@ -343,6 +341,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
   final List<String> _professions = [
     "Any", "Student", "Freelancer", "Professional"
   ];
+  final List<String> _genders = ["Any", "Male", "Female"]; // Gender options with "Any"
 
   @override
   void initState() {
@@ -350,6 +349,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
     final currentFilters = widget.profileController.activeFilters.value;
     _currentAgeRange = currentFilters.ageRange ?? const RangeValues(18, 65);
     _selectedEthnicity = currentFilters.ethnicity ?? "Any";
+    _selectedGender = currentFilters.gender ?? "Any"; // Initialize gender, default to "Any"
     _wantsHost = currentFilters.wantsHost;
     _wantsTravel = currentFilters.wantsTravel;
     _selectedProfession = currentFilters.profession ?? "Any";
@@ -363,7 +363,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
       if (_selectedProvince != null && _selectedProvince != "Any" && africanLocations[_selectedCountry!]!.containsKey(_selectedProvince)) {
         _cities = africanLocations[_selectedCountry!]![_selectedProvince!]!;
          _selectedCity = currentFilters.city ?? "Any";
-         if(!_cities.contains(_selectedCity)){ // Ensure current city is valid for selected province
+         if(!_cities.contains(_selectedCity)){ 
             _selectedCity = "Any";
          }
       } else {
@@ -388,7 +388,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
       } else {
         _provinces = [];
       }
-      _cities = []; // Reset cities when country changes
+      _cities = []; 
     });
   }
 
@@ -423,7 +423,6 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
           ),
           const SizedBox(height: 20),
 
-          // Age Range
           Text('Age Range: ${_currentAgeRange.start.round()} - ${_currentAgeRange.end.round()}', style: const TextStyle(fontSize: 16)),
           RangeSlider(
             values: _currentAgeRange,
@@ -442,40 +441,38 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
           ),
           const SizedBox(height: 16),
 
-          // Profession
+          // Gender Dropdown
+          _buildDropdown("Gender", _selectedGender, _genders, (val) {
+            setState(() { _selectedGender = val; });
+          }),
+          const SizedBox(height: 16),
+
           _buildDropdown("Profession", _selectedProfession, _professions, (val) {
             setState(() { _selectedProfession = val; });
           }),
           const SizedBox(height: 16),
 
-          // Ethnicity
           _buildDropdown("Ethnicity", _selectedEthnicity, _ethnicities, (val) {
             setState(() { _selectedEthnicity = val; });
           }),
           const SizedBox(height: 16),
-
           
-          // Country Dropdown
           _buildDropdown("Country", _selectedCountry, _countries, _updateProvinces),
           const SizedBox(height: 16),
 
-          // Province Dropdown
           if (_selectedCountry != null && _selectedCountry != "Any")
             _buildDropdown("State/Province", _selectedProvince, _provinces, _updateCities),
           const SizedBox(height: 16),
 
-          // City Dropdown
           if (_selectedProvince != null && _selectedProvince != "Any")
             _buildDropdown("City", _selectedCity, _cities, (val) {
               setState(() { _selectedCity = val; });
             }),
           const SizedBox(height: 16),
 
-
-          // Wants Host
           SwitchListTile(
             title: const Text('Wants to Host', style: TextStyle(fontSize: 16)),
-            value: _wantsHost ?? false, // Default to false if null
+            value: _wantsHost ?? false, 
             onChanged: (bool value) {
               setState(() {
                 _wantsHost = value;
@@ -484,10 +481,9 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
             secondary: Icon(_wantsHost == true ? Icons.night_shelter : Icons.night_shelter_outlined),
           ),
 
-          // Wants Travel
           SwitchListTile(
             title: const Text('Wants to Travel', style: TextStyle(fontSize: 16)),
-            value: _wantsTravel ?? false, // Default to false if null
+            value: _wantsTravel ?? false, 
             onChanged: (bool value) {
               setState(() {
                 _wantsTravel = value;
@@ -505,8 +501,9 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                   setState(() {
                     _currentAgeRange = const RangeValues(18, 65);
                     _selectedEthnicity = "Any";
-                    _wantsHost = null; // Cleared to null (no preference)
-                    _wantsTravel = null; // Cleared to null (no preference)
+                    _selectedGender = "Any"; // Clear gender to "Any"
+                    _wantsHost = null; 
+                    _wantsTravel = null; 
                     _selectedProfession = "Any";
                     _selectedCountry = "Any";
                     _selectedProvince = "Any";
@@ -514,8 +511,14 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                     _provinces = [];
                     _cities = [];
                   });
-                  widget.profileController.updateFilters(FilterPreferences()); // Apply default filters
-                  // No need to pop here, let user see cleared state or apply again
+                  widget.profileController.updateFilters(FilterPreferences(
+                    // Make sure FilterPreferences() default constructor also defaults gender to null
+                    // or that it correctly handles ethnicity: "Any", gender: "Any", profession: "Any" being passed
+                    // and converting them to null if necessary for the model.
+                    // For now, assuming updateFilters will handle this.
+                    // If your FilterPreferences model directly stores "Any", then this is fine.
+                    // If it expects null for "Any", you might need to adjust here or in the constructor.
+                  )); 
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[300]),
                 child: const Text('Clear Filters', style: TextStyle(color: Colors.black87)),
@@ -525,6 +528,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                   final newFilters = FilterPreferences(
                     ageRange: _currentAgeRange,
                     ethnicity: _selectedEthnicity == "Any" ? null : _selectedEthnicity,
+                    gender: _selectedGender == "Any" ? null : _selectedGender, // Apply selected gender, null if "Any"
                     wantsHost: _wantsHost,
                     wantsTravel: _wantsTravel,
                     profession: _selectedProfession == "Any" ? null : _selectedProfession,
@@ -533,7 +537,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                     city: _selectedCity == "Any" ? null : _selectedCity,
                   );
                   widget.profileController.updateFilters(newFilters);
-                  Navigator.pop(context); // Close the modal sheet
+                  Navigator.pop(context); 
                 },
                 child: const Text('Apply Filters'),
               ),
@@ -551,7 +555,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
       ),
-      value: items.contains(currentValue) ? currentValue : (items.isNotEmpty ? items.first : null), // Ensure value is valid
+      value: items.contains(currentValue) ? currentValue : (items.isNotEmpty ? items.first : null), 
       isExpanded: true,
       items: items.map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(
