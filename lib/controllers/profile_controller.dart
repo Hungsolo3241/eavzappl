@@ -38,6 +38,14 @@ class ProfileController extends GetxController {
       }).toList();
     }
 
+    // Apply Gender Filter
+    if (filters.gender != null && filters.gender != "Any" && filters.gender!.isNotEmpty) { // Assuming "Any" or empty means no gender filter
+      filteredList = filteredList.where((person) {
+        if (person.gender == null) return false; // Or handle as per your logic
+        return person.gender!.toLowerCase() == filters.gender!.toLowerCase();
+      }).toList();
+    }
+
     // Apply Ethnicity Filter
     if (filters.ethnicity != null && filters.ethnicity != "Any") {
       filteredList = filteredList.where((person) =>
@@ -65,7 +73,7 @@ class ProfileController extends GetxController {
         person.profession?.toLowerCase() == filters.profession!.toLowerCase()
       ).toList();
     }
-    
+
     // Apply Country Filter
     if (filters.country != null && filters.country != "Any" && filters.country!.isNotEmpty) {
         filteredList = filteredList.where((person) =>
@@ -103,11 +111,11 @@ class ProfileController extends GetxController {
         usersProfileList.value = [];
         currentUserProfile.value = null;
         _currentUserOrientation.value = null;
-        activeFilters.value = FilterPreferences(); 
+        activeFilters.value = FilterPreferences();
       } else {
         print("ProfileController: User is signed in! UID: ${user.uid}. Initializing/Refreshing profiles.");
         _initializeAndStreamProfiles();
-        activeFilters.value = FilterPreferences(); 
+        activeFilters.value = FilterPreferences();
       }
     });
   }
@@ -136,7 +144,7 @@ class ProfileController extends GetxController {
             .collection("likesReceived")
             .doc(fromUserName).set({});
       }
-      update(); 
+      update();
   }
 
   Future<void> _initializeAndStreamProfiles() async {

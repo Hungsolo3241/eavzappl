@@ -13,7 +13,7 @@ class _ViewReceivedScreenState extends State<ViewReceivedScreen> {
     return const Scaffold(
         body: Center(
           child: Text(
-            "View Sent View Received",
+            "View Received",
             style: TextStyle(
               color: Colors.blueGrey,
               fontSize: 30,
