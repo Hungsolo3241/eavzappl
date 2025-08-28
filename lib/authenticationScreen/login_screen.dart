@@ -50,9 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (loginSuccess) {
         // Login was successful
         // Ensure splash is visible, wait for 5 seconds
-        print("Login successful, starting 5-second delay..."); // For debugging
         await Future.delayed(const Duration(seconds: 8));
-        print("5-second delay finished."); // For debugging
 
         // Check if the widget is still mounted before navigating
         if (mounted) {
@@ -66,7 +64,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     } catch (error) {
       // Catch unexpected errors during the login process
-      print("LOGIN SCREEN CAUGHT ERROR: $error"); // For debugging
       if (mounted) {
         Get.snackbar("Login Error", "An unexpected error occurred. Please try again.",
             backgroundColor: Colors.redAccent, colorText: Colors.white);
@@ -77,7 +74,6 @@ class _LoginScreenState extends State<LoginScreen> {
       // If login was successful, we would have navigated and returned, so this setState might not even run,
       // or if it does, it's on a screen that's about to be disposed.
       if (!loginSuccess && mounted) {
-        print("Login failed or error occurred, hiding splash screen."); // For debugging
         setState(() {
           isLoading = false;
         });
@@ -87,6 +83,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final mqLogin = MediaQuery.of(context);
+
+    if (isLoading) {
+      // If loading, return SplashScreen directly.
+      // It will use the MediaQuery context provided by its parent (LoginScreen, which gets its from main.dart)
+      return const SplashScreen(); // SplashScreen is already a Scaffold
+    }
     return Scaffold(
       body: Stack(
         children: [

@@ -77,7 +77,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   final String evePlaceholderUrl = 'https://firebasestorage.googleapis.com/v0/b/eavzappl-32891.firebasestorage.app/o/placeholder%2Feves_avatar.jpeg?alt=media&token=75b9c3f5-72c1-42db-be5c-471cc0d88c05';
   final String adamPlaceholderUrl = 'https://firebasestorage.googleapis.com/v0/b/eavzappl-32891.firebasestorage.app/o/placeholder%2Fadam_avatar.jpeg?alt=media&token=997423ec-96a4-42d6-aea8-c8cb80640ca0';
-  final String genericPlaceholderUrl = 'https://via.placeholder.com/150?text=Slot';
+  // UPDATED genericPlaceholderUrl to use your Firebase Storage image:
+  final String genericPlaceholderUrl = 'https://firebasestorage.googleapis.com/v0/b/eavzappl-32891.firebasestorage.app/o/placeholder%2Fplaceholder_avatar.png?alt=media&token=98256561-2bac-4595-8e54-58a5c486a427';
 
   @override
   void initState() {
@@ -123,9 +124,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _ageController.text = _currentUserData?.age?.toString() ?? '';
           _phoneController.text = _currentUserData?.phoneNumber ?? '';
 
-          print("Attempting to load profilePhoto from Firestore data: \${data['profilePhoto']}");
+
           _currentMainProfileImageUrl = data['profilePhoto'] as String?;
-          print("Loaded _currentMainProfileImageUrl: \$_currentMainProfileImageUrl");
 
           _selectedCountry = _currentUserData?.country;
           if (_selectedCountry != null && africanLocations.containsKey(_selectedCountry)) {
@@ -177,14 +177,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           }
 
           for (int i = 0; i < 5; i++) {
-            _imageUrls[i] = data['urlImage\${i + 1}'] as String?;
+            _imageUrls[i] = data['urlImage${i + 1}'] as String?;
           }
         } else {
           Get.snackbar("Error", "Could not load user profile. Document does not exist or has no data.", colorText: Colors.white, backgroundColor: Colors.red);
         }
       } catch (e) {
-        print("Error loading profile: $e");
-        Get.snackbar("Error", "Failed to load profile data: \${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
+
+        Get.snackbar("Error", "Failed to load profile data: ${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
       }
     } else {
       Get.snackbar("Error", "No user logged in.", colorText: Colors.white, backgroundColor: Colors.red);
@@ -195,7 +195,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String _getPlaceholderUrlForSlot(int index) {
     if (_currentUserData?.orientation?.toLowerCase() == 'eve') return evePlaceholderUrl;
     if (_currentUserData?.orientation?.toLowerCase() == 'adam') return adamPlaceholderUrl;
-    return '\${genericPlaceholderUrl}&index=\${index + 1}';
+    return '${genericPlaceholderUrl}&index=${index + 1}';
   }
 
   Future<void> _pickMainProfileImage() async {
@@ -207,7 +207,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         });
       }
     } catch (e) {
-      Get.snackbar("Image Error", "Failed to pick main profile image: \${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar("Image Error", "Failed to pick main profile image: ${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
     }
   }
 
@@ -230,7 +230,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
       }
     } catch (e) {
-      Get.snackbar("Image Error", "Failed to pick or crop image: \${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar("Image Error", "Failed to pick or crop image: ${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
     }
   }
 
@@ -245,16 +245,55 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     },);
   }
 
+
+
   Widget _buildGalleryImageSlot(int index) {
     Widget imageWidget;
+
     if (_pickedImages[index] != null) {
+
       imageWidget = Image.file(_pickedImages[index]!, width: 120, height: 120, fit: BoxFit.cover);
     } else if (_imageUrls[index] != null && _imageUrls[index]!.isNotEmpty) {
-      imageWidget = Image.network(_imageUrls[index]!, width: 120, height: 120, fit: BoxFit.cover,
-          errorBuilder: (c, e, s) => Image.network(_getPlaceholderUrlForSlot(index), width:120, height:120, fit:BoxFit.cover));
+
+      imageWidget = Image.network(
+        _imageUrls[index]!,
+        width: 120, height: 120, fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Center(child: CircularProgressIndicator(value: loadingProgress.expectedTotalBytes != null ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes! : null));
+        },
+        errorBuilder: (context, error, stackTrace) {
+          String placeholderUrl = _getPlaceholderUrlForSlot(index);
+
+          return Image.network(
+            placeholderUrl,
+            width: 120, height: 120, fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Center(child: CircularProgressIndicator(value: loadingProgress.expectedTotalBytes != null ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes! : null));
+            },
+            errorBuilder: (context, error, stackTrace) {
+
+              return Container(width: 120, height: 120, color: Colors.grey[200], child: Icon(Icons.broken_image, color: Colors.grey[400]));
+            },
+          );
+        },
+      );
     } else {
-      imageWidget = Image.network(_getPlaceholderUrlForSlot(index), width: 120, height: 120, fit: BoxFit.cover,
-          errorBuilder: (c, e, s) => Container(width: 120, height: 120, color: Colors.grey[200], child: Icon(Icons.broken_image, color: Colors.grey[400])));
+      // This is the path for default placeholders if _imageUrls[index] is null or empty
+      String placeholderUrl = _getPlaceholderUrlForSlot(index);
+
+      imageWidget = Image.network(
+          placeholderUrl,
+          width: 120, height: 120, fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(child: CircularProgressIndicator(value: loadingProgress.expectedTotalBytes != null ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes! : null));
+          },
+          errorBuilder: (c, e, s) {
+            
+            return Container(width: 120, height: 120, color: Colors.grey[200], child: Icon(Icons.broken_image, color: Colors.grey[400]));
+          });
     }
     return Column(children: [
       Container(width: 120, height: 120, margin: const EdgeInsets.all(4.0),
@@ -265,29 +304,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     ],);
   }
 
-  Future<String?> _uploadGalleryFileToFirebaseStorage(File file, String userId, int slotIndex) async {
-    try {
-      String fileName = 'gallery_image_\${slotIndex}_\${DateTime.now().millisecondsSinceEpoch}\${path.extension(file.path)}';
-      Reference ref = FirebaseStorage.instance.ref().child('gallery_images/$userId/$fileName');
-      TaskSnapshot task = await ref.putFile(file);
-      return await task.ref.getDownloadURL();
-    } catch (e) {
-      Get.snackbar("Upload Error", "Failed to upload gallery image $slotIndex: \${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
-      return null;
-    }
-  }
+
 
   Future<String?> _uploadMainProfileFileToFirebaseStorage(File file, String userId) async {
     try {
-      String fileName = 'main_profile_pic_\${DateTime.now().millisecondsSinceEpoch}\${path.extension(file.path)}';
+      String fileName = 'main_profile_pic_${DateTime.now().millisecondsSinceEpoch}${path.extension(file.path)}';
       Reference ref = FirebaseStorage.instance.ref().child('main_profile_pictures/$userId/$fileName');
       TaskSnapshot task = await ref.putFile(file);
       return await task.ref.getDownloadURL();
     } catch (e) {
-      Get.snackbar("Upload Error", "Failed to upload main profile picture: \${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar("Upload Error", "Failed to upload main profile picture: ${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
       return null;
     }
   }
+
+
+  Future<String?> _uploadGalleryFileToFirebaseStorage(File file, String userId, int slotIndex) async {
+    try {
+      String fileName = 'gallery_image_${slotIndex}_${DateTime.now().millisecondsSinceEpoch}${path.extension(file.path)}';
+      Reference ref = FirebaseStorage.instance.ref().child('gallery_images/$userId/$fileName');
+      TaskSnapshot task = await ref.putFile(file);
+      return await task.ref.getDownloadURL();
+    } catch (e) {
+      Get.snackbar("Upload Error", "Failed to upload gallery image $slotIndex: ${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
+      return null;
+    }
+  }
+
 
   Future<void> _saveProfileChanges() async {
     if (!_formKey.currentState!.validate()) {
@@ -325,7 +368,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (_mainProfessionCategory == "Student" || _mainProfessionCategory == "Freelancer") {
         professionToSave = _mainProfessionCategory ?? "";
       } else if (_mainProfessionCategory == "Professional") {
-        professionToSave = _professionController.text.trim();
+        professionToSave = _professionController.text.trim(); // This line stores the specific profession
       }
       if(_mainProfessionCategory == "Professional") {
         _selectedProfessionalVenues.forEach((venueName, isSelected) { if (isSelected) updatedProfessionalVenues.add(venueName); });
@@ -377,7 +420,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       Get.snackbar("Success", "Profile updated successfully!", colorText: Colors.white, backgroundColor: Colors.green);
       Get.back(result: true);
     } catch (e) {
-      Get.snackbar("Save Error", "Failed to update profile: \${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar("Save Error", "Failed to update profile: ${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
     } finally {
       setState(() { _isLoading = false; });
     }
@@ -431,7 +474,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print("Building EditProfileScreen. _currentMainProfileImageUrl: \$_currentMainProfileImageUrl");
+    print("Building EditProfileScreen. _currentMainProfileImageUrl: $_currentMainProfileImageUrl");
     final bool isEveOrientation = _currentUserData?.orientation?.toLowerCase() == 'eve';
 
     return Scaffold(
@@ -519,7 +562,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 onChanged: (newValue) { setState(() { _selectedCity = newValue; }); },
                 validator: (value) => _selectedProvince != null && value == null ? 'Please select a city' : null,
               ),
-              
+
               _buildDropdownFormField<String>( // Ethnicity Dropdown
                 label: "Ethnicity", icon: Icons.diversity_3, value: _selectedEthnicity,
                 items: _ethnicityOptions.map((ethnicity) => DropdownMenuItem(value: ethnicity, child: Text(ethnicity, style: TextStyle(color: Colors.white70)))).toList(),

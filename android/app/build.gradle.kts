@@ -1,3 +1,4 @@
+val kotlin_version = "1.9.22" // Or your desired Kotlin version
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -5,6 +6,13 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
 }
+
+dependencies {
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version")
+    implementation("com.google.android.material:material:1.10.0")
+    // Add other dependencies here
+}
+
 
 android {
     namespace = "com.blerdguild.eavzappl"

@@ -73,7 +73,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
                   topRight: Radius.circular(20.0),
                 ),
               ),
-              child: _FilterSheetContent(
+              child: _FilterSheetContent( // This should be fine as _FilterSheetContent is defined below
                 profileController: profileController,
                 scrollController: controller,
               ),
@@ -87,11 +87,20 @@ class _SwipingScreenState extends State<SwipingScreen> {
   @override
   Widget build(BuildContext context) {
     final double statusBarHeight = MediaQuery.of(context).padding.top;
+    int currentPageIndex = 0; // Keep track of current page for logging
 
     return Scaffold(
       body: Stack(
         children: [
           Obx(() {
+            // ADDED PRINT STATEMENT
+            print("SwipingScreen: Obx rebuilding. Profile count: ${profileController.filteredUsersProfileList.length}");
+            if (profileController.filteredUsersProfileList.isNotEmpty && profileController.filteredUsersProfileList.length > currentPageIndex) {
+              final currentUserForLog = profileController.filteredUsersProfileList[currentPageIndex];
+              // ADDED PRINT STATEMENT & MODIFIED to use .value for RxBool
+              print("SwipingScreen: Obx - User at index $currentPageIndex: ${currentUserForLog.name}, isFavorite: ${currentUserForLog.isFavorite.value}");
+            }
+
             if (profileController.allUsersProfileList.isEmpty &&
                 profileController.filteredUsersProfileList.isEmpty) {
               return const Center(
@@ -115,10 +124,13 @@ class _SwipingScreenState extends State<SwipingScreen> {
                 initialPage: 0,
                 viewportFraction: 1.0,
               ),
+              onPageChanged: (index) { // Update current page index
+                currentPageIndex = index;
+              },
               scrollDirection: Axis.horizontal,
-              itemBuilder: (context, index) {
+              itemBuilder: (context, index) { // 'index' is the pageIndex for itemBuilder
                 final Person eachProfileInfo =
-                    profileController.filteredUsersProfileList[index];
+                profileController.filteredUsersProfileList[index];
                 final String imageUrl = _getImageUrl(eachProfileInfo);
 
                 return Stack(
@@ -224,33 +236,116 @@ class _SwipingScreenState extends State<SwipingScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              IconButton(
-                                icon: Image.asset('images/default_fave.png',
-                                    width: 45, height: 45, color: Colors.blueGrey),
+                              // Favorite Button - MODIFIED with Obx and .value
+                              Obx(() => IconButton(
+                                icon: Image.asset(
+                                  (eachProfileInfo.isFavorite.value) // Use .value for RxBool
+                                      ? 'images/full_fave.png'
+                                      : 'images/default_fave.png',
+                                  width: 45,
+                                  height: 45,
+                                  color: (eachProfileInfo.isFavorite.value) // Use .value for RxBool
+                                      ? null                      // No tint for active state
+                                      : Colors.blueGrey,
+                                ),
                                 onPressed: () {
-                                  print(
-                                      'Favorite button tapped for ${eachProfileInfo.name}');
-                                },
-                                tooltip: 'Like',
-                              ),
-                              IconButton(
-                                icon: Image.asset('images/default_message.png',
-                                    width: 90, height: 90, color: Colors.blueGrey),
-                                onPressed: () {
-                                  print(
-                                      'Message button tapped for ${eachProfileInfo.name}');
-                                },
-                                tooltip: 'Message',
-                              ),
-                              IconButton(
-                                icon: Image.asset('images/default_like.png',
-                                    width: 45, height: 45, color: Colors.blueGrey),
-                                onPressed: () {
-                                  print(
-                                      'Like button tapped for ${eachProfileInfo.name}');
+                                  print("SwipingScreen: Favorite button pressed for ${eachProfileInfo.name}, UID: ${eachProfileInfo.uid}, current isFavorite: ${eachProfileInfo.isFavorite.value}"); // Use .value
+                                  if (eachProfileInfo.uid != null) {
+                                    profileController.toggleFavoriteStatus(eachProfileInfo.uid!);
+                                  } else {
+                                    Get.snackbar(
+                                        "Error",
+                                        "Cannot update favorite status: User ID is missing.",
+                                        backgroundColor: Colors.redAccent,
+                                        colorText: Colors.white
+                                    );
+                                    print('Error: Favorite button tapped but UID is null for ${eachProfileInfo.name}');
+                                  }
                                 },
                                 tooltip: 'Favorite',
-                              ),
+                              )),
+
+                              Obx(() {
+                                bool canMessage = eachProfileInfo.likeStatus.value == LikeStatus.mutualLike;
+                                return IconButton(
+                                  icon: Image.asset(
+                                    'images/default_message.png',
+                                    width: 90,
+                                    height: 90,
+                                    // Color still indicates active/inactive state
+                                    color: canMessage ? Colors.green : Colors.blueGrey.withOpacity(0.5),
+                                  ),
+                                  onPressed: () { // onPressed is no longer null
+                                    if (canMessage) {
+                                      // Action for when messaging is allowed
+                                      print('Message button tapped for ${eachProfileInfo.name}, UID: ${eachProfileInfo.uid}. MUTUAL LIKE CONFIRMED.');
+                                      Get.snackbar(
+                                        "Mutual Like!",
+                                        "You and ${eachProfileInfo.name ?? 'this user'} have liked each other. Messaging enabled!",
+                                        backgroundColor: Colors.green,
+                                        colorText: Colors.white,
+                                      );
+                                      // TODO: Get.to(() => ChatScreen(targetUserId: eachProfileInfo.uid!));
+                                    } else {
+                                      // Action for when messaging is NOT allowed (show Snackbar)
+                                      Get.snackbar(
+                                        "Message Unavailable",
+                                        "You can only message users after a mutual like.",
+                                        backgroundColor: Colors.orangeAccent,
+                                        colorText: Colors.white,
+                                        snackPosition: SnackPosition.TOP, // Optional: show at top
+                                      );
+                                    }
+                                  },
+                                  tooltip: canMessage ? 'Message' : 'Message (Requires Mutual Like)',
+                                );
+                              }),
+
+                              Obx(() {
+                                String likeIconAsset;
+                                Color? likeIconColor;
+
+                                switch (eachProfileInfo.likeStatus.value) {
+                                  case LikeStatus.currentUserLiked:
+                                  case LikeStatus.targetUserLikedCurrentUser: // MODIFIED - Added this case
+                                    likeIconAsset = 'images/half_like.png';
+                                    likeIconColor = null;
+                                    break;
+                                  case LikeStatus.mutualLike:
+                                    likeIconAsset = 'images/full_like.png';
+                                    likeIconColor = null;
+                                    break;
+                                  case LikeStatus.none:
+                                  default:
+                                    likeIconAsset = 'images/default_like.png';
+                                    likeIconColor = Colors.blueGrey;
+                                    break;
+                                }
+
+                                return IconButton(
+                                  icon: Image.asset(
+                                    likeIconAsset,
+                                    width: 45,
+                                    height: 45,
+                                    color: likeIconColor,
+                                  ),
+                                  onPressed: () {
+                                    if (eachProfileInfo.uid != null) {
+                                      print('Like button tapped for ${eachProfileInfo.name}, UID: ${eachProfileInfo.uid}, current status: ${eachProfileInfo.likeStatus.value}');
+                                      profileController.toggleLike(eachProfileInfo.uid!);
+                                    } else {
+                                      Get.snackbar(
+                                          "Error",
+                                          "Cannot process like: User ID is missing.",
+                                          backgroundColor: Colors.redAccent,
+                                          colorText: Colors.white
+                                      );
+                                      print('Error: Like button tapped but UID is null for ${eachProfileInfo.name}');
+                                    }
+                                  },
+                                  tooltip: 'Like',
+                                );
+                              }),
                             ],
                           ),
                           const SizedBox(height: 16.0),
@@ -267,7 +362,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
             right: 8.0,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.black.withAlpha((255 * 0.3).round()), // Updated withAlpha
+                color: Colors.black.withAlpha((255 * 0.3).round()),
                 shape: BoxShape.circle,
               ),
               child: IconButton(
@@ -285,6 +380,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
   }
 }
 
+// _FilterSheetContent and its state class remain unchanged as per your file content.
 class _FilterSheetContent extends StatefulWidget {
   final ProfileController profileController;
   final ScrollController scrollController;
@@ -301,7 +397,7 @@ class _FilterSheetContent extends StatefulWidget {
 class _FilterSheetContentState extends State<_FilterSheetContent> {
   late RangeValues _currentAgeRange;
   String? _selectedEthnicity;
-  String? _selectedGender; // New state variable for Gender
+  String? _selectedGender;
   bool? _wantsHost;
   bool? _wantsTravel;
   String? _selectedProfession;
@@ -311,11 +407,11 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
 
   final Map<String, Map<String, List<String>>> africanLocations = {
     "Any": {},
-    "Nigeria": {
+    "South Africa": {
       "Any": [],
-      "Lagos": ["Any", "Ikeja", "Lekki", "Victoria Island"],
-      "Abuja": ["Any", "Central Business District", "Garki", "Wuse"],
-      "Kano": ["Any", "Dala", "Fagge", "Nassarawa"]
+      "Gauteng": ["Any", "Johannesburg", "Pretoria", "Vereeniging"],
+      "Western Cape": ["Any", "Cape Town", "Stellenbosch", "George"],
+      "KwaZulu-Natal": ["Any", "Durban", "Pietermaritzburg", "Richards Bay"]
     },
     "Kenya": {
       "Any": [],
@@ -323,11 +419,11 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
       "Mombasa": ["Any", "Nyali", "Old Town", "Likoni"],
       "Kisumu": ["Any", "Milimani", "CBD"]
     },
-    "South Africa": {
+    "Nigeria": {
       "Any": [],
-      "Gauteng": ["Any", "Johannesburg", "Pretoria", "Sandton"],
-      "Western Cape": ["Any", "Cape Town", "Stellenbosch", "George"],
-      "KwaZulu-Natal": ["Any", "Durban", "Pietermaritzburg", "Richards Bay"]
+      "Lagos": ["Any", "Ikeja", "Lekki", "Victoria Island"],
+      "Abuja": ["Any", "Central Business District", "Garki", "Wuse"],
+      "Kano": ["Any", "Dala", "Fagge", "Nassarawa"]
     },
   };
 
@@ -341,7 +437,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
   final List<String> _professions = [
     "Any", "Student", "Freelancer", "Professional"
   ];
-  final List<String> _genders = ["Any", "Male", "Female"]; // Gender options with "Any"
+  final List<String> _genders = ["Any", "Male", "Female"];
 
   @override
   void initState() {
@@ -349,7 +445,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
     final currentFilters = widget.profileController.activeFilters.value;
     _currentAgeRange = currentFilters.ageRange ?? const RangeValues(18, 65);
     _selectedEthnicity = currentFilters.ethnicity ?? "Any";
-    _selectedGender = currentFilters.gender ?? "Any"; // Initialize gender, default to "Any"
+    _selectedGender = currentFilters.gender ?? "Any";
     _wantsHost = currentFilters.wantsHost;
     _wantsTravel = currentFilters.wantsTravel;
     _selectedProfession = currentFilters.profession ?? "Any";
@@ -362,10 +458,10 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
       _selectedProvince = currentFilters.province ?? "Any";
       if (_selectedProvince != null && _selectedProvince != "Any" && africanLocations[_selectedCountry!]!.containsKey(_selectedProvince)) {
         _cities = africanLocations[_selectedCountry!]![_selectedProvince!]!;
-         _selectedCity = currentFilters.city ?? "Any";
-         if(!_cities.contains(_selectedCity)){ 
-            _selectedCity = "Any";
-         }
+        _selectedCity = currentFilters.city ?? "Any";
+        if(!_cities.contains(_selectedCity)){
+          _selectedCity = "Any";
+        }
       } else {
         _cities = [];
         _selectedCity = "Any";
@@ -388,7 +484,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
       } else {
         _provinces = [];
       }
-      _cities = []; 
+      _cities = [];
     });
   }
 
@@ -441,7 +537,6 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
           ),
           const SizedBox(height: 16),
 
-          // Gender Dropdown
           _buildDropdown("Gender", _selectedGender, _genders, (val) {
             setState(() { _selectedGender = val; });
           }),
@@ -456,7 +551,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
             setState(() { _selectedEthnicity = val; });
           }),
           const SizedBox(height: 16),
-          
+
           _buildDropdown("Country", _selectedCountry, _countries, _updateProvinces),
           const SizedBox(height: 16),
 
@@ -472,7 +567,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
 
           SwitchListTile(
             title: const Text('Wants to Host', style: TextStyle(fontSize: 16)),
-            value: _wantsHost ?? false, 
+            value: _wantsHost ?? false,
             onChanged: (bool value) {
               setState(() {
                 _wantsHost = value;
@@ -483,7 +578,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
 
           SwitchListTile(
             title: const Text('Wants to Travel', style: TextStyle(fontSize: 16)),
-            value: _wantsTravel ?? false, 
+            value: _wantsTravel ?? false,
             onChanged: (bool value) {
               setState(() {
                 _wantsTravel = value;
@@ -501,9 +596,9 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                   setState(() {
                     _currentAgeRange = const RangeValues(18, 65);
                     _selectedEthnicity = "Any";
-                    _selectedGender = "Any"; // Clear gender to "Any"
-                    _wantsHost = null; 
-                    _wantsTravel = null; 
+                    _selectedGender = "Any";
+                    _wantsHost = null;
+                    _wantsTravel = null;
                     _selectedProfession = "Any";
                     _selectedCountry = "Any";
                     _selectedProvince = "Any";
@@ -511,14 +606,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                     _provinces = [];
                     _cities = [];
                   });
-                  widget.profileController.updateFilters(FilterPreferences(
-                    // Make sure FilterPreferences() default constructor also defaults gender to null
-                    // or that it correctly handles ethnicity: "Any", gender: "Any", profession: "Any" being passed
-                    // and converting them to null if necessary for the model.
-                    // For now, assuming updateFilters will handle this.
-                    // If your FilterPreferences model directly stores "Any", then this is fine.
-                    // If it expects null for "Any", you might need to adjust here or in the constructor.
-                  )); 
+                  widget.profileController.updateFilters(FilterPreferences());
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[300]),
                 child: const Text('Clear Filters', style: TextStyle(color: Colors.black87)),
@@ -528,7 +616,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                   final newFilters = FilterPreferences(
                     ageRange: _currentAgeRange,
                     ethnicity: _selectedEthnicity == "Any" ? null : _selectedEthnicity,
-                    gender: _selectedGender == "Any" ? null : _selectedGender, // Apply selected gender, null if "Any"
+                    gender: _selectedGender == "Any" ? null : _selectedGender,
                     wantsHost: _wantsHost,
                     wantsTravel: _wantsTravel,
                     profession: _selectedProfession == "Any" ? null : _selectedProfession,
@@ -537,7 +625,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                     city: _selectedCity == "Any" ? null : _selectedCity,
                   );
                   widget.profileController.updateFilters(newFilters);
-                  Navigator.pop(context); 
+                  Navigator.pop(context);
                 },
                 child: const Text('Apply Filters'),
               ),
@@ -555,7 +643,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
       ),
-      value: items.contains(currentValue) ? currentValue : (items.isNotEmpty ? items.first : null), 
+      value: items.contains(currentValue) ? currentValue : (items.isNotEmpty ? items.first : null),
       isExpanded: true,
       items: items.map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(

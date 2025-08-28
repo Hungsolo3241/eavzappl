@@ -1,10 +1,12 @@
+val kotlin_version = "2.2.0" // Or your desired Kotlin version
+
 plugins {
-    // ...
-
-    // Add the dependency for the Google services Gradle plugin
+    id("com.android.application") version "8.12.1" apply false // Or your Android Gradle Plugin version
+    id("org.jetbrains.kotlin.android") version "2.2.0" apply false // Example Kotlin version
     id("com.google.gms.google-services") version "4.4.3" apply false
-
 }
+
+// ... rest of your file
 
 allprojects {
     repositories {

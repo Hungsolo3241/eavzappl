@@ -1,4 +1,3 @@
-// lib/splashScreen/splash_screen.dart
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -7,29 +6,32 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // Fallback color
-      body: Stack(
-        fit: StackFit.expand,
-        children: <Widget>[
-          // Background Image (retains previous alignment adjustment)
-          Image.asset(
-            'images/login_splash.jpeg',
-            fit: BoxFit.cover,
-            alignment: const Alignment(0.0, -0.2), // Keeps the image slightly shifted down
-          ),
-
-          // Align widget for the CircularProgressIndicator at the bottom
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              // Add some padding from the bottom edge
-              padding: const EdgeInsets.only(bottom: 50.0), // Adjust padding as needed
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+      backgroundColor: Colors.transparent, // Keeps the Scaffold itself transparent
+      extendBody: true,
+      resizeToAvoidBottomInset: false,
+      body: Container( // New Container to provide a background for BoxFit.contain
+        color: Colors.black, // Background color for empty areas
+        child: Stack(
+          fit: StackFit.expand,
+          children: <Widget>[
+            Positioned.fill(
+              child: Image.asset(
+                'images/loginSplashScreen.jpeg',
+                fit: BoxFit.contain, // Changed from BoxFit.cover
               ),
             ),
-          ),
-        ],
+            // Align widget for the CircularProgressIndicator at the bottom
+            const Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 50.0), // Adjust as needed
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
