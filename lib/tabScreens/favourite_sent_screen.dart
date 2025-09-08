@@ -21,7 +21,7 @@ class FavouriteSentScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Favourites', style: TextStyle(color: Colors.blueGrey)), // Changed from 'My Favorites'
+        title: Text('My Favourites', style: TextStyle(color: Colors.yellow[700])), // Changed from 'My Favorites'
         backgroundColor: Colors.black87, // Or your app's theme color
         automaticallyImplyLeading: false, // Assuming this is a tab screen and doesn't need a back button
       ),
@@ -94,10 +94,10 @@ class FavouriteSentScreen extends StatelessWidget {
                       child: Text(
                         '${person.name ?? 'N/A'} • ${person.age ?? 'N/A'}', // Added age
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: Colors.blueGrey, // Added this line
+                          color: Colors.yellow[700], // Added this line
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

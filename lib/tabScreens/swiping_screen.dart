@@ -5,6 +5,7 @@ import 'package:eavzappl/models/person.dart';
 import 'package:eavzappl/tabScreens/user_details_screen.dart'; // Import UserDetailsScreen
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SwipingScreen extends StatefulWidget {
   const SwipingScreen({super.key});
@@ -201,10 +202,10 @@ class _SwipingScreenState extends State<SwipingScreen> {
                           Text(
                             '${eachProfileInfo.age?.toString() ?? ''}${eachProfileInfo.age != null && eachProfileInfo.city != null && eachProfileInfo.city!.isNotEmpty ? ' • ' : ''}${eachProfileInfo.city ?? ''}'
                                 .trim(),
-                            style: const TextStyle(
-                              color: Colors.blueGrey,
+                            style: TextStyle(
+                              color: Colors.yellow[700],
                               fontSize: 18,
-                              shadows: [
+                              shadows: const [
                                 Shadow(
                                     blurRadius: 1.0,
                                     color: Colors.black87,
@@ -242,8 +243,8 @@ class _SwipingScreenState extends State<SwipingScreen> {
                                   (eachProfileInfo.isFavorite.value) // Use .value for RxBool
                                       ? 'images/full_fave.png'
                                       : 'images/default_fave.png',
-                                  width: 45,
-                                  height: 45,
+                                  width: 40,
+                                  height: 40,
                                   color: (eachProfileInfo.isFavorite.value) // Use .value for RxBool
                                       ? Colors.yellow[700]                      // No tint for active state
                                       : Colors.blueGrey,
@@ -270,33 +271,76 @@ class _SwipingScreenState extends State<SwipingScreen> {
                                 return IconButton(
                                   icon: Image.asset(
                                     'images/default_message.png',
-                                    width: 90,
-                                    height: 90,
+                                    width: 75,
+                                    height: 75,
                                     // Color still indicates active/inactive state
                                     color: canMessage ? Colors.yellow[700] : Colors.blueGrey.withOpacity(0.5),
                                   ),
-                                  onPressed: () { // onPressed is no longer null
+                                  onPressed: () async { // MODIFIED: Made async
                                     if (canMessage) {
-                                      // Action for when messaging is allowed
-                                      print('Message button tapped for ${eachProfileInfo.name}, UID: ${eachProfileInfo.uid}. MUTUAL LIKE CONFIRMED.');
-                                      Get.snackbar(
-                                        "Mutual Like!",
-                                        "You and ${eachProfileInfo.name ?? 'this user'} have liked each other. Messaging enabled!",
-                                        backgroundColor: Colors.green,
-                                        colorText: Colors.white,
-                                      );
-                                      // TODO: Get.to(() => ChatScreen(targetUserId: eachProfileInfo.uid!));
+                                      final String? userPhoneNumber = eachProfileInfo.phoneNumber;
+
+                                      if (userPhoneNumber != null && userPhoneNumber.isNotEmpty) {
+                                        // Assumes format like +27821234567 or 27821234567.
+                                        // Sanitize to remove any potential non-dial characters except a leading '+'.
+                                        String formattedPhoneNumber = userPhoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+
+                                        if (!formattedPhoneNumber.startsWith('+') && RegExp(r'^\d+$').hasMatch(formattedPhoneNumber)) {
+                                          // If it's all digits and doesn't start with '+', it might be a local number
+                                          // or a number where country code is implied. For WhatsApp, it's safer
+                                          // if it's in full international format. This part depends on how numbers are stored.
+                                          // Assuming numbers are stored with country code (e.g. "27..." for SA or "+27...").
+                                          // If the '+' is missing but country code digits are there, api.whatsapp.com often handles it.
+                                        } else if (!formattedPhoneNumber.startsWith('+')) {
+                                          Get.snackbar(
+                                            "WhatsApp Warning",
+                                            "Phone number format may not be ideal for WhatsApp (e.g., missing '+'). Number: $formattedPhoneNumber. Attempting anyway.",
+                                            backgroundColor: Colors.orangeAccent,
+                                            colorText: Colors.white,
+                                            duration: const Duration(seconds: 5),
+                                          );
+                                        }
+
+                                        final Uri whatsappUri = Uri.parse("https://api.whatsapp.com/send?phone=$formattedPhoneNumber");
+
+                                        if (await canLaunchUrl(whatsappUri)) {
+                                          await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+                                          Get.snackbar(
+                                            "Opening WhatsApp...",
+                                            "If WhatsApp doesn't open, please check if it's installed.",
+                                            backgroundColor: Colors.green,
+                                            colorText: Colors.white,
+                                          );
+                                        } else {
+                                          Get.snackbar(
+                                            "WhatsApp Error",
+                                            "Could not open WhatsApp. Please ensure it's installed or the phone number ($formattedPhoneNumber) is valid.",
+                                            backgroundColor: Colors.redAccent,
+                                            colorText: Colors.white,
+                                            duration: const Duration(seconds: 5),
+                                          );
+                                        }
+                                      } else {
+                                        // Phone number is missing or empty on the Person object
+                                        Get.snackbar(
+                                          "Message Error",
+                                          "Cannot message on WhatsApp: User's phone number is not available.",
+                                          backgroundColor: Colors.orangeAccent,
+                                          colorText: Colors.white,
+                                        );
+                                      }
                                     } else {
-                                      // Action for when messaging is NOT allowed (show Snackbar)
+                                      // This part (when canMessage is false) remains unchanged
                                       Get.snackbar(
                                         "Message Unavailable",
                                         "You can only message users after a mutual like.",
                                         backgroundColor: Colors.orangeAccent,
                                         colorText: Colors.white,
-                                        snackPosition: SnackPosition.TOP, // Optional: show at top
+                                        snackPosition: SnackPosition.TOP,
                                       );
                                     }
                                   },
+
                                   tooltip: canMessage ? 'Message' : 'Message (Requires Mutual Like)',
                                 );
                               }),
@@ -325,8 +369,8 @@ class _SwipingScreenState extends State<SwipingScreen> {
                                 return IconButton(
                                   icon: Image.asset(
                                     likeIconAsset,
-                                    width: 45,
-                                    height: 45,
+                                    width: 40,
+                                    height: 40,
                                     color: likeIconColor,
                                   ),
                                   onPressed: () {
@@ -366,7 +410,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: const Icon(Icons.filter_list, color: Colors.white),
+                icon: Icon(Icons.filter_list, color: Colors.yellow[700]),
                 tooltip: 'Filter Profiles',
                 onPressed: () {
                   _showFilterModalBottomSheet(context);
@@ -427,12 +471,37 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
     },
   };
 
+  // --- START OF MODIFICATION 1: Define asianLocations and allLocations ---
+  final Map<String, Map<String, List<String>>> asianLocations = {
+    'Vietnam': {
+      "Any": [],
+      'Hanoi Capital Region': ['Any', 'Hanoi', 'Haiphong'],
+      'Ho Chi Minh City Region': ['Any', 'Ho Chi Minh City', 'Can Tho'],
+      'Da Nang Province': ['Any', 'Da Nang', 'Hoi An'],
+    },
+    'Thailand': {
+      "Any": [],
+      'Bangkok Metropolitan Region': ['Any', 'Bangkok', 'Nonthaburi', 'Samut Prakan'],
+      'Chiang Mai Province': ['Any', 'Chiang Mai City', 'Chiang Rai City'],
+      'Phuket Province': ['Any', 'Phuket Town', 'Patong'],
+    },
+    'Indonesia': {
+      "Any": [],
+      'Jakarta Special Capital Region': ['Any', 'Jakarta', 'South Tangerang'],
+      'Bali Province': ['Any', 'Denpasar', 'Ubud', 'Kuta'],
+      'West Java Province': ['Any', 'Bandung', 'Bogor'],
+    }
+  };
+
+  late final Map<String, Map<String, List<String>>> allLocations;
+  // --- END OF MODIFICATION 1 ---
+
   List<String> _countries = [];
   List<String> _provinces = [];
   List<String> _cities = [];
 
   final List<String> _ethnicities = [
-    "Any", "Asian", "Black", "Mixed", "White", "Other"
+    "Any", "Asian", "Black", "Mixed", "White"
   ];
   final List<String> _professions = [
     "Any", "Student", "Freelancer", "Professional"
@@ -442,6 +511,11 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
   @override
   void initState() {
     super.initState();
+    // --- START OF MODIFICATION 2: Combine maps and update countriesList source ---
+    allLocations = {}..addAll(africanLocations)..addAll(asianLocations);
+    _countries = allLocations.keys.toList();
+    // --- END OF MODIFICATION 2 ---
+
     final currentFilters = widget.profileController.activeFilters.value;
     _currentAgeRange = currentFilters.ageRange ?? const RangeValues(18, 65);
     _selectedEthnicity = currentFilters.ethnicity ?? "Any";
@@ -451,19 +525,18 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
     _selectedProfession = currentFilters.profession ?? "Any";
     _selectedCountry = currentFilters.country ?? "Any";
 
-    _countries = africanLocations.keys.toList();
-
-    if (_selectedCountry != null && _selectedCountry != "Any" && africanLocations.containsKey(_selectedCountry)) {
-      _provinces = africanLocations[_selectedCountry!]!.keys.toList();
+    // --- START OF MODIFICATION 3: Use allLocations in initState filter loading logic ---
+    if (_selectedCountry != null && _selectedCountry != "Any" && allLocations.containsKey(_selectedCountry)) {
+      _provinces = allLocations[_selectedCountry!]!.keys.toList();
       _selectedProvince = currentFilters.province ?? "Any";
-      if (_selectedProvince != null && _selectedProvince != "Any" && africanLocations[_selectedCountry!]!.containsKey(_selectedProvince)) {
-        _cities = africanLocations[_selectedCountry!]![_selectedProvince!]!;
+      if (_selectedProvince != null && _selectedProvince != "Any" && allLocations[_selectedCountry!]!.containsKey(_selectedProvince)) {
+        _cities = allLocations[_selectedCountry!]![_selectedProvince!]!;
         _selectedCity = currentFilters.city ?? "Any";
         if(!_cities.contains(_selectedCity)){
           _selectedCity = "Any";
         }
       } else {
-        _cities = [];
+        _cities = []; // Clear cities if province is "Any" or not found in allLocations for the country
         _selectedCity = "Any";
       }
     } else {
@@ -472,6 +545,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
       _selectedProvince = "Any";
       _selectedCity = "Any";
     }
+    // --- END OF MODIFICATION 3 ---
   }
 
   void _updateProvinces(String? country) {
@@ -479,11 +553,13 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
       _selectedCountry = country;
       _selectedProvince = "Any";
       _selectedCity = "Any";
-      if (country != null && country != "Any" && africanLocations.containsKey(country)) {
-        _provinces = africanLocations[country]!.keys.toList();
+      // --- START OF MODIFICATION 4: Use allLocations in _updateProvinces ---
+      if (country != null && country != "Any" && allLocations.containsKey(country)) {
+        _provinces = allLocations[country]!.keys.toList();
       } else {
         _provinces = [];
       }
+      // --- END OF MODIFICATION 4 ---
       _cities = [];
     });
   }
@@ -492,14 +568,16 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
     setState(() {
       _selectedProvince = province;
       _selectedCity = "Any";
+      // --- START OF MODIFICATION 5: Use allLocations in _updateCities ---
       if (_selectedCountry != null && _selectedCountry != "Any" &&
           province != null && province != "Any" &&
-          africanLocations.containsKey(_selectedCountry) &&
-          africanLocations[_selectedCountry!]!.containsKey(province)) {
-        _cities = africanLocations[_selectedCountry!]![province]!;
+          allLocations.containsKey(_selectedCountry) &&
+          allLocations[_selectedCountry!]!.containsKey(province)) {
+        _cities = allLocations[_selectedCountry!]![province]!;
       } else {
         _cities = [];
       }
+      // --- END OF MODIFICATION 5 ---
     });
   }
 

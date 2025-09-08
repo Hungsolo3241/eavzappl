@@ -598,7 +598,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
       body: ListView(
         children: <Widget>[
           ListTile(
-            leading: const Icon(Icons.edit, color: Colors.blueGrey),
+            leading: Icon(Icons.edit, color: Colors.yellow[700]),
             title: const Text("Edit Profile", style: TextStyle(color: Colors.blueGrey)),
             onTap: () async {
               var editProfileResult = await Get.to(() => const EditProfileScreen());
@@ -608,7 +608,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.email_outlined, color: Colors.blueGrey),
+            leading: Icon(Icons.email_outlined, color: Colors.yellow[700]),
             title: const Text("Change Email", style: TextStyle(color: Colors.blueGrey)),
             onTap: () {
               _showReauthenticationDialog(
@@ -621,7 +621,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.password, color: Colors.blueGrey),
+            leading: Icon(Icons.password, color: Colors.yellow[700]),
             title: const Text("Change Password", style: TextStyle(color: Colors.blueGrey)),
             onTap: () {
                _showReauthenticationDialog(
@@ -634,21 +634,21 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.shield_outlined, color: Colors.blueGrey),
+            leading: Icon(Icons.shield_outlined, color: Colors.yellow[700]),
             title: const Text("Account Security", style: TextStyle(color: Colors.blueGrey)),
             onTap: () {
               _showAccountSecurityInfoDialog(context);
             },
           ),
            ListTile(
-            leading: const Icon(Icons.notifications, color: Colors.blueGrey),
+            leading: Icon(Icons.notifications, color: Colors.yellow[700]),
             title: const Text("Notifications", style: TextStyle(color: Colors.blueGrey)),
             onTap: () {
               Get.snackbar("Coming Soon", "Notification settings are not yet implemented.", colorText: Colors.white);
             },
           ),
           ListTile(
-            leading: const Icon(Icons.info_outline, color: Colors.blueGrey),
+            leading: Icon(Icons.info_outline, color: Colors.yellow[700]),
             title: const Text("About", style: TextStyle(color: Colors.blueGrey)),
             onTap: () {
               Get.snackbar("App Info", "EAVZ App v1.0.0", colorText: Colors.white);

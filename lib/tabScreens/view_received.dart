@@ -21,7 +21,7 @@ class ViewReceivedScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Viewed Your Profile', style: TextStyle(color: Colors.blueGrey)),
+        title: Text('Viewed Your Profile', style: TextStyle(color: Colors.yellow[700])),
         backgroundColor: Colors.black87,
         automaticallyImplyLeading: false, // Assuming this is a main tab
       ),
@@ -90,10 +90,10 @@ class ViewReceivedScreen extends StatelessWidget {
                       child: Text(
                         '${person.name ?? 'N/A'} • ${person.age ?? 'N/A'}',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: Colors.blueGrey,
+                          color: Colors.yellow[700],
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

@@ -47,7 +47,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
 
     _determineEffectiveUserID(); // Determine the user ID to use
 
-    // --- ADDED THIS SECTION ---
+    // --- ADDED THIS SECTION -- -
     // Record the profile view after the User ID has been determined
     // and after the first frame has been built.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -307,7 +307,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
       // It's better to show a clear message or a loading indicator if the ID isn't ready.
       return Scaffold(
         appBar: AppBar(title: const Text("Profile Information"), centerTitle: true, titleTextStyle: appBarTitleTextStyle, iconTheme: appBarIconTheme, backgroundColor: appBarBackgroundColor),
-        body: const Center(child: Text("User ID not available. Cannot display profile.", style: TextStyle(fontSize: 18, color: Colors.blueGrey))),
+        body: SafeArea( // MODIFIED: Added SafeArea
+          child: const Center(child: Text("User ID not available. Cannot display profile.", style: TextStyle(fontSize: 18, color: Colors.blueGrey))),
+        ),
       );
     }
 
@@ -317,14 +319,18 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
               appBar: AppBar(title: const Text("Loading Profile..."), centerTitle: true, titleTextStyle: appBarTitleTextStyle, iconTheme: appBarIconTheme, backgroundColor: appBarBackgroundColor),
-              body: const Center(child: CircularProgressIndicator(color: Colors.blueGrey)));
+              body: SafeArea( // MODIFIED: Added SafeArea
+                child: const Center(child: CircularProgressIndicator(color: Colors.blueGrey)),
+              ));
         }
 
         if (snapshot.hasError) {
           print("Error in UserDetailsScreen StreamBuilder: ${snapshot.error}");
           return Scaffold(
               appBar: AppBar(title: const Text("Error"), centerTitle: true, titleTextStyle: appBarTitleTextStyle, iconTheme: appBarIconTheme, backgroundColor: appBarBackgroundColor),
-              body: const Center(child: Text("Error loading profile.", style: TextStyle(color: Colors.red, fontSize: 18))));
+              body: SafeArea( // MODIFIED: Added SafeArea
+                child: const Center(child: Text("Error loading profile.", style: TextStyle(color: Colors.red, fontSize: 18))),
+              ));
         }
 
         if (!snapshot.hasData || !snapshot.data!.exists) {
@@ -334,7 +340,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
               : "Profile not found."; // This case should ideally not be reached if _effectiveUserID check is robust
           return Scaffold(
               appBar: AppBar(title: const Text("Profile Not Found"), centerTitle: true, titleTextStyle: appBarTitleTextStyle, iconTheme: appBarIconTheme, backgroundColor: appBarBackgroundColor),
-              body: Center(child: Text(message, style: const TextStyle(fontSize: 18, color: Colors.blueGrey), textAlign: TextAlign.center,)));
+              body: SafeArea( // MODIFIED: Added SafeArea
+                child: Center(child: Text(message, style: const TextStyle(fontSize: 18, color: Colors.blueGrey), textAlign: TextAlign.center,)),
+              ));
         }
 
         // Data is available, proceed to build the profile UI
@@ -362,7 +370,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
             actions: <Widget>[
               if (isCurrentUserProfile) ...[
                 IconButton(
-                  icon: const Icon(Icons.settings, color: Colors.blueGrey), // Consistent icon color
+                  icon: Icon(Icons.settings, color: Colors.yellow[700]), // Consistent icon color
                   tooltip: 'Settings',
                   onPressed: () {
                     // Navigate to UserSettingsScreen, ensuring it exists and is correctly imported
@@ -377,71 +385,73 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
               ]
             ],
           ),
-          body: Stack(
-            fit: StackFit.expand,
-            children: <Widget>[
-              Image.asset(
-                'images/userDetailsBackground.jpeg', // Path to your background image asset
-                fit: BoxFit.cover, // Cover the entire space
-              ),
-              // Original Scrollable Content
-              SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    _buildImageCarousel(sliderImages.isNotEmpty ? sliderImages : [_getDisplayImageUrl(user.profilePhoto, user.orientation)], user.orientation),
-                    _buildSectionTitle(context, "Personal Information"),
-                    _buildDetailRow(context, "Name", user.name),
-                    if (user.age != null) _buildDetailRow(context, "Age", user.age.toString()),
-                    _buildDetailRow(context, "Gender", user.gender),
-                    _buildDetailRow(context, "Email", shouldObscureDetails ? "Protected" : user.email), // Obscure if needed
-                    _buildDetailRow(context, "Phone", shouldObscureDetails ? "Protected" : user.phoneNumber), // Obscure if needed
-                    _buildDetailRow(context, "Country", user.country),
-                    _buildDetailRow(context, "Province", user.province),
-                    _buildDetailRow(context, "City", user.city),
-                    _buildDetailRow(context, "Profession", user.profession),
-                    _buildDetailRow(context, "Ethnicity", user.ethnicity),
-                    _buildDetailRow(context, "Income", user.income),
-                    if (user.professionalVenues != null && user.professionalVenues!.isNotEmpty)
-                      _buildDetailRow(context, "Professional Venues", user.professionalVenues!.join(", ")),
-                    _buildDetailRow(context, "Private Venue", user.otherProfessionalVenue),
-                    if (user.publishedDateTime != null)
-                      _buildDetailRow(context, "Joined", DateFormat.yMMMd().add_jm().format(DateTime.fromMillisecondsSinceEpoch(user.publishedDateTime!))),
-
-                    _buildSectionTitle(context, "Looking/Available For"),
-                    _buildBooleanDetailRow(context, "Breakfast", user.lookingForBreakfast),
-                    _buildBooleanDetailRow(context, "Lunch", user.lookingForLunch),
-                    _buildBooleanDetailRow(context, "Dinner", user.lookingForDinner),
-                    _buildBooleanDetailRow(context, "Long Term", user.lookingForLongTerm),
-
-                    if (!isAdamProfile || isCurrentUserProfile) ...[
-                      if (!isAdamProfile) ...[
-                        _buildSectionTitle(context, "Appearance"),
-                        _buildDetailRow(context, "Height", user.height),
-                        _buildDetailRow(context, "Body Type", user.bodyType),
-                        _buildSectionTitle(context, "Lifestyle"),
-                        _buildBooleanDetailRow(context, "Drinks Alcohol", user.drinkSelection),
-                        _buildBooleanDetailRow(context, "Smokes", user.smokeSelection),
-                        _buildBooleanDetailRow(context, "Likes Meat", user.meatSelection),
-                        _buildBooleanDetailRow(context, "Likes Greek", user.greekSelection),
-                        _buildBooleanDetailRow(context, "Can Host", user.hostSelection),
-                        _buildBooleanDetailRow(context, "Able to Travel", user.travelSelection),
-                      ],
-                      _buildSectionTitle(context, "Background"),
-                      _buildDetailRow(context, "Nationality", user.nationality),
-                      _buildDetailRow(context, "Languages Spoken", user.languages),
-
-                      if (!isAdamProfile) ...[
-                        _buildSectionTitle(context, "Social Media"),
-                        _buildDetailRow(context, "Instagram", user.instagram, isLink: true),
-                        _buildDetailRow(context, "Twitter", user.twitter, isLink: true),
-                      ]
-                    ],
-                    const SizedBox(height: 30),
-                  ],
+          body: SafeArea( // MODIFIED: Added SafeArea
+            child: Stack(
+              fit: StackFit.expand,
+              children: <Widget>[
+                Image.asset(
+                  'images/userDetailsBackground.jpeg', // Path to your background image asset
+                  fit: BoxFit.cover, // Cover the entire space
                 ),
-              ),
-            ],
+                // Original Scrollable Content
+                SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      _buildImageCarousel(sliderImages.isNotEmpty ? sliderImages : [_getDisplayImageUrl(user.profilePhoto, user.orientation)], user.orientation),
+                      _buildSectionTitle(context, "Personal Information"),
+                      _buildDetailRow(context, "Name", user.name),
+                      if (user.age != null) _buildDetailRow(context, "Age", user.age.toString()),
+                      _buildDetailRow(context, "Gender", user.gender),
+                      _buildDetailRow(context, "Email", shouldObscureDetails ? "Protected" : user.email), // Obscure if needed
+                      _buildDetailRow(context, "Phone", shouldObscureDetails ? "Protected" : user.phoneNumber), // Obscure if needed
+                      _buildDetailRow(context, "Country", user.country),
+                      _buildDetailRow(context, "Province", user.province),
+                      _buildDetailRow(context, "City", user.city),
+                      _buildDetailRow(context, "Profession", user.profession),
+                      _buildDetailRow(context, "Ethnicity", user.ethnicity),
+                      _buildDetailRow(context, "Income", user.income),
+                      if (user.professionalVenues != null && user.professionalVenues!.isNotEmpty)
+                        _buildDetailRow(context, "Professional Venues", user.professionalVenues!.join(", ")),
+                      _buildDetailRow(context, "Private Venue", user.otherProfessionalVenue),
+                      if (user.publishedDateTime != null)
+                        _buildDetailRow(context, "Joined", DateFormat.yMMMd().add_jm().format(DateTime.fromMillisecondsSinceEpoch(user.publishedDateTime!))),
+
+                      _buildSectionTitle(context, "Looking/Available For"),
+                      _buildBooleanDetailRow(context, "Breakfast", user.lookingForBreakfast),
+                      _buildBooleanDetailRow(context, "Lunch", user.lookingForLunch),
+                      _buildBooleanDetailRow(context, "Dinner", user.lookingForDinner),
+                      _buildBooleanDetailRow(context, "Long Term", user.lookingForLongTerm),
+
+                      if (!isAdamProfile || isCurrentUserProfile) ...[
+                        if (!isAdamProfile) ...[
+                          _buildSectionTitle(context, "Appearance"),
+                          _buildDetailRow(context, "Height", user.height),
+                          _buildDetailRow(context, "Body Type", user.bodyType),
+                          _buildSectionTitle(context, "Lifestyle"),
+                          _buildBooleanDetailRow(context, "Drinks Alcohol", user.drinkSelection),
+                          _buildBooleanDetailRow(context, "Smokes", user.smokeSelection),
+                          _buildBooleanDetailRow(context, "Likes Meat", user.meatSelection),
+                          _buildBooleanDetailRow(context, "Likes Greek", user.greekSelection),
+                          _buildBooleanDetailRow(context, "Can Host", user.hostSelection),
+                          _buildBooleanDetailRow(context, "Able to Travel", user.travelSelection),
+                        ],
+                        _buildSectionTitle(context, "Background"),
+                        _buildDetailRow(context, "Nationality", user.nationality),
+                        _buildDetailRow(context, "Languages Spoken", user.languages),
+
+                        if (!isAdamProfile) ...[
+                          _buildSectionTitle(context, "Social Media"),
+                          _buildDetailRow(context, "Instagram", user.instagram, isLink: true),
+                          _buildDetailRow(context, "Twitter", user.twitter, isLink: true),
+                        ]
+                      ],
+                      const SizedBox(height: 30),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

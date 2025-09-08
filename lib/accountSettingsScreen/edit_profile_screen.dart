@@ -55,6 +55,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       'Kisumu': ['Kisumu City', 'Ahero', 'Maseno'],
     },
   };
+
+  // --- START OF ADDING ASIAN LOCATIONS ---
+  final Map<String, Map<String, List<String>>> asianLocations = {
+    'Vietnam': {
+      'Hanoi Capital Region': ['Hanoi', 'Haiphong'],
+      'Ho Chi Minh City Region': ['Ho Chi Minh City', 'Can Tho'],
+      'Da Nang Province': ['Da Nang', 'Hoi An'],
+    },
+    'Thailand': {
+      'Bangkok Metropolitan Region': ['Bangkok', 'Nonthaburi', 'Samut Prakan'],
+      'Chiang Mai Province': ['Chiang Mai City', 'Chiang Rai City'],
+      'Phuket Province': ['Phuket Town', 'Patong'],
+    },
+    'Indonesia': {
+      'Jakarta Special Capital Region': ['Jakarta', 'South Tangerang'],
+      'Bali Province': ['Denpasar', 'Ubud', 'Kuta'],
+      'West Java Province': ['Bandung', 'Bogor'],
+    }
+  };
+
+  late final Map<String, Map<String, List<String>>> allLocations;
+  // --- END OF ADDING ASIAN LOCATIONS ---
+
   List<String> _countriesList = [];
   List<String> _provincesList = [];
   List<String> _citiesList = [];
@@ -89,11 +112,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _professionController = TextEditingController();
     _professionalVenueOtherNameController = TextEditingController();
 
+    // --- START OF INITIALIZING ALL LOCATIONS ---
+    allLocations = {...africanLocations, ...asianLocations};
+    // --- END OF INITIALIZING ALL LOCATIONS ---
+
     for (var venue in _professionalVenueOptions) {
       _selectedProfessionalVenues[venue] = false;
     }
 
-    _countriesList = africanLocations.keys.toList();
+    _countriesList = allLocations.keys.toList(); // MODIFIED
     _provincesList = [];
     _citiesList = [];
 
@@ -128,11 +155,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _currentMainProfileImageUrl = data['profilePhoto'] as String?;
 
           _selectedCountry = _currentUserData?.country;
-          if (_selectedCountry != null && africanLocations.containsKey(_selectedCountry)) {
-            _provincesList = africanLocations[_selectedCountry!]!.keys.toList();
+          if (_selectedCountry != null && allLocations.containsKey(_selectedCountry)) { // MODIFIED
+            _provincesList = allLocations[_selectedCountry!]!.keys.toList(); // MODIFIED
             _selectedProvince = _currentUserData?.province;
-            if (_selectedProvince != null && africanLocations[_selectedCountry!]!.containsKey(_selectedProvince)) {
-              _citiesList = africanLocations[_selectedCountry!]![_selectedProvince!]!;
+            if (_selectedProvince != null && allLocations[_selectedCountry!]!.containsKey(_selectedProvince)) { // MODIFIED
+              _citiesList = allLocations[_selectedCountry!]![_selectedProvince!]!; // MODIFIED
               _selectedCity = _currentUserData?.city;
               if (_selectedCity != null && !_citiesList.contains(_selectedCity)) {
                 _selectedCity = null;
@@ -485,7 +512,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             title: const Text("Edit Profile"), centerTitle: true,
             titleTextStyle: const TextStyle(color: Colors.blueGrey, fontSize: 20, fontWeight: FontWeight.bold),
             iconTheme: const IconThemeData(color: Colors.blueGrey), backgroundColor: Colors.black54,
-            actions: [IconButton(icon: const Icon(Icons.save, color: Colors.blueGrey), onPressed: _isLoading ? null : _saveProfileChanges, tooltip: "Save Changes")]),
+            actions: [IconButton(icon: Icon(Icons.save, color: Colors.yellow[700]), onPressed: _isLoading ? null : _saveProfileChanges, tooltip: "Save Changes")]),
         body: _isLoading && _currentUserData == null
             ? const Center(child: CircularProgressIndicator(color: Colors.blueGrey))
             : _currentUserData == null
@@ -531,9 +558,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                   Text("Profile Gallery Images", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
                   const SizedBox(height: 8),
-                  Text("Note: Only upload genuine images of yourself. Misleading profiles (catfishing) may lead to a permanent ban.", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.blueAccent, fontStyle: FontStyle.italic)),
+                  Text("Keep it Real: Please only upload genuine photos of yourself. To maintain a trustworthy community, accounts found catfishing will be permanently banned.", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.yellow[700], fontStyle: FontStyle.italic)),
                   const SizedBox(height: 10),
-                  Wrap(spacing: 8.0, runSpacing: 8.0, alignment: WrapAlignment.center, children: List.generate(5, (index) => _buildGalleryImageSlot(index))),
+                  Center( // Wrap the Wrap widget with a Center widget
+                    child: Wrap(spacing: 8.0, runSpacing: 8.0, alignment: WrapAlignment.center, children: List.generate(5, (index) => _buildGalleryImageSlot(index))),
+                  ),
                   const SizedBox(height: 24),
                   Text("Profile Details", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
                   const SizedBox(height: 16),
@@ -548,7 +577,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     items: _countriesList.map((country) => DropdownMenuItem(value: country, child: Text(country, style: TextStyle(color: Colors.white70)))).toList(),
                     onChanged: (newValue) { setState(() {
                       _selectedCountry = newValue; _selectedProvince = null; _selectedCity = null;
-                      _provincesList = newValue != null ? africanLocations[newValue]!.keys.toList() : [];
+                      _provincesList = newValue != null && allLocations.containsKey(newValue) ? allLocations[newValue]!.keys.toList() : []; // MODIFIED
                       _citiesList = []; }); },
                     validator: (value) => value == null ? 'Please select a country' : null,
                   ),
@@ -557,7 +586,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     items: _provincesList.map((province) => DropdownMenuItem(value: province, child: Text(province, style: TextStyle(color: Colors.white70)))).toList(),
                     onChanged: (newValue) { setState(() {
                       _selectedProvince = newValue; _selectedCity = null;
-                      _citiesList = (newValue != null && _selectedCountry != null) ? africanLocations[_selectedCountry!]![newValue]! : []; }); },
+                      _citiesList = (newValue != null && _selectedCountry != null && allLocations.containsKey(_selectedCountry!) && allLocations[_selectedCountry!]!.containsKey(newValue)) ? allLocations[_selectedCountry!]![newValue]! : []; // MODIFIED
+                    }); },
                     validator: (value) => _selectedCountry != null && value == null ? 'Please select a province/state' : null,
                   ),
                   _buildDropdownFormField<String>(

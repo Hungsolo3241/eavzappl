@@ -103,11 +103,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: 275,
                 ),
                 const SizedBox(height: 80),
-                const Text(
+                Text(
                   "  come inside",
                   style: TextStyle(
                     fontSize: 30,
-                    color: Colors.blueGrey,
+                    color: Colors.yellow[700],
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -172,7 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const Text(
                       "Don't have an account?",
                       style: TextStyle(
-                        color: Colors.grey,
+                        color: Colors.blueGrey,
                         fontSize: 18,
                       ),
                     ),
@@ -180,10 +180,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         Get.to(() => const RegistrationScreen());
                       },
-                      child: const Text(
+                      child: Text(
                         " Register",
                         style: TextStyle(
-                          color: Colors.blueGrey,
+                          color: Colors.yellow[700],
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),

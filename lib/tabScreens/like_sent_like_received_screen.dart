@@ -51,7 +51,7 @@ class _LikeSentLikeReceivedScreenState
                     "They Liked", // Changed from "Liked"
                     style: TextStyle(
                       color: isLikeSentTabActive
-                          ? Colors.green
+                          ? Colors.yellow[700]
                           : Colors.blueGrey,
                       fontWeight: isLikeSentTabActive
                           ? FontWeight.bold
@@ -79,7 +79,7 @@ class _LikeSentLikeReceivedScreenState
                     "I Liked", // Changed from "Likes"
                     style: TextStyle(
                       color: !isLikeSentTabActive
-                          ? Colors.green
+                          ? Colors.yellow[700]
                           : Colors.blueGrey,
                       fontWeight: !isLikeSentTabActive
                           ? FontWeight.bold
@@ -178,10 +178,10 @@ class _LikeSentLikeReceivedScreenState
                         child: Text(
                           '${person.name ?? 'N/A'} • ${person.age ?? 'N/A'}',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            color: Colors.blueGrey,
+                            color: Colors.yellow[700],
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
