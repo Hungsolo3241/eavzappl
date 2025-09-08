@@ -27,7 +27,8 @@ class FavouriteSentScreen extends StatelessWidget {
       ),
       body: Obx(() {
         // MODIFIED LINE BELOW
-        final List<Person> favouriteProfiles = profileController.usersProfileList.value.where((person) => person.isFavorite.value).toList();        if (favouriteProfiles.isEmpty) {
+        final List<Person> favouriteProfiles = profileController.usersProfileList.where((person) => person.isFavorite.value).toList();
+        if (favouriteProfiles.isEmpty) {
           return const Center(
             child: Text(
               'You haven\'t favourited anyone yet.',

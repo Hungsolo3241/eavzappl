@@ -466,6 +466,7 @@ class ProfileController extends GetxController {
 
   // --- Profile Viewers Feature Methods ---
   Future<void> recordProfileView(String viewedUserId) async {
+    print("DEBUG: recordProfileView CALLED. Viewed User ID: $viewedUserId, Current User ID: ${FirebaseAuth.instance.currentUser?.uid}"); // Add/modify this line
     String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null || currentUserId == viewedUserId) {
       return;

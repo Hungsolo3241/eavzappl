@@ -21,7 +21,7 @@ class ViewReceivedScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Who Viewed Your Profile', style: TextStyle(color: Colors.blueGrey)),
+        title: const Text('Viewed Your Profile', style: TextStyle(color: Colors.blueGrey)),
         backgroundColor: Colors.black87,
         automaticallyImplyLeading: false, // Assuming this is a main tab
       ),

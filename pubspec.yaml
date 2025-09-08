@@ -45,7 +45,7 @@ dependencies:
   intl_phone_field:
   intl:
   flutter_image_slider:
-  image_cropper:
+  image_cropper: ^9.1.0
   path:
   firebase_app_check:
 

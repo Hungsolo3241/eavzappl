@@ -245,7 +245,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
                                   width: 45,
                                   height: 45,
                                   color: (eachProfileInfo.isFavorite.value) // Use .value for RxBool
-                                      ? null                      // No tint for active state
+                                      ? Colors.yellow[700]                      // No tint for active state
                                       : Colors.blueGrey,
                                 ),
                                 onPressed: () {
@@ -273,7 +273,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
                                     width: 90,
                                     height: 90,
                                     // Color still indicates active/inactive state
-                                    color: canMessage ? Colors.green : Colors.blueGrey.withOpacity(0.5),
+                                    color: canMessage ? Colors.yellow[700] : Colors.blueGrey.withOpacity(0.5),
                                   ),
                                   onPressed: () { // onPressed is no longer null
                                     if (canMessage) {
@@ -313,7 +313,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
                                     break;
                                   case LikeStatus.mutualLike:
                                     likeIconAsset = 'images/full_like.png';
-                                    likeIconColor = null;
+                                    likeIconColor = Colors.yellow[700];
                                     break;
                                   case LikeStatus.none:
                                   default:

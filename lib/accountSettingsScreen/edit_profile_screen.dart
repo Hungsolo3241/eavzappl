@@ -291,7 +291,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             return Center(child: CircularProgressIndicator(value: loadingProgress.expectedTotalBytes != null ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes! : null));
           },
           errorBuilder: (c, e, s) {
-            
+
             return Container(width: 120, height: 120, color: Colors.grey[200], child: Icon(Icons.broken_image, color: Colors.grey[400]));
           });
     }
@@ -472,158 +472,163 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ),);
   }
 
+  // Current file path: C:/dev/flutter_projects/eavzappl/lib/accountSettingsScreen/edit_profile_screen.dart.
+// ... other code from your file ...
+
   @override
   Widget build(BuildContext context) {
     print("Building EditProfileScreen. _currentMainProfileImageUrl: $_currentMainProfileImageUrl");
     final bool isEveOrientation = _currentUserData?.orientation?.toLowerCase() == 'eve';
 
     return Scaffold(
-      appBar: AppBar(
-          title: const Text("Edit Profile"), centerTitle: true,
-          titleTextStyle: const TextStyle(color: Colors.blueGrey, fontSize: 20, fontWeight: FontWeight.bold),
-          iconTheme: const IconThemeData(color: Colors.blueGrey), backgroundColor: Colors.black54,
-          actions: [IconButton(icon: const Icon(Icons.save, color: Colors.blueGrey), onPressed: _isLoading ? null : _saveProfileChanges, tooltip: "Save Changes")]),
-      body: _isLoading && _currentUserData == null
-          ? const Center(child: CircularProgressIndicator(color: Colors.blueGrey))
-          : _currentUserData == null
-          ? const Center(child: Text("Could not load user profile.", style: TextStyle(color: Colors.red, fontSize: 16)))
-          : SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Center(
-                child: Column(
-                  children: [
-                    Text("Main Profile Picture", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
-                    const SizedBox(height: 10),
-                    GestureDetector(
-                      onTap: _pickMainProfileImage,
-                      child: CircleAvatar(
-                        radius: 60,
-                        backgroundColor: Colors.grey.shade700,
-                        backgroundImage: _pickedMainProfileImageFile != null
-                            ? FileImage(_pickedMainProfileImageFile!)
-                            : (_currentMainProfileImageUrl != null && _currentMainProfileImageUrl!.isNotEmpty)
-                            ? NetworkImage(_currentMainProfileImageUrl!)
-                            : null,
-                        child: (_pickedMainProfileImageFile == null && (_currentMainProfileImageUrl == null || _currentMainProfileImageUrl!.isEmpty))
-                            ? Icon(Icons.person, size: 60, color: Colors.grey.shade400)
-                            : null,
-                      ),
+        appBar: AppBar(
+            title: const Text("Edit Profile"), centerTitle: true,
+            titleTextStyle: const TextStyle(color: Colors.blueGrey, fontSize: 20, fontWeight: FontWeight.bold),
+            iconTheme: const IconThemeData(color: Colors.blueGrey), backgroundColor: Colors.black54,
+            actions: [IconButton(icon: const Icon(Icons.save, color: Colors.blueGrey), onPressed: _isLoading ? null : _saveProfileChanges, tooltip: "Save Changes")]),
+        body: _isLoading && _currentUserData == null
+            ? const Center(child: CircularProgressIndicator(color: Colors.blueGrey))
+            : _currentUserData == null
+            ? const Center(child: Text("Could not load user profile.", style: TextStyle(color: Colors.red, fontSize: 16)))
+            : SafeArea( // <----------------------------------------- ONLY THIS LINE ADDED
+          child: SingleChildScrollView( // Existing SingleChildScrollView
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Center(
+                    child: Column(
+                      children: [
+                        Text("Main Profile Picture", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
+                        const SizedBox(height: 10),
+                        GestureDetector(
+                          onTap: _pickMainProfileImage,
+                          child: CircleAvatar(
+                            radius: 60,
+                            backgroundColor: Colors.grey.shade700,
+                            backgroundImage: _pickedMainProfileImageFile != null
+                                ? FileImage(_pickedMainProfileImageFile!)
+                                : (_currentMainProfileImageUrl != null && _currentMainProfileImageUrl!.isNotEmpty)
+                                ? NetworkImage(_currentMainProfileImageUrl!)
+                                : null,
+                            child: (_pickedMainProfileImageFile == null && (_currentMainProfileImageUrl == null || _currentMainProfileImageUrl!.isEmpty))
+                                ? Icon(Icons.person, size: 60, color: Colors.grey.shade400)
+                                : null,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _pickMainProfileImage,
+                          child: const Text("Change Main Photo", style: TextStyle(color: Colors.blueGrey)),
+                        ),
+                      ],
                     ),
-                    TextButton(
-                      onPressed: _pickMainProfileImage,
-                      child: const Text("Change Main Photo", style: TextStyle(color: Colors.blueGrey)),
+                  ),
+                  const SizedBox(height: 20),
+                  Divider(color: Colors.blueGrey, thickness: 2),
+                  const SizedBox(height: 20),
+
+                  Text("Profile Gallery Images", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
+                  const SizedBox(height: 8),
+                  Text("Note: Only upload genuine images of yourself. Misleading profiles (catfishing) may lead to a permanent ban.", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.blueAccent, fontStyle: FontStyle.italic)),
+                  const SizedBox(height: 10),
+                  Wrap(spacing: 8.0, runSpacing: 8.0, alignment: WrapAlignment.center, children: List.generate(5, (index) => _buildGalleryImageSlot(index))),
+                  const SizedBox(height: 24),
+                  Text("Profile Details", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
+                  const SizedBox(height: 16),
+
+                  _buildTextFormField(controller: _nameController, label: "Name", icon: Icons.person, validator: (v) => (v == null || v.trim().isEmpty) ? 'Name cannot be empty' : null),
+                  _buildTextFormField(controller: _ageController, label: "Age", icon: Icons.cake, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], validator: (v) {
+                    if (v == null || v.trim().isEmpty) return null; final age = int.tryParse(v.trim()); if (age == null) return 'Invalid age'; if (age < 18) return 'Must be 18 or older'; if (age > 120) return 'Invalid age'; return null; }),
+                  _buildTextFormField(controller: _phoneController, label: "Phone Number", icon: Icons.phone, keyboardType: TextInputType.phone, validator: (v) { if (v == null || v.trim().isEmpty) return null; if (v.replaceAll(RegExp(r'\\D'), '').length < 7) return 'Enter a valid phone number'; return null; }),
+
+                  _buildDropdownFormField<String>(
+                    label: "Country", icon: Icons.public, value: _selectedCountry,
+                    items: _countriesList.map((country) => DropdownMenuItem(value: country, child: Text(country, style: TextStyle(color: Colors.white70)))).toList(),
+                    onChanged: (newValue) { setState(() {
+                      _selectedCountry = newValue; _selectedProvince = null; _selectedCity = null;
+                      _provincesList = newValue != null ? africanLocations[newValue]!.keys.toList() : [];
+                      _citiesList = []; }); },
+                    validator: (value) => value == null ? 'Please select a country' : null,
+                  ),
+                  _buildDropdownFormField<String>(
+                    label: "Province/State", icon: Icons.landscape, value: _selectedProvince, enabled: _selectedCountry != null,
+                    items: _provincesList.map((province) => DropdownMenuItem(value: province, child: Text(province, style: TextStyle(color: Colors.white70)))).toList(),
+                    onChanged: (newValue) { setState(() {
+                      _selectedProvince = newValue; _selectedCity = null;
+                      _citiesList = (newValue != null && _selectedCountry != null) ? africanLocations[_selectedCountry!]![newValue]! : []; }); },
+                    validator: (value) => _selectedCountry != null && value == null ? 'Please select a province/state' : null,
+                  ),
+                  _buildDropdownFormField<String>(
+                    label: "City", icon: Icons.location_city, value: _selectedCity, enabled: _selectedProvince != null,
+                    items: _citiesList.map((city) => DropdownMenuItem(value: city, child: Text(city, style: TextStyle(color: Colors.white70)))).toList(),
+                    onChanged: (newValue) { setState(() { _selectedCity = newValue; }); },
+                    validator: (value) => _selectedProvince != null && value == null ? 'Please select a city' : null,
+                  ),
+
+                  _buildDropdownFormField<String>( // Ethnicity Dropdown
+                    label: "Ethnicity", icon: Icons.diversity_3, value: _selectedEthnicity,
+                    items: _ethnicityOptions.map((ethnicity) => DropdownMenuItem(value: ethnicity, child: Text(ethnicity, style: TextStyle(color: Colors.white70)))).toList(),
+                    onChanged: (newValue) { setState(() { _selectedEthnicity = newValue; }); },
+                    validator: (value) => null, // Optional: make it required if needed
+                  ),
+
+                  if (isEveOrientation) ...[
+                    _buildDropdownFormField<String>(
+                      label: "I am a...", icon: Icons.work_outline, value: _mainProfessionCategory,
+                      items: _mainProfessionCategoriesList.map((type) => DropdownMenuItem(value: type, child: Text(type, style: TextStyle(color: Colors.white70)))).toList(),
+                      onChanged: (newValue) { setState(() {
+                        _mainProfessionCategory = newValue;
+                        if (newValue != "Professional") {
+                          _professionController.clear();
+                        }
+                      }); },
+                      validator: (value) => value == null ? 'Please select a category' : null,
                     ),
+                    if (_mainProfessionCategory == "Professional")
+                      _buildTextFormField(controller: _professionController, label: "Specific Profession", icon: Icons.business_center,
+                        validator: (value) => (value == null || value.trim().isEmpty) ? 'Please specify your profession' : null,),
+                  ] else ...[
+                    _buildTextFormField(controller: _professionController, label: "Profession", icon: Icons.work, validator: (v) => null),
                   ],
-                ),
+
+                  if (isEveOrientation && _mainProfessionCategory == "Professional") ...[
+                    const SizedBox(height: 24),
+                    Text("Preferred Professional Venues", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.blueGrey, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    ..._professionalVenueOptions.map((venueName) {
+                      return SwitchListTile(
+                          title: Text(venueName, style: TextStyle(color: Colors.white70)),
+                          value: _selectedProfessionalVenues[venueName] ?? false,
+                          onChanged: (bool value) { setState(() { _selectedProfessionalVenues[venueName] = value; }); },
+                          activeColor: Colors.blueAccent, inactiveThumbColor: Colors.grey, inactiveTrackColor: Colors.grey.shade700);
+                    }).toList(),
+                    SwitchListTile(
+                        title: const Text("Other Venue", style: TextStyle(color: Colors.white70)),
+                        value: _professionalVenueOtherSelected,
+                        onChanged: (bool value) { setState(() { _professionalVenueOtherSelected = value; if (!value) _professionalVenueOtherNameController.clear(); }); },
+                        activeColor: Colors.blueAccent, inactiveThumbColor: Colors.grey, inactiveTrackColor: Colors.grey.shade700),
+                    if (_professionalVenueOtherSelected)
+                      _buildTextFormField(controller: _professionalVenueOtherNameController, label: "Specify Other Venue", icon: Icons.storefront,
+                          validator: (value) => (_professionalVenueOtherSelected && (value == null || value.trim().isEmpty)) ? 'Please specify the venue name' : null),
+                  ],
+
+                  const SizedBox(height: 20),
+                  Padding(padding: const EdgeInsets.symmetric(vertical: 8.0), child: Row(children: [
+                    Text("Orientation: ", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.blueGrey, fontWeight: FontWeight.bold)),
+                    Text(_currentUserData?.orientation ?? "Not set", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.blueGrey)),
+                  ],),),
+                  const SizedBox(height: 30),
+                  Center(child: _isLoading ? const CircularProgressIndicator(color: Colors.blueGrey)
+                      : ElevatedButton(onPressed: _saveProfileChanges, style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey, padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15)),
+                    child: const Text("Save Changes", style: TextStyle(fontSize: 16, color: Colors.white)),
+                  ),),
+                ],
               ),
-              const SizedBox(height: 20),
-              Divider(color: Colors.blueGrey, thickness: 2),
-              const SizedBox(height: 20),
-
-              Text("Profile Gallery Images", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
-              const SizedBox(height: 8),
-              Text("Note: Only upload genuine images of yourself. Misleading profiles (catfishing) may lead to a permanent ban.", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.blueAccent, fontStyle: FontStyle.italic)),
-              const SizedBox(height: 10),
-              Wrap(spacing: 8.0, runSpacing: 8.0, alignment: WrapAlignment.center, children: List.generate(5, (index) => _buildGalleryImageSlot(index))),
-              const SizedBox(height: 24),
-              Text("Profile Details", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
-              const SizedBox(height: 16),
-
-              _buildTextFormField(controller: _nameController, label: "Name", icon: Icons.person, validator: (v) => (v == null || v.trim().isEmpty) ? 'Name cannot be empty' : null),
-              _buildTextFormField(controller: _ageController, label: "Age", icon: Icons.cake, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly], validator: (v) {
-                if (v == null || v.trim().isEmpty) return null; final age = int.tryParse(v.trim()); if (age == null) return 'Invalid age'; if (age < 18) return 'Must be 18 or older'; if (age > 120) return 'Invalid age'; return null; }),
-              _buildTextFormField(controller: _phoneController, label: "Phone Number", icon: Icons.phone, keyboardType: TextInputType.phone, validator: (v) { if (v == null || v.trim().isEmpty) return null; if (v.replaceAll(RegExp(r'\\D'), '').length < 7) return 'Enter a valid phone number'; return null; }),
-
-              _buildDropdownFormField<String>(
-                label: "Country", icon: Icons.public, value: _selectedCountry,
-                items: _countriesList.map((country) => DropdownMenuItem(value: country, child: Text(country, style: TextStyle(color: Colors.white70)))).toList(),
-                onChanged: (newValue) { setState(() {
-                  _selectedCountry = newValue; _selectedProvince = null; _selectedCity = null;
-                  _provincesList = newValue != null ? africanLocations[newValue]!.keys.toList() : [];
-                  _citiesList = []; }); },
-                validator: (value) => value == null ? 'Please select a country' : null,
-              ),
-              _buildDropdownFormField<String>(
-                label: "Province/State", icon: Icons.landscape, value: _selectedProvince, enabled: _selectedCountry != null,
-                items: _provincesList.map((province) => DropdownMenuItem(value: province, child: Text(province, style: TextStyle(color: Colors.white70)))).toList(),
-                onChanged: (newValue) { setState(() {
-                  _selectedProvince = newValue; _selectedCity = null;
-                  _citiesList = (newValue != null && _selectedCountry != null) ? africanLocations[_selectedCountry!]![newValue]! : []; }); },
-                validator: (value) => _selectedCountry != null && value == null ? 'Please select a province/state' : null,
-              ),
-              _buildDropdownFormField<String>(
-                label: "City", icon: Icons.location_city, value: _selectedCity, enabled: _selectedProvince != null,
-                items: _citiesList.map((city) => DropdownMenuItem(value: city, child: Text(city, style: TextStyle(color: Colors.white70)))).toList(),
-                onChanged: (newValue) { setState(() { _selectedCity = newValue; }); },
-                validator: (value) => _selectedProvince != null && value == null ? 'Please select a city' : null,
-              ),
-
-              _buildDropdownFormField<String>( // Ethnicity Dropdown
-                label: "Ethnicity", icon: Icons.diversity_3, value: _selectedEthnicity,
-                items: _ethnicityOptions.map((ethnicity) => DropdownMenuItem(value: ethnicity, child: Text(ethnicity, style: TextStyle(color: Colors.white70)))).toList(),
-                onChanged: (newValue) { setState(() { _selectedEthnicity = newValue; }); },
-                validator: (value) => null, // Optional: make it required if needed
-              ),
-
-              if (isEveOrientation) ...[
-                _buildDropdownFormField<String>(
-                  label: "I am a...", icon: Icons.work_outline, value: _mainProfessionCategory,
-                  items: _mainProfessionCategoriesList.map((type) => DropdownMenuItem(value: type, child: Text(type, style: TextStyle(color: Colors.white70)))).toList(),
-                  onChanged: (newValue) { setState(() {
-                    _mainProfessionCategory = newValue;
-                    if (newValue != "Professional") {
-                      _professionController.clear();
-                    }
-                  }); },
-                  validator: (value) => value == null ? 'Please select a category' : null,
-                ),
-                if (_mainProfessionCategory == "Professional")
-                  _buildTextFormField(controller: _professionController, label: "Specific Profession", icon: Icons.business_center,
-                    validator: (value) => (value == null || value.trim().isEmpty) ? 'Please specify your profession' : null,),
-              ] else ...[
-                _buildTextFormField(controller: _professionController, label: "Profession", icon: Icons.work, validator: (v) => null),
-              ],
-
-              if (isEveOrientation && _mainProfessionCategory == "Professional") ...[
-                const SizedBox(height: 24),
-                Text("Preferred Professional Venues", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.blueGrey, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                ..._professionalVenueOptions.map((venueName) {
-                  return SwitchListTile(
-                      title: Text(venueName, style: TextStyle(color: Colors.white70)),
-                      value: _selectedProfessionalVenues[venueName] ?? false,
-                      onChanged: (bool value) { setState(() { _selectedProfessionalVenues[venueName] = value; }); },
-                      activeColor: Colors.blueAccent, inactiveThumbColor: Colors.grey, inactiveTrackColor: Colors.grey.shade700);
-                }).toList(),
-                SwitchListTile(
-                    title: const Text("Other Venue", style: TextStyle(color: Colors.white70)),
-                    value: _professionalVenueOtherSelected,
-                    onChanged: (bool value) { setState(() { _professionalVenueOtherSelected = value; if (!value) _professionalVenueOtherNameController.clear(); }); },
-                    activeColor: Colors.blueAccent, inactiveThumbColor: Colors.grey, inactiveTrackColor: Colors.grey.shade700),
-                if (_professionalVenueOtherSelected)
-                  _buildTextFormField(controller: _professionalVenueOtherNameController, label: "Specify Other Venue", icon: Icons.storefront,
-                      validator: (value) => (_professionalVenueOtherSelected && (value == null || value.trim().isEmpty)) ? 'Please specify the venue name' : null),
-              ],
-
-              const SizedBox(height: 20),
-              Padding(padding: const EdgeInsets.symmetric(vertical: 8.0), child: Row(children: [
-                Text("Orientation: ", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.blueGrey, fontWeight: FontWeight.bold)),
-                Text(_currentUserData?.orientation ?? "Not set", style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.blueGrey)),
-              ],),),
-              const SizedBox(height: 30),
-              Center(child: _isLoading ? const CircularProgressIndicator(color: Colors.blueGrey)
-                  : ElevatedButton(onPressed: _saveProfileChanges, style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey, padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15)),
-                child: const Text("Save Changes", style: TextStyle(fontSize: 16, color: Colors.white)),
-              ),),
-            ],
-          ),
-        ),
-      ),
+            ),
+          ), // <------------------------------------------ AND ITS CORRESPONDING BRACKET
+        )
     );
   }
 }

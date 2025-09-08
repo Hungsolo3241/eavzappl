@@ -37,12 +37,39 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     _pageController = PageController(); // Initialize _pageController here
     // Attempt to find ProfileController, but handle if not found (e.g., during tests or if not set up)
     try {
+      // It's better to assign directly to _profileController if it's not final
       _profileController = Get.find<ProfileController>();
     } catch (e) {
-      print("UserDetailsScreen: ProfileController not found via Get.find(). This might be okay if userID is provided directly or in certain testing scenarios. Error: $e");
-      _profileController = null; // Ensure it's null if not found
+      print(
+          "UserDetailsScreen: ProfileController not found via Get.find(). This might be okay if userID is provided directly or in certain testing scenarios. Error: $e");
+      // _profileController will remain null if not found
     }
+
     _determineEffectiveUserID(); // Determine the user ID to use
+
+    // --- ADDED THIS SECTION ---
+    // Record the profile view after the User ID has been determined
+    // and after the first frame has been built.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Ensure the widget is still mounted, profileController is available,
+      // and we have an effectiveUserID to record.
+      // The recordProfileView method itself will check if it's a self-view.
+      if (mounted && _profileController != null && _effectiveUserID.isNotEmpty) {
+        print(
+            "DEBUG: UserDetailsScreen initState - Attempting to call recordProfileView for User ID: $_effectiveUserID");
+        _profileController!.recordProfileView(_effectiveUserID);
+      } else {
+        if (_profileController == null) {
+          print(
+              "DEBUG: UserDetailsScreen initState - ProfileController is null, cannot record view.");
+        }
+        if (_effectiveUserID.isEmpty) {
+          print(
+              "DEBUG: UserDetailsScreen initState - EffectiveUserID is empty, cannot record view.");
+        }
+      }
+    });
+    // --- END ADDED SECTION ---
   }
 
 
