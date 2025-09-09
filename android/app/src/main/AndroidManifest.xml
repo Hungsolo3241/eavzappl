@@ -2,7 +2,7 @@
     <application
         android:label="eavzappl"
         android:name="${applicationName}"
-        android:icon="@mipmap/icon_logo_new"
+        android:icon="@mipmap/launcher_icon"
         android:roundIcon="@mipmap/icon_logo_new_round">
         <activity
             android:name=".MainActivity"

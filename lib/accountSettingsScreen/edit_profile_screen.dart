@@ -30,12 +30,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String? _mainProfessionCategory;
 
   final List<String> _professionalVenueOptions = [
-    "The Grand Gentlemen's Club - JHB", "Blu Night Revue Bar - Haarties", "Royal Park Hotel - JHB",
-    "XO Lounge - JHB", "Cheeky Tiger Gentlemen's Club - JHB", "The Summit Club  - JHB",
-    "Chivalry Gentlemen's Lounge - JHB", "The Diplomat Club -JHB", "Manhattan - Vaal", "White House - JHB",
-    "Mavericks Revue Bar - CPT", "Stilettos Gentlemen's Club - CPT", "Lush Capetown - CPT", "The Pynk - DBN", "Wonder Lounge - DBN"
+    "The Grand - JHB", "Blu Night Revue Bar - Haarties", "Royal Park - JHB",
+    "The Summit - JHB", "Chivalry Lounge - JHB", "Manhattan - Vaal",
+    "Mavericks Revue Bar - CPT", "Lush Capetown - CPT", "The Pynk - DBN", "Wonder Lounge - DBN"
   ];
-  Map<String, bool> _selectedProfessionalVenues = {};
+  final Map<String, bool> _selectedProfessionalVenues = {};
   bool _professionalVenueOtherSelected = false;
   late TextEditingController _professionalVenueOtherNameController;
 
