@@ -101,11 +101,16 @@ class AuthenticationController extends GetxController
   }
 
   Future<bool> createAccountAndSaveData(String email, String password, File? profileImageFile, Map<String, dynamic> userData) async {
+    UserCredential? credential; // Keep credential in a broader scope
+
     try {
-      UserCredential credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email.trim(),
         password: password.trim(),
       );
+
+      // If Auth user creation itself failed, credential will be null or an exception already thrown.
+      // If we reach here, Auth user was created.
 
       String? downloadUrl;
       if (profileImageFile != null) {
@@ -121,11 +126,11 @@ class AuthenticationController extends GetxController
       firestoreUserData['email'] = email.trim();
       firestoreUserData['profilePhoto'] = downloadUrl ?? "";
 
-      // Convert 'orientation' to lowercase if it exists in the userData map
       if (firestoreUserData.containsKey('orientation') && firestoreUserData['orientation'] is String) {
         firestoreUserData['orientation'] = (firestoreUserData['orientation'] as String).toLowerCase();
       }
 
+      // Attempt to set Firestore data
       await FirebaseFirestore.instance.collection("users")
           .doc(credential.user!.uid)
           .set(firestoreUserData);
@@ -134,6 +139,7 @@ class AuthenticationController extends GetxController
       return true; // Return true on success
 
     } on FirebaseAuthException catch (e) {
+      // This catch is for errors during createUserWithEmailAndPassword
       String errorMessage = "An error occurred. Please try again.";
       if (e.code == 'weak-password') {
         errorMessage = 'The password provided is too weak.';
@@ -143,13 +149,31 @@ class AuthenticationController extends GetxController
         errorMessage = 'The email address is not valid.';
       }
       Get.snackbar("Account Creation Failed", errorMessage, backgroundColor: Colors.blueGrey, colorText: Colors.white);
-      return false; // Return false on FirebaseAuthException
+      return false;
     }
     catch (error) {
-      Get.snackbar("Account Creation Failed", "An unexpected error occurred: ${error.toString()}", backgroundColor: Colors.blueGrey, colorText: Colors.white);
-      return false; // Return false on other errors
+      // This catch is for errors AFTER Auth user creation (e.g., Firestore write, image upload)
+      Get.snackbar("Account Creation Failed", "An unexpected error occurred while saving data: ${error.toString()}", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+
+      // IMPORTANT: Attempt to delete the Auth user if Firestore write failed
+      // IMPORTANT: Attempt to delete the Auth user if Firestore write failed
+      if (credential != null && credential.user != null) { // More explicit check
+        final User user = credential.user!; // This should now be safe
+        try {
+          await user.delete();
+          Get.snackbar("Rollback", "User registration rolled back due to data saving error.", backgroundColor: Colors.orangeAccent, colorText: Colors.white);
+          print("Successfully deleted partially created Auth user: ${user.uid}");
+        } catch (deleteError) {
+          Get.snackbar("Critical Error", "Failed to save data AND failed to rollback user. Please contact support.", backgroundColor: Colors.red, colorText: Colors.white);
+          print("Failed to delete partially created Auth user (UID: ${user.uid}): $deleteError");
+        }
+      }
+
+
+      return false;
     }
   }
+
 
   // Updated createNewUserAccount method
   createNewUserAccount(

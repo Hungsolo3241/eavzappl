@@ -29,50 +29,56 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: BottomNavigationBar(
-        onTap: (indexNumber)
-        {
-          setState(() {
-            screenIndex = indexNumber;
-          });
-        },
-        type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.black,
-          selectedItemColor: Colors.yellow[700],
-          unselectedItemColor: Colors.blueGrey,
-          currentIndex: screenIndex,
-          items: const [
+      bottomNavigationBar: SafeArea(  // Added SafeArea
+        bottom: true,
+        top: false,
+        left: false,
+        right: false,
+        child: BottomNavigationBar(
+          onTap: (indexNumber)
+          {
+            setState(() {
+              screenIndex = indexNumber;
+            });
+          },
+          type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.black,
+            selectedItemColor: Colors.yellow[700],
+            unselectedItemColor: Colors.blueGrey,
+            currentIndex: screenIndex,
+            items: const [
 
-            // Swiping Screen
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: "Home",
-            ),
+              // Swiping Screen
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: "Home",
+              ),
 
-            // Views
-            BottomNavigationBarItem(
-              icon: Icon(Icons.remove_red_eye),
-              label: "Views",
-            ),
+              // Views
+              BottomNavigationBarItem(
+                icon: Icon(Icons.remove_red_eye),
+                label: "Views",
+              ),
 
-            // Favourites
-            BottomNavigationBarItem(
-              icon: Icon(Icons.star),
-              label: "Favourites",
-            ),
+              // Favourites
+              BottomNavigationBarItem(
+                icon: Icon(Icons.star),
+                label: "Favourites",
+              ),
 
-            // Likes
-            BottomNavigationBarItem(
-              icon: Icon(Icons.favorite),
-              label: "Likes",
-            ),
+              // Likes
+              BottomNavigationBarItem(
+                icon: Icon(Icons.favorite),
+                label: "Likes",
+              ),
 
-            // profile
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: "Profile",
-            ),
-          ]
+              // profile
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person),
+                label: "Profile",
+              ),
+            ]
+        ),
       ),
       body: tabScreensList[screenIndex],
     );
