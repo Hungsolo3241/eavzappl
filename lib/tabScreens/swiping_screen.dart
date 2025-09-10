@@ -231,6 +231,8 @@ class _SwipingScreenState extends State<SwipingScreen> {
                                 _buildInfoPill("Greek"),
                               if (eachProfileInfo.smokeSelection == true)
                                 _buildInfoPill("Smokes"),
+                              if (eachProfileInfo.drinkSelection == true) // <-- ADDED LINE
+                                _buildInfoPill("Drinks"),
                             ],
                           ),
                           const SizedBox(height: 8.0),

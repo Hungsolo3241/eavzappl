@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../accountSettingsScreen/user_settings_screen.dart';
 
@@ -188,10 +189,10 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     return genericPlaceholderUrl; // Default generic placeholder
   }
 
-
-  Widget _buildDetailRow(BuildContext context, String label, String? value, {bool isLink = false}) {
+  // MODIFIED _buildDetailRow to include onTap and adjust styling for links
+  Widget _buildDetailRow(BuildContext context, String label, String? value, {bool isLink = false, VoidCallback? onTap}) {
     if (value == null || value.isEmpty) {
-      return const SizedBox.shrink(); // Don't display if value is null or empty
+      return const SizedBox.shrink();
     }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 16.0),
@@ -202,16 +203,20 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
             '$label: ',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.blueGrey, // Consistent color
+              color: Colors.blueGrey,
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              value,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.blueGrey, // Consistent color
-                decoration: isLink ? TextDecoration.underline : null,
+            child: GestureDetector(
+              onTap: onTap,
+              child: Text(
+                value,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: onTap != null ? Colors.blueAccent : Colors.blueGrey, // Make link color distinct
+                  decoration: isLink ? TextDecoration.underline : null,
+                  decorationColor: onTap != null ? Colors.blueAccent : Colors.blueGrey,
+                ),
               ),
             ),
           ),
@@ -223,6 +228,15 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   Widget _buildBooleanDetailRow(BuildContext context, String label, bool? value) {
     if (value == null) return const SizedBox.shrink();
     return _buildDetailRow(context, label, value ? "Yes" : "No");
+  }
+
+  // ADDED _launchUrlFromString method
+  Future<void> _launchUrlFromString(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      Get.snackbar('Error', 'Could not launch $urlString');
+      print('Could not launch $urlString');
+    }
   }
 
 
@@ -390,63 +404,128 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
               fit: StackFit.expand,
               children: <Widget>[
                 Image.asset(
-                  'images/userDetailsBackground.jpeg', // Path to your background image asset
-                  fit: BoxFit.cover, // Cover the entire space
+                  'images/userDetailsBackground.jpeg', // Background image
+                  fit: BoxFit.cover,
                 ),
-                // Original Scrollable Content
                 SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      _buildImageCarousel(sliderImages.isNotEmpty ? sliderImages : [_getDisplayImageUrl(user.profilePhoto, user.orientation)], user.orientation),
-                      _buildSectionTitle(context, "Personal Information"),
-                      _buildDetailRow(context, "Name", user.name),
-                      if (user.age != null) _buildDetailRow(context, "Age", user.age.toString()),
-                      _buildDetailRow(context, "Gender", user.gender),
-                      _buildDetailRow(context, "Email", shouldObscureDetails ? "Protected" : user.email), // Obscure if needed
-                      _buildDetailRow(context, "Phone", shouldObscureDetails ? "Protected" : user.phoneNumber), // Obscure if needed
-                      _buildDetailRow(context, "Country", user.country),
-                      _buildDetailRow(context, "Province", user.province),
-                      _buildDetailRow(context, "City", user.city),
-                      _buildDetailRow(context, "Profession", user.profession),
-                      _buildDetailRow(context, "Ethnicity", user.ethnicity),
-                      _buildDetailRow(context, "Income", user.income),
-                      if (user.professionalVenues != null && user.professionalVenues!.isNotEmpty)
-                        _buildDetailRow(context, "Professional Venues", user.professionalVenues!.join(", ")),
-                      _buildDetailRow(context, "Private Venue", user.otherProfessionalVenue),
-                      if (user.publishedDateTime != null)
-                        _buildDetailRow(context, "Joined", DateFormat.yMMMd().add_jm().format(DateTime.fromMillisecondsSinceEpoch(user.publishedDateTime!))),
+                      // Main Profile Image as a large CircleAvatar
+                      Center(
+                        child: CircleAvatar(
+                          radius: 70, // Larger radius
+                          backgroundColor: Colors.grey.shade700,
+                          backgroundImage: NetworkImage(_getDisplayImageUrl(user.profilePhoto, user.orientation)),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
 
+                      // Name and Age (if available) centered
+                      if (user.name != null && user.name!.isNotEmpty)
+                        Center(
+                          child: Text(
+                            user.age != null ? '${user.name}' : user.name!,
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.yellow[700],
+                              shadows: [Shadow(blurRadius: 2.0, color: Colors.black.withOpacity(0.5), offset: const Offset(1,1))],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      const SizedBox(height: 20),
+
+
+                      // Image Carousel
+                      _buildImageCarousel(sliderImages, user.orientation),
+                      const SizedBox(height: 24),
+
+                      // User Details Section
+                      _buildSectionTitle(context, "About"),
+                      _buildDetailRow(context, "Profession", user.profession),
+                      if (user.orientation?.toLowerCase() == 'eve' && user.professionalVenues != null && user.professionalVenues!.isNotEmpty)
+                        _buildDetailRow(context, "Venues", user.professionalVenues!.join(", ")),
+                      if (user.orientation?.toLowerCase() == 'eve' && user.otherProfessionalVenue != null && user.otherProfessionalVenue!.isNotEmpty)
+                        _buildDetailRow(context, "Other Venue", user.otherProfessionalVenue),
+
+                      _buildDetailRow(context, "Location", [user.city, user.province, user.country].where((s) => s != null && s.isNotEmpty).join(", ")),
+                      _buildDetailRow(context, "Ethnicity", user.ethnicity),
+
+                      // ADDED Tappable Instagram and Twitter links for Eve profiles
+                      if (user.orientation?.toLowerCase() == 'eve') ...[
+                        if (user.instagram != null && user.instagram!.isNotEmpty)
+                          _buildDetailRow(
+                            context,
+                            "Instagram",
+                            "@${user.instagram!}", // Display with @ symbol
+                            isLink: true,
+                            onTap: () => _launchUrlFromString('https://instagram.com/${user.instagram!.replaceAll('@', '')}'), // Remove @ if present for URL
+                          ),
+                        if (user.twitter != null && user.twitter!.isNotEmpty)
+                          _buildDetailRow(
+                            context,
+                            "Twitter",
+                            "@${user.twitter!}", // Display with @ symbol
+                            isLink: true,
+                            onTap: () => _launchUrlFromString('https://twitter.com/${user.twitter!.replaceAll('@', '')}'), // Remove @ if present for URL
+                          ),
+                      ],
+
+                      //Appearance
+                      if (!isAdamProfile || isCurrentUserProfile) ...[
+                        if (!isAdamProfile) ...[
+                          _buildSectionTitle(context, "Appearance"),
+                          _buildDetailRow(context, "Height", user.height),
+                          _buildDetailRow(context, "Body Type", user.bodyType),
+
+
+                        _buildSectionTitle(context, "Background"),
+                        _buildDetailRow(context, "Nationality", user.nationality),
+                        _buildDetailRow(context, "Languages Spoken", user.languages),
+                        ],
+                      ],
+
+                      //Looking for/available for
                       _buildSectionTitle(context, "Looking/Available For"),
                       _buildBooleanDetailRow(context, "Breakfast", user.lookingForBreakfast),
                       _buildBooleanDetailRow(context, "Lunch", user.lookingForLunch),
                       _buildBooleanDetailRow(context, "Dinner", user.lookingForDinner),
                       _buildBooleanDetailRow(context, "Long Term", user.lookingForLongTerm),
 
-                      if (!isAdamProfile || isCurrentUserProfile) ...[
-                        if (!isAdamProfile) ...[
-                          _buildSectionTitle(context, "Appearance"),
-                          _buildDetailRow(context, "Height", user.height),
-                          _buildDetailRow(context, "Body Type", user.bodyType),
-                          _buildSectionTitle(context, "Lifestyle"),
-                          _buildBooleanDetailRow(context, "Drinks Alcohol", user.drinkSelection),
-                          _buildBooleanDetailRow(context, "Smokes", user.smokeSelection),
-                          _buildBooleanDetailRow(context, "Likes Meat", user.meatSelection),
-                          _buildBooleanDetailRow(context, "Likes Greek", user.greekSelection),
-                          _buildBooleanDetailRow(context, "Can Host", user.hostSelection),
-                          _buildBooleanDetailRow(context, "Able to Travel", user.travelSelection),
-                        ],
-                        _buildSectionTitle(context, "Background"),
-                        _buildDetailRow(context, "Nationality", user.nationality),
-                        _buildDetailRow(context, "Languages Spoken", user.languages),
 
-                        if (!isAdamProfile) ...[
-                          _buildSectionTitle(context, "Social Media"),
-                          _buildDetailRow(context, "Instagram", user.instagram, isLink: true),
-                          _buildDetailRow(context, "Twitter", user.twitter, isLink: true),
-                        ]
+
+                      // Lifestyle Section
+                      _buildSectionTitle(context, "Lifestyle"),
+                      _buildBooleanDetailRow(context, "Drinks", user.drinkSelection),
+                      _buildBooleanDetailRow(context, "Smokes", user.smokeSelection),
+                      _buildBooleanDetailRow(context, "Eats Meat", user.meatSelection),
+                      _buildBooleanDetailRow(context, "Greek Life", user.greekSelection),
+                      _buildBooleanDetailRow(context, "Enjoys Hosting", user.hostSelection),
+                      _buildBooleanDetailRow(context, "Travels", user.travelSelection),
+                      if(user.income != null && user.income!.isNotEmpty && !isAdamProfile)
+                        _buildDetailRow(context, "Income Range", user.income),
+
+
+                      // Obscured Details Section (if applicable)
+                      if (shouldObscureDetails && isAdamProfile) ...[
+                        const SizedBox(height: 20),
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(
+                              "Further details are revealed upon mutual connection.",
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: Colors.orangeAccent,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ),
                       ],
-                      const SizedBox(height: 30),
+                      const SizedBox(height: 70), // Space for floating action buttons if any
                     ],
                   ),
                 ),
