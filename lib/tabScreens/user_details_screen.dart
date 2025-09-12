@@ -372,6 +372,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
         bool shouldObscureDetails = !isCurrentUserProfile;
 
         // Determine if the profile being viewed is an 'Adam' type profile
+
         final bool isAdamProfile = user.orientation?.toLowerCase() == 'adam';
 
         return Scaffold(

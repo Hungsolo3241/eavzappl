@@ -122,11 +122,23 @@ class ProfileController extends GetxController {
 
     // Apply Profession Filter
     if (filters.profession != null && filters.profession != "Any") {
-      filteredList = filteredList
-          .where((person) =>
-      person.profession?.toLowerCase() ==
-          filters.profession!.toLowerCase())
-          .toList();
+      String filterProfessionLower = filters.profession!.toLowerCase();
+
+      if (filterProfessionLower == "professional") {
+        // If filtering for "Professional" category
+        filteredList = filteredList.where((person) {
+          String? personProfessionLower = person.profession?.toLowerCase();
+          // Match if profession is not null, not empty, and not "student" or "freelancer"
+          return personProfessionLower != null &&
+                 personProfessionLower.isNotEmpty &&
+                 personProfessionLower != "student" &&
+                 personProfessionLower != "freelancer";
+        }).toList();
+      } else {
+        // Existing behavior for exact matches (e.g., "Student", "Freelancer", or a specific typed profession)
+        filteredList = filteredList.where((person) =>
+          person.profession?.toLowerCase() == filterProfessionLower).toList();
+      }
     }
 
     // Apply Country Filter
@@ -459,81 +471,69 @@ class ProfileController extends GetxController {
       allUsersProfileList.clear();
       usersProfileList.clear();
       currentUserProfile.value = null;
-      _currentUserOrientation.value = null;
+      _currentUserOrientation.value = null; // Correctly assigns null
     }
   }
-
 
   // --- Profile Viewers Feature Methods ---
-  Future<void> recordProfileView(String viewedUserId) async {
-    print("DEBUG: recordProfileView CALLED. Viewed User ID: $viewedUserId, Current User ID: ${FirebaseAuth.instance.currentUser?.uid}"); // Add/modify this line
-    String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUserId == null || currentUserId == viewedUserId) {
-      return;
-    }
-    try {
-      await FirebaseFirestore.instance
-          .collection("users")
-          .doc(viewedUserId)
-          .collection(profileViewersSubCollection)
-          .doc(currentUserId)
-          .set({'viewedAt': FieldValue.serverTimestamp()});
-      print(
-          "ProfileController: User $currentUserId viewed profile $viewedUserId.");
-    } catch (e) {
-      print("ProfileController: Error recording profile view for $viewedUserId: $e");
-    }
-  }
-
   void _listenToUsersWhoViewedMe(String currentUserId) {
     _usersWhoViewedMeSubscription?.cancel();
     _usersWhoViewedMeSubscription = FirebaseFirestore.instance
         .collection("users")
         .doc(currentUserId)
         .collection(profileViewersSubCollection)
+        .orderBy("lastViewed", descending: true)
         .snapshots()
         .asyncMap((snapshot) async {
-      List<String> viewerUids = [];
-
-      for (var doc in snapshot.docs) {
-        var data = doc.data();
-        Timestamp? timestamp = data['viewedAt'] as Timestamp?;
-        if (timestamp != null) {
-          DateTime viewedAt = timestamp.toDate();
-          if (DateTime.now().difference(viewedAt).inHours <= 36) {
-            viewerUids.add(doc.id);
-          } else {
-            print("ProfileController: Expired view from ${doc.id}, not adding.");
-          }
-        }
-      }
-
+      List<String> viewerIds = snapshot.docs.map((doc) => doc.id).toList();
       List<Person> viewers = [];
-      if (viewerUids.isNotEmpty) {
-        for (String uid in viewerUids) { // Iterate directly over UIDs
-          try {
-            DocumentSnapshot userDoc = await FirebaseFirestore.instance
-                .collection("users")
-                .doc(uid)
-                .get();
-            if (userDoc.exists) {
-              Person person = Person.fromDataSnapshot(userDoc);
-              viewers.add(person);
-            }
-          } catch (e) {
-            print("ProfileController: Error fetching profile for viewer $uid: $e");
+      for (String id in viewerIds) {
+        if (id == currentUserId) continue; // Skip self-view
+        try {
+          DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection("users").doc(id).get();
+          if (userDoc.exists) {
+            viewers.add(Person.fromDataSnapshot(userDoc));
           }
+        } catch (e) {
+          print("ProfileController: Error fetching viewer profile $id: $e");
         }
       }
       return viewers;
-    }).listen((fetchedViewers) {
-      usersWhoViewedMeList.assignAll(fetchedViewers); // MODIFIED
-      print(
-          "ProfileController: Updated list of users who viewed me: ${usersWhoViewedMeList.length} viewers.");
+    }).listen((viewersList) {
+      usersWhoViewedMeList.assignAll(viewersList);
+      print("ProfileController: Users who viewed me list updated. Count: ${usersWhoViewedMeList.length}");
     }, onError: (error) {
-      print(
-          "ProfileController: Error listening to users who viewed me: $error");
-      usersWhoViewedMeList.clear();
+      print("ProfileController: Error listening to users who viewed me: $error");
     });
   }
+
+  Future<void> recordProfileView(String viewedUserId) async {
+    String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null || currentUserId == viewedUserId) {
+      // Don't record if no user is logged in or if it's a self-view
+      if (currentUserId == viewedUserId) {
+        print("ProfileController: Self-view detected for $viewedUserId. Not recording.");
+      } else {
+        print("ProfileController: No current user ID. Cannot record profile view for $viewedUserId.");
+      }
+      return;
+    }
+
+    try {
+      await FirebaseFirestore.instance
+          .collection("users")
+          .doc(viewedUserId) // The user whose profile was viewed
+          .collection(profileViewersSubCollection) // Subcollection on their document
+          .doc(currentUserId) // Document ID is the UID of the viewer
+          .set({
+        "lastViewed": FieldValue.serverTimestamp(),
+        // Potentially add viewer's name/photo for quick display on the viewed user's side,
+        // but this adds data duplication. For now, just timestamp.
+      });
+      print("ProfileController: Profile view recorded. User $currentUserId viewed $viewedUserId.");
+    } catch (e) {
+      print("ProfileController: Error recording profile view for $viewedUserId by $currentUserId: $e");
+    }
+  }
+
 }
