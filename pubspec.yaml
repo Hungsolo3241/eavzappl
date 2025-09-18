@@ -49,6 +49,10 @@ dependencies:
   path:
   firebase_app_check:
   url_launcher:
+  http:
+  googleapis:
+  googleapis_auth:
+#  flutter_local_notifications:
 
 dev_dependencies:
   flutter_test:

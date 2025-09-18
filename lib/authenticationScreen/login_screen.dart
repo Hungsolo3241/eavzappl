@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:eavzappl/authenticationScreen/registration_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:eavzappl/widgets/custom_text_field_widget.dart';
@@ -102,7 +103,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: 300,
                   height: 275,
                 ),
-                const SizedBox(height: 80),
+                const SizedBox(
+                  height: 20,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "  adam",
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.black12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 4),
                 Text(
                   "  come inside",
                   style: TextStyle(
@@ -111,11 +125,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  "  eve",
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.black12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 const SizedBox(
-                  height: 40,
+                  height: 20,
                 ),
                 SizedBox(
-                  width: MediaQuery.of(context).size.width - 40,
+                  width: math.max(0, MediaQuery.of(context).size.width - 40),
                   height: 45,
                   child: CustomTextFieldWidget(
                     editingController: emailController,
@@ -128,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: 20,
                 ),
                 SizedBox(
-                  width: MediaQuery.of(context).size.width - 40,
+                  width: math.max(0, MediaQuery.of(context).size.width - 40),
                   height: 45,
                   child: CustomTextFieldWidget(
                     editingController: passwordController,
@@ -141,7 +164,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   height: 20,
                 ),
                 Container(
-                  width: MediaQuery.of(context).size.width - 40,
+                  width: math.max(0, MediaQuery.of(context).size.width - 40),
                   height: 35,
                   decoration: const BoxDecoration(
                     color: Colors.grey,
@@ -170,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      "Don't have an account?",
+                      "Don\'t have an account?",
                       style: TextStyle(
                         color: Colors.blueGrey,
                         fontSize: 18,
@@ -199,9 +222,9 @@ class _LoginScreenState extends State<LoginScreen> {
             const Positioned.fill(
               child: SplashScreen(),
             ),
+          const SizedBox(height: 30,),
         ],
       ),
     );
   }
 }
-

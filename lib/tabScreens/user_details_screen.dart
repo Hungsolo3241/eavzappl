@@ -423,11 +423,11 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Name and Age (if available) centered
+                      // Name and Age Section
                       if (user.name != null && user.name!.isNotEmpty)
                         Center(
                           child: Text(
-                            user.age != null ? '${user.name}' : user.name!,
+                            user.age != null ? '${user.name} ⸰ ${user.age}' : user.name!,
                             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.yellow[700],
@@ -510,22 +510,22 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
 
 
                       // Obscured Details Section (if applicable)
-                      if (shouldObscureDetails && isAdamProfile) ...[
-                        const SizedBox(height: 20),
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Text(
-                              "Further details are revealed upon mutual connection.",
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: Colors.orangeAccent,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      // if (shouldObscureDetails && isAdamProfile) ...[
+                      //   const SizedBox(height: 20),
+                      //   Center(
+                      //     child: Padding(
+                      //       padding: const EdgeInsets.all(16.0),
+                      //       child: Text(
+                      //         "Further details are revealed upon mutual connection.",
+                      //         textAlign: TextAlign.center,
+                      //         style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      //           color: Colors.orangeAccent,
+                      //           fontStyle: FontStyle.italic,
+                      //         ),
+                      //       ),
+                      //     ),
+                      //   ),
+                      // ],
                       const SizedBox(height: 70), // Space for floating action buttons if any
                     ],
                   ),

@@ -1501,10 +1501,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         ),
                         TextButton(
                           onPressed: () {
-                            // Changed from HomeScreen to LoginScreen for "Already have an account?"
                             Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
                           },
-                          child: const Text(
+                          child: Text(
                             "Login",
                             style: TextStyle(
                               fontSize: 16,

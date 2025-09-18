@@ -29,7 +29,7 @@ class ViewReceivedScreen extends StatelessWidget {
         if (profileController.usersWhoViewedMeList.isEmpty) {
           return const Center(
             child: Text(
-              'No one has viewed your profile yet.',
+              'No one has viewed your profile in the last 36hrs.',
               style: TextStyle(fontSize: 18, color: Colors.blueGrey),
               textAlign: TextAlign.center,
             ),

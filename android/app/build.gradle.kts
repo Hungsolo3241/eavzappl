@@ -9,7 +9,8 @@ plugins {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version")
-    implementation("com.google.android.material:material:1.10.0")
+    implementation("com.google.android.material:material:1.13.0")
+    coreLibraryDesugaring ("com.android.tools:desugar_jdk_libs:2.0.4") // Or the latest version
     // Add other dependencies here
 }
 
@@ -22,6 +23,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+
     }
 
     // Corrected Kotlin options
