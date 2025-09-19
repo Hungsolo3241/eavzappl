@@ -47,8 +47,7 @@ class ProfileController extends GetxController {
             usersWhoViewedMeList.clear();
             activeFilters.value = FilterPreferences();
           } else {
-            print(
-                "ProfileController: User is signed in! UID: ${user.uid}. Initializing/Refreshing profiles.");
+            print("ProfileController: User is signed in! UID: ${user.uid}. Initializing/Refreshing profiles.");
             _fetchAndStreamUserFavorites(user.uid);
             _listenToUsersWhoViewedMe(user.uid);
             _initializeAndStreamProfiles();
@@ -317,11 +316,15 @@ class ProfileController extends GetxController {
     }
 
     Person? targetPerson = allUsersProfileList.firstWhereOrNull((p) => p.uid == targetUserId);
+    Person? currentUserData = currentUserProfile.value; // From onInit 
 
     if (targetPerson == null) {
-      print(
-          "ProfileController Warning: Person $targetUserId not found for like toggle.");
+      print("ProfileController Warning: Person $targetUserId not found for like toggle.");
       return;
+    }
+    // currentUserData might be null if not fetched yet, handle gracefully for names
+    if (currentUserData == null) {
+        print("ProfileController Warning: Current user data (currentUserProfile) is null. Usernames for notification might be generic.");
     }
 
     DocumentReference currentUserLikesTargetRef = FirebaseFirestore.instance
@@ -330,53 +333,86 @@ class ProfileController extends GetxController {
         .collection("likesSent")
         .doc(targetUserId);
 
-    DocumentReference targetLikesCurrentUserRef = FirebaseFirestore.instance
-        .collection("users")
-        .doc(targetUserId)
-        .collection("likesSent")
-        .doc(currentUserId);
+    // Variable to determine if the operation on "likesSent" was a like or unlike
+    bool isLikingOperationInLikesSent = false;
 
     try {
+      // Transaction for 'likesSent' to keep existing app logic consistent
       await FirebaseFirestore.instance.runTransaction((transaction) async {
-        DocumentSnapshot currentUserLikesTargetSnap =
-        await transaction.get(currentUserLikesTargetRef);
-        DocumentSnapshot targetLikesCurrentUserSnap =
-        await transaction.get(targetLikesCurrentUserRef);
+        DocumentSnapshot currentUserLikesTargetSnap = await transaction.get(currentUserLikesTargetRef);
+        // DocumentSnapshot targetLikesCurrentUserSnap = await transaction.get(targetLikesCurrentUserRef); // Not directly needed for this transaction's write logic
 
         if (currentUserLikesTargetSnap.exists) {
+          // --- USER IS UNLIKING (in likesSent) ---
           transaction.delete(currentUserLikesTargetRef);
-          if (targetLikesCurrentUserSnap.exists) {
-            targetPerson.likeStatus.value = LikeStatus.targetUserLikedCurrentUser;
-          } else {
-            targetPerson.likeStatus.value = LikeStatus.none;
-          }
-          print("ProfileController: User $currentUserId unliked $targetUserId.");
+          isLikingOperationInLikesSent = false; // This was an unlike action for likesSent
+          print("ProfileController: User $currentUserId unliked $targetUserId (from likesSent).");
+          // REMOVED: Direct update to targetPerson.likeStatus.value, will be handled by _updateInitialLikeStatusForPerson
         } else {
-          transaction.set(
-              currentUserLikesTargetRef, {'likedAt': FieldValue.serverTimestamp()});
-          if (targetLikesCurrentUserSnap.exists) {
-            targetPerson.likeStatus.value = LikeStatus.mutualLike;
-            print(
-                "ProfileController: User $currentUserId liked $targetUserId. It's a MUTUAL like!");
-          } else {
-            targetPerson.likeStatus.value = LikeStatus.currentUserLiked;
-            print(
-                "ProfileController: User $currentUserId liked $targetUserId. Waiting for target to like back.");
-          }
+          // --- USER IS LIKING (in likesSent) ---
+          transaction.set(currentUserLikesTargetRef, {'likedAt': FieldValue.serverTimestamp()});
+          isLikingOperationInLikesSent = true; // This was a like action for likesSent
+          print("ProfileController: User $currentUserId liked $targetUserId (to likesSent).");
+          // REMOVED: Direct update to targetPerson.likeStatus.value, will be handled by _updateInitialLikeStatusForPerson
         }
       });
+
+      // --- After the transaction for likesSent completes ---
+
+      // Perform operations on the top-level 'likes' collection for Cloud Function interaction
+      if (isLikingOperationInLikesSent) {
+        // --- THIS WAS A "LIKE" OPERATION IN LIKESSENT ---
+        DocumentReference topLevelLikeDocRef = FirebaseFirestore.instance.collection("likes").doc(); // Auto-ID
+        final likeDataForCloudFunction = {
+          'likingUserId': currentUserId,
+          'likingUserName': currentUserData?.name ?? 'Someone', // Fallback name
+          'likedUserId': targetUserId,
+          'likedUserName': targetPerson.name ?? 'Someone', // Fallback name
+          'timestamp': FieldValue.serverTimestamp(),
+          'status': 'active', // Important for the Cloud Function query
+          'likeId': topLevelLikeDocRef.id // Store the doc ID within the doc itself
+        };
+        await topLevelLikeDocRef.set(likeDataForCloudFunction);
+        print("ProfileController: Recorded like in top-level 'likes' collection (ID: ${topLevelLikeDocRef.id}) for Cloud Function trigger.");
+      } else {
+        // --- THIS WAS AN "UNLIKE" OPERATION IN LIKESSENT ---
+        // Mark the corresponding like in the top-level 'likes' collection as "inactive"
+        QuerySnapshot likeQuery = await FirebaseFirestore.instance.collection("likes")
+          .where("likingUserId", isEqualTo: currentUserId)
+          .where("likedUserId", isEqualTo: targetUserId)
+          .where("status", isEqualTo: "active") // Find the active like
+          .limit(1).get();
+
+        if (likeQuery.docs.isNotEmpty) {
+          await likeQuery.docs.first.reference.update({
+            "status": "inactive",
+            "unlikedAt": FieldValue.serverTimestamp()
+          });
+          print("ProfileController: Marked like as 'inactive' in top-level 'likes' collection for $currentUserId -> $targetUserId.");
+        } else {
+          print("ProfileController: No active like found in top-level 'likes' collection to mark as inactive for $currentUserId -> $targetUserId.");
+        }
+      }
+      // ADDED: Call _updateInitialLikeStatusForPerson to refresh UI based on 'likesSent'
+      // This ensures your in-app logic remains consistent with its primary source of truth for UI.
+      await _updateInitialLikeStatusForPerson(targetPerson, currentUserId);
+
     } catch (e) {
-      print(
-          "ProfileController: Error in toggleLike transaction for $targetUserId: $e");
-      // Optionally, revert optimistic UI update if any
+      print("ProfileController: Error in toggleLike operation for $targetUserId: $e");
+      // Optionally, revert optimistic UI update if any, or re-fetch like status
+      // For robustness, consider calling _updateInitialLikeStatusForPerson here too if an error occurs
+      // after the transaction but before the top-level like operations, or if the top-level ops fail.
+      // However, the most critical part is that _updateInitialLikeStatusForPerson runs on successful completion.
+       if (targetPerson != null && currentUserId != null) {
+        await _updateInitialLikeStatusForPerson(targetPerson, currentUserId);
+      }
     }
   }
 
   Future<void> _initializeAndStreamProfiles() async {
     String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) {
-      print(
-          "ProfileController: _initializeAndStreamProfiles called but user is null.");
+      print("ProfileController: _initializeAndStreamProfiles called but user is null.");
       allUsersProfileList.clear();
       usersProfileList.clear();
       currentUserProfile.value = null;
@@ -394,8 +430,7 @@ class ProfileController extends GetxController {
           .get();
 
       if (!currentUserDoc.exists || currentUserDoc.data() == null) {
-        print(
-            "ProfileController: Current user document ($currentUserId) not found or has no data.");
+        print("ProfileController: Current user document ($currentUserId) not found or has no data.");
         allUsersProfileList.clear();
         usersProfileList.clear();
         return;

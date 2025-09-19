@@ -3,7 +3,8 @@
         android:label="eavzappl"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
-        android:roundIcon="@mipmap/icon_logo_new_round">
+        android:roundIcon="@mipmap/icon_logo_new_round"
+        android:enableOnBackInvokedCallback="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"
