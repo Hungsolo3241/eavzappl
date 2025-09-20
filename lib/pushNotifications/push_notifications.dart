@@ -8,16 +8,16 @@ import 'package:flutter/material.dart';
 // usually in your main.dart file, and registered with
 // FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 // before runApp().
-/*
+
 @pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(); // Ensure Firebase is initialized here too
   print("Handling a background message: ${message.messageId}");
   print("Background message data: ${message.data}");
   // If you want to show a local notification for background messages (not when app is terminated)
   // you might need a local notification plugin here too.
 }
-*/
+
 
 class PushNotifications {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;

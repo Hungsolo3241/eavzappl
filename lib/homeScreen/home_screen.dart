@@ -1,3 +1,4 @@
+import 'package:eavzappl/pushNotifications/push_notifications.dart';
 import 'package:flutter/material.dart';
 
 import '../tabScreens/favourite_sent_screen.dart';
@@ -17,6 +18,8 @@ class _HomeScreenState extends State<HomeScreen>
 {
   int screenIndex = 0;
 
+  final PushNotifications _pushNotifications = PushNotifications();
+
   List tabScreensList =
   [
     SwipingScreen(),
@@ -25,6 +28,16 @@ class _HomeScreenState extends State<HomeScreen>
     LikeSentLikeReceivedScreen(),
     UserDetailsScreen(userID: '')
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeNotifications();
+  }
+
+  Future<void> _initializeNotifications() async {
+    await _pushNotifications.initialize(context);
+  }
 
   @override
   Widget build(BuildContext context) {

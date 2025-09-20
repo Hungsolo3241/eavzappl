@@ -7,19 +7,18 @@ import 'package:eavzappl/controllers/authentication_controller.dart';
 import 'package:eavzappl/controllers/profile_controller.dart';
 import 'homeScreen/home_screen.dart';
 import 'package:flutter/services.dart';
+import 'package:eavzappl/pushNotifications/push_notifications.dart' as push_notifications_service;
+import 'package:firebase_messaging/firebase_messaging.dart';
 
-// Import App Check
+
 import 'package:firebase_app_check/firebase_app_check.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Simplest Firebase Initialization.
-  // This relies on your project's `google-services.json` (for Android)
-  // or `GoogleService-Info.plist` (for iOS) being correctly set up
-  // and providing all necessary Firebase options.
-  // The Firebase SDK should handle cases where native initialization already occurred.
   await Firebase.initializeApp();
+
+  FirebaseMessaging.onBackgroundMessage(push_notifications_service.firebaseMessagingBackgroundHandler);
 
   // Activate Firebase App Check AFTER Firebase.initializeApp()
   try {
@@ -79,13 +78,6 @@ class MyApp extends StatelessWidget {
             );
           }
 // ...
-
-          // ...
-          if (snapshot.hasData && snapshot.data != null) {
-            return const HomeScreen();
-          } else {
-            return const LoginScreen();
-          }
         },
       ),
       theme: ThemeData.dark().copyWith(
