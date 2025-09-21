@@ -17,6 +17,10 @@ class SwipingScreen extends StatefulWidget {
 class _SwipingScreenState extends State<SwipingScreen> {
   final ProfileController profileController = Get.put(ProfileController());
 
+  // Loading states
+  final RxBool _isLiking = false.obs;
+  final RxBool _isFavoriting = false.obs;
+
   // Placeholder URLs
   final String evePlaceholderUrl =
       'https://firebasestorage.googleapis.com/v0/b/eavzappl-32891.appspot.com/o/placeholder%2Feves_avatar.jpeg?alt=media&token=75b9c3f5-72c1-42db-be5c-471cc0d88c05';
@@ -240,31 +244,67 @@ class _SwipingScreenState extends State<SwipingScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               // Favorite Button - MODIFIED with Obx and .value
+                              // Favorite Button
                               Obx(() => IconButton(
-                                icon: Image.asset(
-                                  (eachProfileInfo.isFavorite.value) // Use .value for RxBool
+                                icon: _isFavoriting.value // Check the loading state
+                                    ? SizedBox( // If loading, show CircularProgressIndicator
+                                  width: 40,
+                                  height: 40,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.0,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blueGrey),
+                                    ),
+                                  ),
+                                )
+                                    : Image.asset( // If not loading, show the image
+                                  eachProfileInfo.isFavorite.value // CORRECTED
                                       ? 'images/full_fave.png'
                                       : 'images/default_fave.png',
                                   width: 40,
                                   height: 40,
-                                  color: (eachProfileInfo.isFavorite.value) // Use .value for RxBool
-                                      ? Colors.yellow[700]                      // No tint for active state
-                                      : Colors.blueGrey,
+                                  color: eachProfileInfo.isFavorite.value ? Colors.yellow[700] : Colors.blueGrey, // CORRECTED
                                 ),
-                                onPressed: () {
-                                  print("SwipingScreen: Favorite button pressed for ${eachProfileInfo.name}, UID: ${eachProfileInfo.uid}, current isFavorite: ${eachProfileInfo.isFavorite.value}"); // Use .value
+                                onPressed: _isFavoriting.value
+                                    ? null
+                                    : () async {
+                                  print(
+                                      "SwipingScreen: Favorite button pressed for ${eachProfileInfo.name}, UID: ${eachProfileInfo.uid}, current isFavorite: ${eachProfileInfo.isFavorite.value}");
                                   if (eachProfileInfo.uid != null) {
-                                    profileController.toggleFavoriteStatus(eachProfileInfo.uid!);
+                                    _isFavoriting.value = true; // Start loading
+                                    try {
+                                      // Assuming toggleFavoriteStatus returns the new favorite status (bool)
+                                      final newFavoriteStatus = await profileController
+                                          .toggleFavoriteStatus(eachProfileInfo.uid!);
+                                      // Update the local Person object's observable.
+                                      // This is important if ProfileController doesn't directly update
+                                      // the isFavorite property of the Person objects in its lists
+                                      // in a way that GetX automatically picks up for this specific instance.
+                                      // If toggleFavoriteStatus updates the underlying list item reactively,
+                                      // this explicit update might be redundant but usually harmless.
+                                      eachProfileInfo.isFavorite.value = newFavoriteStatus;
+                                    } catch (e) {
+                                      Get.snackbar("Error",
+                                          "Failed to update favorite: ${e.toString()}",
+                                          backgroundColor: Colors.redAccent,
+                                          colorText: Colors.white,
+                                          snackPosition: SnackPosition.BOTTOM);
+                                      print(
+                                          'Error updating favorite for ${eachProfileInfo.name}: $e');
+                                    } finally {
+                                      _isFavoriting.value = false; // Stop loading
+                                    }
                                   } else {
-                                    Get.snackbar(
-                                        "Error",
+                                    Get.snackbar("Error",
                                         "Cannot update favorite status: User ID is missing.",
                                         backgroundColor: Colors.redAccent,
-                                        colorText: Colors.white
-                                    );
-                                    print('Error: Favorite button tapped but UID is null for ${eachProfileInfo.name}');
+                                        colorText: Colors.white,
+                                        snackPosition: SnackPosition.BOTTOM);
+                                    print(
+                                        'Error: Favorite button tapped but UID is null for ${eachProfileInfo.name}');
                                   }
                                 },
+
                                 tooltip: 'Favorite',
                               )),
 
@@ -347,13 +387,15 @@ class _SwipingScreenState extends State<SwipingScreen> {
                                 );
                               }),
 
+                              // Like Button (added within the Row of action buttons)
                               Obx(() {
                                 String likeIconAsset;
                                 Color? likeIconColor;
 
+                                // Determine like icon based on like status
                                 switch (eachProfileInfo.likeStatus.value) {
                                   case LikeStatus.currentUserLiked:
-                                  case LikeStatus.targetUserLikedCurrentUser: // MODIFIED - Added this case
+                                  case LikeStatus.targetUserLikedCurrentUser:
                                     likeIconAsset = 'images/half_like.png';
                                     likeIconColor = null;
                                     break;
@@ -369,22 +411,52 @@ class _SwipingScreenState extends State<SwipingScreen> {
                                 }
 
                                 return IconButton(
-                                  icon: Image.asset(
+                                  icon: _isLiking.value // Check the loading state
+                                      ? SizedBox( // If loading, show CircularProgressIndicator
+                                    width: 40,
+                                    height: 40,
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.0,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blueGrey),
+                                      ),
+                                    ),
+                                  )
+                                      : Image.asset( // If not loading, show the image
                                     likeIconAsset,
                                     width: 40,
                                     height: 40,
                                     color: likeIconColor,
                                   ),
-                                  onPressed: () {
+                                  onPressed: _isLiking.value
+                                      ? null // Disable if loading
+                                      : () async {
                                     if (eachProfileInfo.uid != null) {
-                                      print('Like button tapped for ${eachProfileInfo.name}, UID: ${eachProfileInfo.uid}, current status: ${eachProfileInfo.likeStatus.value}');
-                                      profileController.toggleLike(eachProfileInfo.uid!);
+                                      _isLiking.value = true; // Start loading
+                                      try {
+                                        // Assuming toggleLike returns the new LikeStatus
+                                        final newLikeStatus = await profileController.toggleLike(eachProfileInfo.uid!);
+                                        // Update the local Person object's observable LikeStatus
+                                        eachProfileInfo.likeStatus.value = newLikeStatus;
+                                      } catch (e) {
+                                        Get.snackbar(
+                                          "Error",
+                                          "Failed to process like: ${e.toString()}",
+                                          backgroundColor: Colors.redAccent,
+                                          colorText: Colors.white,
+                                          snackPosition: SnackPosition.BOTTOM,
+                                        );
+                                        print('Error processing like for ${eachProfileInfo.name}: $e');
+                                      } finally {
+                                        _isLiking.value = false; // Stop loading
+                                      }
                                     } else {
                                       Get.snackbar(
-                                          "Error",
-                                          "Cannot process like: User ID is missing.",
-                                          backgroundColor: Colors.redAccent,
-                                          colorText: Colors.white
+                                        "Error",
+                                        "Cannot process like: User ID is missing.",
+                                        backgroundColor: Colors.redAccent,
+                                        colorText: Colors.white,
+                                        snackPosition: SnackPosition.BOTTOM,
                                       );
                                       print('Error: Like button tapped but UID is null for ${eachProfileInfo.name}');
                                     }
@@ -392,6 +464,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
                                   tooltip: 'Like',
                                 );
                               }),
+
                             ],
                           ),
                           const SizedBox(height: 16.0),

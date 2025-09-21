@@ -217,12 +217,15 @@ class ProfileController extends GetxController {
     }
   }
 
-  Future<void> toggleFavoriteStatus(String personIdToToggle) async {
+  Future<bool> toggleFavoriteStatus(String personIdToToggle) async {
     String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) {
       print(
           "ProfileController Error: Current user is null. Cannot toggle favorite.");
-      return;
+      // It's important to return a sensible default or throw an error based on your app's needs.
+      // Returning the current status if person is found, else false.
+      final personInList = allUsersProfileList.firstWhereOrNull((p) => p.uid == personIdToToggle);
+      return personInList?.isFavorite.value ?? false;
     }
 
     DocumentReference favoriteDocRef = FirebaseFirestore.instance
@@ -231,39 +234,41 @@ class ProfileController extends GetxController {
         .collection("userFavorites")
         .doc(personIdToToggle);
 
-    final personDoc = await favoriteDocRef.get();
     bool newFavoriteState;
 
-    final int personIndexInAll =
-    allUsersProfileList.indexWhere((p) => p.uid == personIdToToggle);
-    // No need to find in usersProfileList separately as it's derived from allUsersProfileList
-    // and isFavorite is on the Person object itself.
+    try {
+      final personDoc = await favoriteDocRef.get();
+      final int personIndexInAll =
+          allUsersProfileList.indexWhere((p) => p.uid == personIdToToggle);
 
-    if (personDoc.exists) {
-      await favoriteDocRef.delete();
-      newFavoriteState = false;
-      print(
-          "ProfileController: User $personIdToToggle removed from favorites for $currentUserId");
-    } else {
-      await favoriteDocRef.set({'favoritedAt': FieldValue.serverTimestamp()});
-      newFavoriteState = true;
-      print(
-          "ProfileController: User $personIdToToggle added to favorites for $currentUserId");
-    }
+      if (personDoc.exists) {
+        await favoriteDocRef.delete();
+        newFavoriteState = false;
+        print(
+            "ProfileController: User $personIdToToggle removed from favorites for $currentUserId");
+      } else {
+        await favoriteDocRef.set({'favoritedAt': FieldValue.serverTimestamp()});
+        newFavoriteState = true;
+        print(
+            "ProfileController: User $personIdToToggle added to favorites for $currentUserId");
+      }
 
-    if (personIndexInAll != -1) {
-      allUsersProfileList[personIndexInAll].isFavorite.value = newFavoriteState;
-      // UI should react because Person.isFavorite is an RxBool
-      // and SwipingScreen's Obx listens to it.
-      // Re-filtering might be needed if favorite status impacts filtering criteria (not currently the case)
-      // _updateFavoriteStatusInProfileList(); // Call this to ensure usersProfileList is also in sync
-      usersProfileList.assignAll(filteredUsersProfileList); // Keep filtered list in sync
+      if (personIndexInAll != -1) {
+        allUsersProfileList[personIndexInAll].isFavorite.value = newFavoriteState;
+        usersProfileList.assignAll(filteredUsersProfileList); // Keep filtered list in sync
+      }
+      // favoritedUserIds will be updated by the stream in _fetchAndStreamUserFavorites.
+      return newFavoriteState;
+    } catch (e) {
+      print("ProfileController: Error toggling favorite status for $personIdToToggle: $e");
+      // In case of error, return the last known state from the list, or false if not found.
+      final personInList = allUsersProfileList.firstWhereOrNull((p) => p.uid == personIdToToggle);
+      return personInList?.isFavorite.value ?? false;
     }
-    // favoritedUserIds will be updated by the stream in _fetchAndStreamUserFavorites.
   }
 
   // --- Like Feature Methods ---
-  Future<void> _updateInitialLikeStatusForPerson(
+  Future<void> updateInitialLikeStatusForPerson(
       Person person, String currentUserId) async {
     if (person.uid == null) {
       person.likeStatus.value = LikeStatus.none;
@@ -308,19 +313,20 @@ class ProfileController extends GetxController {
     }
   }
 
-  Future<void> toggleLike(String targetUserId) async {
+  Future<LikeStatus> toggleLike(String targetUserId) async {
     String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) {
       print("ProfileController Error: Current user is null. Cannot toggle like.");
-      return;
+      final personInList = allUsersProfileList.firstWhereOrNull((p) => p.uid == targetUserId);
+      return personInList?.likeStatus.value ?? LikeStatus.none;
     }
 
     Person? targetPerson = allUsersProfileList.firstWhereOrNull((p) => p.uid == targetUserId);
-    Person? currentUserData = currentUserProfile.value; // From onInit 
+    Person? currentUserData = currentUserProfile.value; // From onInit
 
     if (targetPerson == null) {
       print("ProfileController Warning: Person $targetUserId not found for like toggle.");
-      return;
+      return LikeStatus.none; // Return a default status if target person not found
     }
     // currentUserData might be null if not fetched yet, handle gracefully for names
     if (currentUserData == null) {
@@ -333,54 +339,41 @@ class ProfileController extends GetxController {
         .collection("likesSent")
         .doc(targetUserId);
 
-    // Variable to determine if the operation on "likesSent" was a like or unlike
     bool isLikingOperationInLikesSent = false;
 
     try {
-      // Transaction for 'likesSent' to keep existing app logic consistent
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         DocumentSnapshot currentUserLikesTargetSnap = await transaction.get(currentUserLikesTargetRef);
-        // DocumentSnapshot targetLikesCurrentUserSnap = await transaction.get(targetLikesCurrentUserRef); // Not directly needed for this transaction's write logic
 
         if (currentUserLikesTargetSnap.exists) {
-          // --- USER IS UNLIKING (in likesSent) ---
           transaction.delete(currentUserLikesTargetRef);
-          isLikingOperationInLikesSent = false; // This was an unlike action for likesSent
+          isLikingOperationInLikesSent = false;
           print("ProfileController: User $currentUserId unliked $targetUserId (from likesSent).");
-          // REMOVED: Direct update to targetPerson.likeStatus.value, will be handled by _updateInitialLikeStatusForPerson
         } else {
-          // --- USER IS LIKING (in likesSent) ---
           transaction.set(currentUserLikesTargetRef, {'likedAt': FieldValue.serverTimestamp()});
-          isLikingOperationInLikesSent = true; // This was a like action for likesSent
+          isLikingOperationInLikesSent = true;
           print("ProfileController: User $currentUserId liked $targetUserId (to likesSent).");
-          // REMOVED: Direct update to targetPerson.likeStatus.value, will be handled by _updateInitialLikeStatusForPerson
         }
       });
 
-      // --- After the transaction for likesSent completes ---
-
-      // Perform operations on the top-level 'likes' collection for Cloud Function interaction
       if (isLikingOperationInLikesSent) {
-        // --- THIS WAS A "LIKE" OPERATION IN LIKESSENT ---
-        DocumentReference topLevelLikeDocRef = FirebaseFirestore.instance.collection("likes").doc(); // Auto-ID
+        DocumentReference topLevelLikeDocRef = FirebaseFirestore.instance.collection("likes").doc();
         final likeDataForCloudFunction = {
           'likingUserId': currentUserId,
-          'likingUserName': currentUserData?.name ?? 'Someone', // Fallback name
+          'likingUserName': currentUserData?.name ?? 'Someone',
           'likedUserId': targetUserId,
-          'likedUserName': targetPerson.name ?? 'Someone', // Fallback name
+          'likedUserName': targetPerson.name ?? 'Someone',
           'timestamp': FieldValue.serverTimestamp(),
-          'status': 'active', // Important for the Cloud Function query
-          'likeId': topLevelLikeDocRef.id // Store the doc ID within the doc itself
+          'status': 'active',
+          'likeId': topLevelLikeDocRef.id
         };
         await topLevelLikeDocRef.set(likeDataForCloudFunction);
         print("ProfileController: Recorded like in top-level 'likes' collection (ID: ${topLevelLikeDocRef.id}) for Cloud Function trigger.");
       } else {
-        // --- THIS WAS AN "UNLIKE" OPERATION IN LIKESSENT ---
-        // Mark the corresponding like in the top-level 'likes' collection as "inactive"
         QuerySnapshot likeQuery = await FirebaseFirestore.instance.collection("likes")
           .where("likingUserId", isEqualTo: currentUserId)
           .where("likedUserId", isEqualTo: targetUserId)
-          .where("status", isEqualTo: "active") // Find the active like
+          .where("status", isEqualTo: "active")
           .limit(1).get();
 
         if (likeQuery.docs.isNotEmpty) {
@@ -393,19 +386,17 @@ class ProfileController extends GetxController {
           print("ProfileController: No active like found in top-level 'likes' collection to mark as inactive for $currentUserId -> $targetUserId.");
         }
       }
-      // ADDED: Call _updateInitialLikeStatusForPerson to refresh UI based on 'likesSent'
-      // This ensures your in-app logic remains consistent with its primary source of truth for UI.
-      await _updateInitialLikeStatusForPerson(targetPerson, currentUserId);
+
+      await updateInitialLikeStatusForPerson(targetPerson, currentUserId);
+      return targetPerson.likeStatus.value; // Return the updated status
 
     } catch (e) {
       print("ProfileController: Error in toggleLike operation for $targetUserId: $e");
-      // Optionally, revert optimistic UI update if any, or re-fetch like status
-      // For robustness, consider calling _updateInitialLikeStatusForPerson here too if an error occurs
-      // after the transaction but before the top-level like operations, or if the top-level ops fail.
-      // However, the most critical part is that _updateInitialLikeStatusForPerson runs on successful completion.
-       if (targetPerson != null && currentUserId != null) {
-        await _updateInitialLikeStatusForPerson(targetPerson, currentUserId);
+      // In case of error, attempt to re-fetch and return the status, or return the current known status.
+      if (targetPerson != null && currentUserId != null) {
+        await updateInitialLikeStatusForPerson(targetPerson, currentUserId);
       }
+      return targetPerson?.likeStatus.value ?? LikeStatus.none;
     }
   }
 
@@ -437,11 +428,9 @@ class ProfileController extends GetxController {
       }
 
       currentUserProfile.value = Person.fromDataSnapshot(currentUserDoc);
-      // MODIFIED: Correct assignment from nullable to nullable
       _currentUserOrientation.value =
           currentUserProfile.value?.orientation?.toLowerCase();
 
-      // MODIFIED: Check for null on _currentUserOrientation.value
       if (_currentUserOrientation.value == null) {
         print(
             "ProfileController: Current user '$currentUserId' orientation not found.");
@@ -451,7 +440,6 @@ class ProfileController extends GetxController {
       }
 
       String targetOrientation;
-      // MODIFIED: Safe access to _currentUserOrientation.value
       final String? currentOrientation = _currentUserOrientation.value;
 
       if (currentOrientation == 'adam') {
@@ -483,13 +471,13 @@ class ProfileController extends GetxController {
             for (var eachProfileDoc in queryDataSnapshot.docs) {
               Person person = Person.fromDataSnapshot(eachProfileDoc);
               person.isFavorite.value = favoritedUserIds.contains(person.uid);
-              await _updateInitialLikeStatusForPerson(person, currentUserId);
+              await updateInitialLikeStatusForPerson(person, currentUserId);
               profilesList.add(person);
             }
             return profilesList;
           }).listen((profilesWithLikeStatus) {
-            allUsersProfileList.assignAll(profilesWithLikeStatus); // MODIFIED
-            usersProfileList.assignAll(filteredUsersProfileList); // MODIFIED Apply filters
+            allUsersProfileList.assignAll(profilesWithLikeStatus);
+            usersProfileList.assignAll(filteredUsersProfileList);
             print(
                 "ProfileController: allUsersProfileList updated with ${profilesWithLikeStatus.length} profiles. Filtered list has ${usersProfileList.length} profiles.");
           }, onError: (e) {
@@ -506,11 +494,10 @@ class ProfileController extends GetxController {
       allUsersProfileList.clear();
       usersProfileList.clear();
       currentUserProfile.value = null;
-      _currentUserOrientation.value = null; // Correctly assigns null
+      _currentUserOrientation.value = null;
     }
   }
 
-  // --- Profile Viewers Feature Methods ---
   void _listenToUsersWhoViewedMe(String currentUserId) {
     _usersWhoViewedMeSubscription?.cancel();
     _usersWhoViewedMeSubscription = FirebaseFirestore.instance
@@ -523,7 +510,7 @@ class ProfileController extends GetxController {
       List<String> viewerIds = snapshot.docs.map((doc) => doc.id).toList();
       List<Person> viewers = [];
       for (String id in viewerIds) {
-        if (id == currentUserId) continue; // Skip self-view
+        if (id == currentUserId) continue;
         try {
           DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection("users").doc(id).get();
           if (userDoc.exists) {
@@ -545,7 +532,6 @@ class ProfileController extends GetxController {
   Future<void> recordProfileView(String viewedUserId) async {
     String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null || currentUserId == viewedUserId) {
-      // Don't record if no user is logged in or if it's a self-view
       if (currentUserId == viewedUserId) {
         print("ProfileController: Self-view detected for $viewedUserId. Not recording.");
       } else {
@@ -557,18 +543,15 @@ class ProfileController extends GetxController {
     try {
       await FirebaseFirestore.instance
           .collection("users")
-          .doc(viewedUserId) // The user whose profile was viewed
-          .collection(profileViewersSubCollection) // Subcollection on their document
-          .doc(currentUserId) // Document ID is the UID of the viewer
+          .doc(viewedUserId)
+          .collection(profileViewersSubCollection)
+          .doc(currentUserId)
           .set({
         "lastViewed": FieldValue.serverTimestamp(),
-        // Potentially add viewer's name/photo for quick display on the viewed user's side,
-        // but this adds data duplication. For now, just timestamp.
       });
       print("ProfileController: Profile view recorded. User $currentUserId viewed $viewedUserId.");
     } catch (e) {
       print("ProfileController: Error recording profile view for $viewedUserId by $currentUserId: $e");
     }
   }
-
 }

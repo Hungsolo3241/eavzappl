@@ -25,6 +25,11 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   ProfileController? _profileController;
   late PageController _pageController;
   Timer? _carouselTimer;
+  String? _currentAuthUserId; // Added for current user's ID
+
+  // Loading states
+  final RxBool _isLiking = false.obs;
+  final RxBool _isFavoriting = false.obs;
 
   // CORRECTED Placeholder URLs:
   final String evePlaceholderUrl = 'https://firebasestorage.googleapis.com/v0/b/eavzappl-32891.firebasestorage.app/o/placeholder%2Feves_avatar.jpeg?alt=media&token=75b9c3f5-72c1-42db-be5c-471cc0d88c05';
@@ -36,6 +41,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
   void initState() {
     super.initState();
     _pageController = PageController(); // Initialize _pageController here
+    _currentAuthUserId = FirebaseAuth.instance.currentUser?.uid; // Initialize current user ID
     // Attempt to find ProfileController, but handle if not found (e.g., during tests or if not set up)
     try {
       // It's better to assign directly to _profileController if it's not final
@@ -121,18 +127,19 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     // Priority: widget.userID > currentUser.uid from ProfileController > currentUser.uid from FirebaseAuth
     // This allows overriding the displayed profile via widget parameter.
     final String? directUserID = widget.userID;
-    final String? profileControllerUserID = _profileController?.currentUserProfile.value?.uid;
+    //final String? profileControllerUserID = _profileController?.currentUserProfile.value?.uid; // This line might cause issues if currentUserProfile is not guaranteed.
     final String? firebaseAuthUserID = FirebaseAuth.instance.currentUser?.uid;
 
     if (directUserID != null && directUserID.isNotEmpty) {
       _effectiveUserID = directUserID;
-    } else if (profileControllerUserID != null && profileControllerUserID.isNotEmpty) {
-      _effectiveUserID = profileControllerUserID;
+    //} else if (profileControllerUserID != null && profileControllerUserID.isNotEmpty) { // Using _currentAuthUserId which is directly from FirebaseAuth
+    //  _effectiveUserID = profileControllerUserID;
     } else if (firebaseAuthUserID != null && firebaseAuthUserID.isNotEmpty) {
       _effectiveUserID = firebaseAuthUserID;
     } else {
       _effectiveUserID = ""; // Fallback to empty string if no ID is found
     }
+     _currentAuthUserId = firebaseAuthUserID; // Ensure _currentAuthUserId is set based on FirebaseAuth for consistency
 
     if (_effectiveUserID.isEmpty) {
       print("UserDetailsScreen: Critical - Effective User ID is empty after determination. Cannot load profile.");
@@ -365,14 +372,26 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
         final userDataMap = userDoc.data() as Map<String, dynamic>; // Ensure data is a map
         final List<String> sliderImages = _extractSliderImages(userDataMap, user.orientation);
 
+        // Initialize favorite and like status from ProfileController
+        if (_profileController != null && _currentAuthUserId != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) { // Check if the widget is still in the tree
+              final isCurrentlyFavorited = _profileController!.favoritedUserIds.contains(user.uid);
+              if (user.isFavorite.value != isCurrentlyFavorited) {
+                user.isFavorite.value = isCurrentlyFavorited;
+              }
+              // Assuming updateInitialLikeStatusForPerson is public in ProfileController
+              _profileController!.updateInitialLikeStatusForPerson(user, _currentAuthUserId!);
+            }
+          });
+        }
 
-        final bool isCurrentUserProfile = (FirebaseAuth.instance.currentUser?.uid == _effectiveUserID);
+        final bool isCurrentUserProfile = (_currentAuthUserId == _effectiveUserID);
 
         // If it's not the current user's profile, obscure the details.
-        bool shouldObscureDetails = !isCurrentUserProfile;
+        //bool shouldObscureDetails = !isCurrentUserProfile; // This variable seems unused later, can be removed if not needed
 
         // Determine if the profile being viewed is an 'Adam' type profile
-
         final bool isAdamProfile = user.orientation?.toLowerCase() == 'adam';
 
         return Scaffold(
@@ -442,6 +461,150 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       // Image Carousel
                       _buildImageCarousel(sliderImages, user.orientation),
                       const SizedBox(height: 24),
+                      
+                      // --- ACTION BUTTONS ROW --- 
+                      if (!isCurrentUserProfile && _profileController != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              // Favorite Button
+                              // Favorite Button
+                              Obx(() => IconButton(
+                                icon: _isFavoriting.value // Check the loading state
+                                    ? SizedBox( // If loading, show CircularProgressIndicator
+                                  width: 40,
+                                  height: 40,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.0,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blueGrey),
+                                    ),
+                                  ),
+                                )
+                                    : Image.asset( // If not loading, show the image
+                                  user.isFavorite.value
+                                      ? 'images/full_fave.png'
+                                      : 'images/default_fave.png',
+                                  width: 40,
+                                  height: 40,
+                                  color: user.isFavorite.value ? Colors.yellow[700] : Colors.blueGrey,
+                                ),
+                                onPressed: _isFavoriting.value
+                                    ? null
+                                    : () async {
+                                  if (user.uid != null && _profileController != null) {
+                                    _isFavoriting.value = true;
+                                    try {
+                                      final newFavStatus = await _profileController!.toggleFavoriteStatus(user.uid!);
+                                      if (mounted) user.isFavorite.value = newFavStatus;
+                                    } catch (e) {
+                                      Get.snackbar("Error", "Failed to update favorite: ${e.toString()}", snackPosition: SnackPosition.BOTTOM);
+                                    } finally {
+                                      _isFavoriting.value = false;
+                                    }
+                                  } else {
+                                    Get.snackbar("Error", "Cannot update favorite: User ID or controller missing.", snackPosition: SnackPosition.BOTTOM);
+                                  }
+                                },
+                                tooltip: 'Favorite',
+                              )),
+
+                              // Message Button
+                              Obx(() {
+                                bool canMessage = user.likeStatus.value == model.LikeStatus.mutualLike;
+                                return IconButton(
+                                  icon: Image.asset(
+                                    'images/default_whatsapp.png',
+                                    width: 40, height: 40,
+                                    color: canMessage ? Colors.greenAccent : Colors.blueGrey.withOpacity(0.7),
+                                  ),
+                                  onPressed: () async {
+                                    if (canMessage) {
+                                      final String? userPhoneNumber = user.phoneNumber; 
+                                      if (userPhoneNumber != null && userPhoneNumber.isNotEmpty) {
+                                        String formattedPhoneNumber = userPhoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+                                        if (!formattedPhoneNumber.startsWith('+') && RegExp(r'^\d+$').hasMatch(formattedPhoneNumber)) {
+                                          // Optionally prepend country code
+                                        } else if (!formattedPhoneNumber.startsWith('+')) {
+                                           Get.snackbar("WhatsApp Warning", "Phone number format may not be ideal. Attempting anyway.", backgroundColor: Colors.orangeAccent);
+                                        }
+                                        await _launchUrlFromString("https://api.whatsapp.com/send?phone=$formattedPhoneNumber");
+                                      } else {
+                                        Get.snackbar("Message Error", "User's phone number is not available.");
+                                      }
+                                    } else {
+                                      Get.snackbar("Message Unavailable", "You can only message users after a mutual like.", snackPosition: SnackPosition.TOP);
+                                    }
+                                  },
+                                  tooltip: canMessage ? 'Message on WhatsApp' : 'Message (Requires Mutual Like)',
+                                );
+                              }),
+
+                              // Like Button
+                              Obx(() {
+                                String likeIconAsset;
+                                Color? likeIconColor;
+                                switch (user.likeStatus.value) {
+                                  case model.LikeStatus.currentUserLiked:
+                                  case model.LikeStatus.targetUserLikedCurrentUser:
+                                    likeIconAsset = 'images/half_like.png';
+                                    likeIconColor = null; // Or specific color for half like
+                                    break;
+                                  case model.LikeStatus.mutualLike:
+                                    likeIconAsset = 'images/full_like.png';
+                                    likeIconColor = Colors.yellow[700];
+                                    break;
+                                  case model.LikeStatus.none:
+                                  default:
+                                    likeIconAsset = 'images/default_like.png';
+                                    likeIconColor = Colors.blueGrey;
+                                    break;
+                                }
+                                return IconButton(
+                                  icon: _isLiking.value // Check the loading state
+                                      ? SizedBox( // If loading, show CircularProgressIndicator
+                                          width: 40,
+                                          height: 40,
+                                          child: Center(
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.0,
+                                              valueColor: AlwaysStoppedAnimation<Color>(Colors.blueGrey),
+                                            ),
+                                          ),
+                                        )
+                                      : Image.asset( // If not loading, show the image
+                                          likeIconAsset,
+                                          width: 40,
+                                          height: 40,
+                                          color: likeIconColor,
+                                        ),
+                                  onPressed: _isLiking.value
+                                      ? null
+                                      : () async {
+                                    if (user.uid != null && _profileController != null) {
+                                      _isLiking.value = true;
+                                      try {
+                                        final newLikeStatus = await _profileController!.toggleLike(user.uid!);
+                                        if (mounted) user.likeStatus.value = newLikeStatus;
+                                      } catch (e) {
+                                        Get.snackbar("Error", "Failed to process like: ${e.toString()}", snackPosition: SnackPosition.BOTTOM);
+                                      } finally {
+                                        _isLiking.value = false;
+                                      }
+                                    } else {
+                                      Get.snackbar("Error", "Cannot process like: User ID or controller missing.", snackPosition: SnackPosition.BOTTOM);
+                                    }
+                                  },
+
+                                  tooltip: 'Like',
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
+                      // --- END ACTION BUTTONS ROW ---
 
                       // User Details Section
                       _buildSectionTitle(context, "About"),
@@ -482,9 +645,9 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                           _buildDetailRow(context, "Body Type", user.bodyType),
 
 
-                        _buildSectionTitle(context, "Background"),
-                        _buildDetailRow(context, "Nationality", user.nationality),
-                        _buildDetailRow(context, "Languages Spoken", user.languages),
+                          _buildSectionTitle(context, "Background"),
+                          _buildDetailRow(context, "Nationality", user.nationality),
+                          _buildDetailRow(context, "Languages Spoken", user.languages),
                         ],
                       ],
 

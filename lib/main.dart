@@ -31,13 +31,8 @@ Future<void> main() async {
     print("!!!!!!!!!! FIREBASE APP CHECK ACTIVATION FAILED !!!!!!!!!!");
     print("Error: $e");
     print("Stacktrace: $stacktrace");
-    // Depending on how critical App Check is at startup, you might want to:
-    // - show an error UI and prevent the app from continuing
-    // - or allow the app to continue with degraded functionality
-    // For now, we'll let it continue to see if other issues arise.
   }
-
-  // Initialize your GetX controllers AFTER Firebase and App Check are ready.
+  // Initialize GetX controllers AFTER Firebase and App Check are ready.
   Get.put(AuthenticationController());
   Get.put(ProfileController());
 
