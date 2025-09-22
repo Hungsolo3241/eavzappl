@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart'; // For date formatting
+import 'package:eavzappl/accountSettingsScreen/notifications_screen.dart';
 
 class UserSettingsScreen extends StatefulWidget {
   const UserSettingsScreen({super.key});
@@ -644,8 +645,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
             leading: Icon(Icons.notifications, color: Colors.yellow[700]),
             title: const Text("Notifications", style: TextStyle(color: Colors.blueGrey)),
             onTap: () {
-              Get.snackbar("Coming Soon", "Notification settings are not yet implemented.", colorText: Colors.white);
-            },
+              Get.to(() => const NotificationsScreen());            },
           ),
           ListTile(
             leading: Icon(Icons.info_outline, color: Colors.yellow[700]),

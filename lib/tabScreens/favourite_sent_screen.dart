@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../controllers/profile_controller.dart';
 import '../../models/person.dart';
 import 'user_details_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class FavouriteSentScreen extends StatelessWidget {
   FavouriteSentScreen({super.key});
@@ -67,28 +68,19 @@ class FavouriteSentScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Expanded(
-                      child: Image.network(
-                        imageUrl,
+                      child: CachedNetworkImage(
+                        imageUrl: imageUrl,
                         fit: BoxFit.cover,
-                        loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                  : null,
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) {
-                          // Fallback for image loading errors
-                          print('Error loading image $imageUrl for ${person.name}: $error');
+                        placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+                        errorWidget: (context, url, error) {
+                          print('Error loading image $imageUrl for ${person.name} with CachedNetworkImage: $error');
                           return const Center(
                             child: Icon(Icons.broken_image, size: 50, color: Colors.grey),
                           );
                         },
                       ),
                     ),
+
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text(

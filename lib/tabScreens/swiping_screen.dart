@@ -1,4 +1,5 @@
 // GEMINI_WRITE_TEST
+import 'package:cached_network_image/cached_network_image.dart'; // Added import
 import 'package:eavzappl/controllers/profile_controller.dart';
 import 'package:eavzappl/models/filter_preferences.dart';
 import 'package:eavzappl/models/person.dart';
@@ -141,17 +142,29 @@ class _SwipingScreenState extends State<SwipingScreen> {
                 return Stack(
                   fit: StackFit.expand,
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: NetworkImage(imageUrl),
-                          fit: BoxFit.cover,
-                          onError: (exception, stackTrace) {
-                            print(
-                                'Error loading image for ${eachProfileInfo.name}: $exception');
-                          },
+                    CachedNetworkImage( // MODIFIED: Replaced Container with CachedNetworkImage
+                      imageUrl: imageUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => const Align(
+                        alignment: Alignment.topLeft,
+                        child: Padding(
+                          padding: EdgeInsets.all(8.0), // Optional: for a little spacing from the edge
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.0, // Optional: make it a bit smaller if desired
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white70), // Optional: change color for visibility
+                          ),
                         ),
                       ),
+                      errorWidget: (context, url, error) {
+                        print('Error loading image with CachedNetworkImage for ${eachProfileInfo.name}: $error');
+                        // Optionally, return a more specific error placeholder image or icon
+                        return Container(
+                          color: Colors.grey[300],
+                          child: const Center(
+                            child: Icon(Icons.broken_image, color: Colors.grey, size: 50),
+                          ),
+                        );
+                      },
                     ),
                     DecoratedBox(
                       decoration: BoxDecoration(

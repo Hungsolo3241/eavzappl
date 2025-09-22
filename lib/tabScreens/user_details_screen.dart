@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart'; // ADDED IMPORT
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eavzappl/authenticationScreen/login_screen.dart';
 import 'package:eavzappl/controllers/profile_controller.dart';
@@ -278,22 +279,24 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
           controller: _pageController,
           itemCount: imagesToShow.length, // Should always be 5
           itemBuilder: (context, index) {
-            return Image.network(
-              imagesToShow[index],
+            // MODIFIED to use CachedNetworkImage
+            return CachedNetworkImage(
+              imageUrl: imagesToShow[index],
               fit: BoxFit.cover,
-              loadingBuilder: (BuildContext context, Widget child, ImageChunkEvent? loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Center(child: CircularProgressIndicator(
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                      : null,
-                  color: Colors.blueGrey, // Consistent color
-                ));
-              },
-              errorBuilder: (BuildContext context, Object exception, StackTrace? stackTrace) {
-                // Log error and display a fallback placeholder
-                print("Error loading image in carousel: ${imagesToShow[index]}, Exception: $exception");
-                // Fallback to a generic placeholder or orientation-specific one
+              placeholder: (context, url) => const Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.0,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                  ),
+                ),
+              ),
+              errorWidget: (context, url, error) {
+                print("Error loading image in carousel with CachedNetworkImage: ${imagesToShow[index]}, Exception: $error");
+                // Fallback to a generic placeholder or orientation-specific one using Image.network
+                // This ensures that even if CachedNetworkImage fails, we attempt to show something.
                 return Image.network(_getDisplayImageUrl(null, orientationForPlaceholder), fit: BoxFit.cover);
               },
             );
@@ -396,7 +399,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(isCurrentUserProfile ? "My Profile" : (user.name ?? "User Profile")), // Dynamic title
+            title: Text(isCurrentUserProfile ? "My Profile" : (user.name ?? "User Profile")),
             centerTitle: true,
             titleTextStyle: appBarTitleTextStyle,
             iconTheme: appBarIconTheme,
@@ -404,15 +407,14 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
             actions: <Widget>[
               if (isCurrentUserProfile) ...[
                 IconButton(
-                  icon: Icon(Icons.settings, color: Colors.yellow[700]), // Consistent icon color
+                  icon: Icon(Icons.settings, color: Colors.yellow[700]),
                   tooltip: 'Settings',
                   onPressed: () {
-                    // Navigate to UserSettingsScreen, ensuring it exists and is correctly imported
                     Get.to(() => const UserSettingsScreen());
                   },
                 ),
                 IconButton(
-                  icon: const Icon(Icons.logout, color: Colors.blueGrey), // Consistent icon color
+                  icon: const Icon(Icons.logout, color: Colors.blueGrey),
                   tooltip: 'Logout',
                   onPressed: _signOutUser,
                 ),
@@ -424,7 +426,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
               fit: StackFit.expand,
               children: <Widget>[
                 Image.asset(
-                  'images/userDetailsBackground.jpeg', // Background image
+                  'images/userDetailsBackground.jpeg',
                   fit: BoxFit.cover,
                 ),
                 SingleChildScrollView(
@@ -432,17 +434,37 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      // Main Profile Image as a large CircleAvatar
                       Center(
                         child: CircleAvatar(
-                          radius: 70, // Larger radius
+                          radius: 70,
                           backgroundColor: Colors.grey.shade700,
-                          backgroundImage: NetworkImage(_getDisplayImageUrl(user.profilePhoto, user.orientation)),
+                          // MODIFIED: Use CachedNetworkImage for CircleAvatar as well
+                          child: CachedNetworkImage(
+                            imageUrl: _getDisplayImageUrl(user.profilePhoto, user.orientation),
+                            imageBuilder: (context, imageProvider) => CircleAvatar(
+                              radius: 70,
+                              backgroundImage: imageProvider,
+                            ),
+                            placeholder: (context, url) => const Align(
+                              alignment: Alignment.center, // Center for CircleAvatar placeholder
+                              child: Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.0,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                                ),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => CircleAvatar(
+                              radius: 70,
+                              backgroundColor: Colors.grey.shade300,
+                              child: const Icon(Icons.person, color: Colors.grey, size: 70),
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
 
-                      // Name and Age Section
                       if (user.name != null && user.name!.isNotEmpty)
                         Center(
                           child: Text(
@@ -457,23 +479,18 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                         ),
                       const SizedBox(height: 20),
 
-
-                      // Image Carousel
                       _buildImageCarousel(sliderImages, user.orientation),
                       const SizedBox(height: 24),
                       
-                      // --- ACTION BUTTONS ROW --- 
                       if (!isCurrentUserProfile && _profileController != null)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 10.0),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              // Favorite Button
-                              // Favorite Button
                               Obx(() => IconButton(
-                                icon: _isFavoriting.value // Check the loading state
-                                    ? SizedBox( // If loading, show CircularProgressIndicator
+                                icon: _isFavoriting.value
+                                    ? SizedBox(
                                   width: 40,
                                   height: 40,
                                   child: Center(
@@ -483,7 +500,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                                     ),
                                   ),
                                 )
-                                    : Image.asset( // If not loading, show the image
+                                    : Image.asset(
                                   user.isFavorite.value
                                       ? 'images/full_fave.png'
                                       : 'images/default_fave.png',
@@ -511,7 +528,6 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                                 tooltip: 'Favorite',
                               )),
 
-                              // Message Button
                               Obx(() {
                                 bool canMessage = user.likeStatus.value == model.LikeStatus.mutualLike;
                                 return IconButton(
@@ -526,7 +542,6 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                                       if (userPhoneNumber != null && userPhoneNumber.isNotEmpty) {
                                         String formattedPhoneNumber = userPhoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
                                         if (!formattedPhoneNumber.startsWith('+') && RegExp(r'^\d+$').hasMatch(formattedPhoneNumber)) {
-                                          // Optionally prepend country code
                                         } else if (!formattedPhoneNumber.startsWith('+')) {
                                            Get.snackbar("WhatsApp Warning", "Phone number format may not be ideal. Attempting anyway.", backgroundColor: Colors.orangeAccent);
                                         }
@@ -542,7 +557,6 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                                 );
                               }),
 
-                              // Like Button
                               Obx(() {
                                 String likeIconAsset;
                                 Color? likeIconColor;
@@ -550,7 +564,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                                   case model.LikeStatus.currentUserLiked:
                                   case model.LikeStatus.targetUserLikedCurrentUser:
                                     likeIconAsset = 'images/half_like.png';
-                                    likeIconColor = null; // Or specific color for half like
+                                    likeIconColor = null;
                                     break;
                                   case model.LikeStatus.mutualLike:
                                     likeIconAsset = 'images/full_like.png';
@@ -563,8 +577,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                                     break;
                                 }
                                 return IconButton(
-                                  icon: _isLiking.value // Check the loading state
-                                      ? SizedBox( // If loading, show CircularProgressIndicator
+                                  icon: _isLiking.value
+                                      ? SizedBox(
                                           width: 40,
                                           height: 40,
                                           child: Center(
@@ -574,7 +588,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                                             ),
                                           ),
                                         )
-                                      : Image.asset( // If not loading, show the image
+                                      : Image.asset(
                                           likeIconAsset,
                                           width: 40,
                                           height: 40,
@@ -597,16 +611,13 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                                       Get.snackbar("Error", "Cannot process like: User ID or controller missing.", snackPosition: SnackPosition.BOTTOM);
                                     }
                                   },
-
                                   tooltip: 'Like',
                                 );
                               }),
                             ],
                           ),
                         ),
-                      // --- END ACTION BUTTONS ROW ---
 
-                      // User Details Section
                       _buildSectionTitle(context, "About"),
                       _buildDetailRow(context, "Profession", user.profession),
                       if (user.orientation?.toLowerCase() == 'eve' && user.professionalVenues != null && user.professionalVenues!.isNotEmpty)
@@ -617,33 +628,30 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       _buildDetailRow(context, "Location", [user.city, user.province, user.country].where((s) => s != null && s.isNotEmpty).join(", ")),
                       _buildDetailRow(context, "Ethnicity", user.ethnicity),
 
-                      // ADDED Tappable Instagram and Twitter links for Eve profiles
                       if (user.orientation?.toLowerCase() == 'eve') ...[
                         if (user.instagram != null && user.instagram!.isNotEmpty)
                           _buildDetailRow(
                             context,
                             "Instagram",
-                            "@${user.instagram!}", // Display with @ symbol
+                            "@${user.instagram!}",
                             isLink: true,
-                            onTap: () => _launchUrlFromString('https://instagram.com/${user.instagram!.replaceAll('@', '')}'), // Remove @ if present for URL
+                            onTap: () => _launchUrlFromString('https://instagram.com/${user.instagram!.replaceAll('@', '')}'),
                           ),
                         if (user.twitter != null && user.twitter!.isNotEmpty)
                           _buildDetailRow(
                             context,
                             "Twitter",
-                            "@${user.twitter!}", // Display with @ symbol
+                            "@${user.twitter!}",
                             isLink: true,
-                            onTap: () => _launchUrlFromString('https://twitter.com/${user.twitter!.replaceAll('@', '')}'), // Remove @ if present for URL
+                            onTap: () => _launchUrlFromString('https://twitter.com/${user.twitter!.replaceAll('@', '')}'),
                           ),
                       ],
 
-                      //Appearance
                       if (!isAdamProfile || isCurrentUserProfile) ...[
                         if (!isAdamProfile) ...[
                           _buildSectionTitle(context, "Appearance"),
                           _buildDetailRow(context, "Height", user.height),
                           _buildDetailRow(context, "Body Type", user.bodyType),
-
 
                           _buildSectionTitle(context, "Background"),
                           _buildDetailRow(context, "Nationality", user.nationality),
@@ -651,16 +659,12 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                         ],
                       ],
 
-                      //Looking for/available for
                       _buildSectionTitle(context, "Looking/Available For"),
                       _buildBooleanDetailRow(context, "Breakfast", user.lookingForBreakfast),
                       _buildBooleanDetailRow(context, "Lunch", user.lookingForLunch),
                       _buildBooleanDetailRow(context, "Dinner", user.lookingForDinner),
                       _buildBooleanDetailRow(context, "Long Term", user.lookingForLongTerm),
 
-
-
-                      // Lifestyle Section
                       _buildSectionTitle(context, "Lifestyle"),
                       _buildBooleanDetailRow(context, "Drinks", user.drinkSelection),
                       _buildBooleanDetailRow(context, "Smokes", user.smokeSelection),
@@ -671,25 +675,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       if(user.income != null && user.income!.isNotEmpty && !isAdamProfile)
                         _buildDetailRow(context, "Income Range", user.income),
 
-
-                      // Obscured Details Section (if applicable)
-                      // if (shouldObscureDetails && isAdamProfile) ...[
-                      //   const SizedBox(height: 20),
-                      //   Center(
-                      //     child: Padding(
-                      //       padding: const EdgeInsets.all(16.0),
-                      //       child: Text(
-                      //         "Further details are revealed upon mutual connection.",
-                      //         textAlign: TextAlign.center,
-                      //         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      //           color: Colors.orangeAccent,
-                      //           fontStyle: FontStyle.italic,
-                      //         ),
-                      //       ),
-                      //     ),
-                      //   ),
-                      // ],
-                      const SizedBox(height: 70), // Space for floating action buttons if any
+                      const SizedBox(height: 70),
                     ],
                   ),
                 ),
