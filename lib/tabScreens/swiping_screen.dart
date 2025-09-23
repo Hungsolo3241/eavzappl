@@ -146,12 +146,12 @@ class _SwipingScreenState extends State<SwipingScreen> {
                       imageUrl: imageUrl,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => const Align(
-                        alignment: Alignment.topLeft,
+                        alignment: Alignment.bottomCenter,
                         child: Padding(
                           padding: EdgeInsets.all(8.0), // Optional: for a little spacing from the edge
                           child: CircularProgressIndicator(
                             strokeWidth: 2.0, // Optional: make it a bit smaller if desired
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white70), // Optional: change color for visibility
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.transparent), // Optional: change color for visibility
                           ),
                         ),
                       ),
