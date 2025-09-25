@@ -272,7 +272,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
         margin: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0), // Consistent margin
         clipBehavior: Clip.antiAlias, // Apply rounded corners to child
         decoration: BoxDecoration(
-          color: Colors.grey[300], // Background for the carousel area
+          color: Colors.black12, // Background for the carousel area
           borderRadius: BorderRadius.circular(12.0), // Rounded corners
         ),
         child: PageView.builder(
@@ -289,7 +289,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                   padding: EdgeInsets.all(8.0),
                   child: CircularProgressIndicator(
                     strokeWidth: 2.0,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white70),
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.transparent),
                   ),
                 ),
               ),
