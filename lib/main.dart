@@ -5,10 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:eavzappl/controllers/authentication_controller.dart';
 import 'package:eavzappl/controllers/profile_controller.dart';
+import 'package:eavzappl/controllers/like_controller.dart';
+import 'package:eavzappl/splashScreen/splash_screen.dart';
 import 'homeScreen/home_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:eavzappl/pushNotifications/push_notifications.dart' as push_notifications_service;
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:eavzappl/models/filter_preferences.dart';
 
 
 import 'package:firebase_app_check/firebase_app_check.dart';
@@ -19,12 +22,11 @@ Future<void> main() async {
   await Firebase.initializeApp();
 
   FirebaseMessaging.onBackgroundMessage(push_notifications_service.firebaseMessagingBackgroundHandler);
-
   // Activate Firebase App Check AFTER Firebase.initializeApp()
   try {
     await FirebaseAppCheck.instance.activate(
-      androidProvider: AndroidProvider.playIntegrity,
-      // appleProvider: AppleProvider.appAttest, // For iOS, if you implement it
+      androidProvider: AndroidProvider.debug,
+      // appleProvider: AppleProvider.appAttest, // For iOS
     );
     print("Firebase App Check activated successfully."); // Added success log
   } catch (e, stacktrace) { // Added stacktrace
@@ -35,15 +37,18 @@ Future<void> main() async {
   // Initialize GetX controllers AFTER Firebase and App Check are ready.
   Get.put(AuthenticationController());
   Get.put(ProfileController());
+  Get.put(FilterPreferences());
+  // Get.put(LikeController());
+  Get.put(push_notifications_service.PushNotifications());
 
   // Make the app go edge-to-edge
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  // Optional: You might also want to set preferred orientations if your app is fixed
-  // SystemChrome.setPreferredOrientations([
-  //   DeviceOrientation.portraitUp,
-  //   DeviceOrientation.portraitDown,
-  // ]);
+  // Optional: Set preferred orientations if app is fixed
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
   runApp(const MyApp());
 }
@@ -56,25 +61,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'eavzappl',
       debugShowCheckedModeBanner: false,
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {
-          // ...
-          // Modified main.dart StreamBuilder
-// ...
-          if (snapshot.hasData && snapshot.data != null) {
-            return const HomeScreen();
-          } else {
-            final mediaQuery = MediaQuery.of(context);
-
-            return MediaQuery(
-              data: mediaQuery.removePadding(removeBottom: true), // Attempt to remove bottom padding
-              child: const LoginScreen(),
-            );
-          }
-// ...
-        },
-      ),
+      home: const SplashScreen(),
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: Colors.black,
       ),

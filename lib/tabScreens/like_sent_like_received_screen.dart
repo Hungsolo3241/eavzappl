@@ -1,188 +1,164 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'dart:developer';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eavzappl/controllers/profile_controller.dart';
 import 'package:eavzappl/models/person.dart';
 import 'package:eavzappl/tabScreens/user_details_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
-class LikeSentLikeReceivedScreen extends StatefulWidget {
+class LikeSentLikeReceivedScreen extends StatelessWidget {
   const LikeSentLikeReceivedScreen({super.key});
 
   @override
-  State<LikeSentLikeReceivedScreen> createState() =>
-      _LikeSentLikeReceivedScreenState();
-}
-
-class _LikeSentLikeReceivedScreenState
-    extends State<LikeSentLikeReceivedScreen> {
-  bool isLikeSentTabActive = true; // true for "Liked by me", false for "Likes on me"
-  final ProfileController profileController = Get.find<ProfileController>();
-
-  String _getImageUrl(Person person) {
-    if (person.profilePhoto != null && person.profilePhoto!.isNotEmpty) {
-      return person.profilePhoto!;
-    }
-    // Fallback placeholder if profilePhoto is null or empty
-    // Consider Eve/Adam specific placeholders if orientation is available and desired
-    return 'https://via.placeholder.com/150';
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    // A single controller is needed for the entire screen.
+    final ProfileController profileController = Get.find<ProfileController>();
+
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.black.withOpacity(0.8),
-          elevation: 0,
-          centerTitle: true,
+          title: Text('Likes', style: TextStyle(color: Colors.yellow[700])),
+          backgroundColor: Colors.black87,
           automaticallyImplyLeading: false,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextButton(
-                  onPressed: () {
-                    if (!isLikeSentTabActive) {
-                      setState(() {
-                        isLikeSentTabActive = true;
-                      });
-                    }
-                  },
-                  child: Text(
-                    "They Liked", // Changed from "Liked"
-                    style: TextStyle(
-                      color: isLikeSentTabActive
-                          ? Colors.yellow[700]
-                          : Colors.blueGrey,
-                      fontWeight: isLikeSentTabActive
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      fontSize: 20,
-                    ),
-                  )),
-              const Text(
-                '  |  ',
-                style: TextStyle(
-                  color: Colors.blueGrey,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-              ),
-              TextButton(
-                  onPressed: () {
-                    if (isLikeSentTabActive) {
-                      setState(() {
-                        isLikeSentTabActive = false;
-                      });
-                    }
-                  },
-                  child: Text(
-                    "I Liked", // Changed from "Likes"
-                    style: TextStyle(
-                      color: !isLikeSentTabActive
-                          ? Colors.yellow[700]
-                          : Colors.blueGrey,
-                      fontWeight: !isLikeSentTabActive
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      fontSize: 20,
-                    ),
-                  ))
+          centerTitle: true,
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Likes Sent'),
+              Tab(text: 'Likes Received'),
             ],
           ),
         ),
-        body: Obx(() {
-          List<Person> displayedProfiles;
-          String emptyListMessage;
-
-          if (isLikeSentTabActive) { // "They Liked" (Profiles that liked the current user)
-            displayedProfiles = profileController.usersProfileList.value
-                .where((person) =>
-            person.likeStatus.value ==
-                LikeStatus.targetUserLikedCurrentUser ||
-                person.likeStatus.value == LikeStatus.mutualLike)
-                .toList();
-            emptyListMessage = "No one has liked you yet.";
-          } else { // "I Liked" (Profiles the current user has liked)
-            displayedProfiles = profileController.usersProfileList.value
-                .where((person) =>
-            person.likeStatus.value == LikeStatus.currentUserLiked ||
-                person.likeStatus.value == LikeStatus.mutualLike)
-                .toList();
-            emptyListMessage = "You haven't liked anyone yet.";
-          }
-
-          if (displayedProfiles.isEmpty) {
-            return Center(
-              child: Text(
-                emptyListMessage,
-                style: const TextStyle(fontSize: 18, color: Colors.blueGrey),
-                textAlign: TextAlign.center,
-              ),
-            );
-          }
-
-          return GridView.builder(
-            padding: const EdgeInsets.all(8.0),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 8.0,
-              mainAxisSpacing: 8.0,
-              childAspectRatio: 0.75,
+        body: TabBarView(
+          children: [
+            // "Likes Sent" Tab
+            _LikesGridView(
+              userList: profileController.usersIHaveLiked,
+              emptyMessage: "You haven't liked anyone yet.",
             ),
-            itemCount: displayedProfiles.length,
-            itemBuilder: (context, index) {
-              final Person person = displayedProfiles[index];
-              final String imageUrl = _getImageUrl(person);
+            // "Likes Received" Tab
+            _LikesGridView(
+              userList: profileController.usersWhoHaveLikedMe,
+              emptyMessage: "No one has liked you yet.",
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-              return InkWell(
-                onTap: () {
-                  if (person.uid != null) {
-                    Get.to(() => UserDetailsScreen(userID: person.uid!));
-                  } else {
-                    Get.snackbar('Error', 'User ID is missing.');
-                  }
-                },
-                child: Card(
-                  clipBehavior: Clip.antiAlias,
-                  elevation: 4.0,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-                          errorWidget: (context, url, error) {
-                            print('Error loading image $imageUrl for ${person.name} with CachedNetworkImage: $error');
-                            return const Center(
-                              child: Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                            );
-                          },
-                        ),
-                      ),
+/// A reusable widget to display a grid of users for a given list of UIDs.
+class _LikesGridView extends StatelessWidget {
+  const _LikesGridView({
+    required this.userList,
+    required this.emptyMessage,
+  });
 
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          '${person.name ?? 'N/A'} • ${person.age ?? 'N/A'}',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Colors.yellow[700],
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
+  final RxList<Person> userList;
+  final String emptyMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (userList.isEmpty) {
+        return Center(
+          child: Text(
+            emptyMessage,
+            style: const TextStyle(fontSize: 18, color: Colors.blueGrey),
+          ),
+        );
+      }
+
+      return GridView.builder(
+        padding: const EdgeInsets.all(8.0),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 8.0,
+          mainAxisSpacing: 8.0,
+          childAspectRatio: 0.75,
+        ),
+        itemCount: userList.length,
+        itemBuilder: (context, index) {
+          return _UserGridItem(person: userList[index]);
+        },
+      );
+    });
+  }
+}
+
+/// A dedicated widget to display a single user in the likes grid.
+class _UserGridItem extends StatelessWidget {
+  const _UserGridItem({required this.person});
+
+  final Person person;
+
+  // Static constant for placeholder URL
+  static const String _placeholderUrl = 'https://via.placeholder.com/150';
+
+  String get _imageUrl =>
+      person.profilePhoto != null && person.profilePhoto!.isNotEmpty
+          ? person.profilePhoto!
+          : _placeholderUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        if (person.uid != null) {
+          Get.to(() => UserDetailsScreen(userID: person.uid!));
+        } else {
+          log(
+            'Tap failed: UID is null for ${person.name}',
+            name: 'LikesScreen',
           );
-        }));
+          Get.snackbar('Error', 'User ID is missing. Cannot open details.');
+        }
+      },
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        elevation: 4.0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: CachedNetworkImage(
+                imageUrl: _imageUrl,
+                fit: BoxFit.cover,
+                placeholder: (context, url) =>
+                const Center(child: CircularProgressIndicator()),
+                errorWidget: (context, url, error) {
+                  log(
+                    'Error loading image $_imageUrl for ${person.name}',
+                    name: 'LikesScreen',
+                    error: error,
+                  );
+                  return const Center(
+                    child: Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                person.age != null ? '${person.name ?? 'N/A'} • ${person.age}' : (person.name ?? 'N/A'),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.yellow[700],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

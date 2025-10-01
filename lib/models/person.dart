@@ -1,70 +1,151 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:get/get.dart'; // Import GetX for Rx types
+import 'package:json_annotation/json_annotation.dart';
 
-// Define LikeStatus enum
+part 'person.g.dart';
+
+// The LikeStatus enum is better defined here or in a dedicated file if it's
+// used across different models or controllers.
 enum LikeStatus {
-  none,                     // No like interaction
-  currentUserLiked,         // Current user liked target, target has not responded
-  targetUserLikedCurrentUser, // Target user liked current, current user has not responded
-  mutualLike,               // Both users have liked each other
+  none, // Default state
+  liked, // Current user has liked the target, but not mutual (half-like)
+  mutualLike, // Both users have liked each other (full-like)
 }
 
+@JsonSerializable(
+  explicitToJson: true, // Needed for nested objects if any were present
+  createToJson: true,
+  anyMap: true, // Allows for a dynamic map from Firestore
+)
 class Person {
-  //Personal Info
-  String? uid;
-  String? profilePhoto;
-  String? email;
-  String? password; // Consider if password should be stored in the Person model
-  String? name;
-  int? age; // Made nullable to handle potential null from Firestore
-  String? phoneNumber;
-  String? gender;
-  String? orientation;
-  String? username; // Eve specific
-  String? country; // Eve specific
-  String? province; // Eve specific
-  String? city; // Eve specific
-  bool? lookingForBreakfast; // Eve specific
-  bool? lookingForLunch; // Eve specific
-  bool? lookingForDinner; // Eve specific
-  bool? lookingForLongTerm; // Eve specific
-  int? publishedDateTime;
+  // Personal Info
+  @JsonKey(name: 'uid')
+  final String? uid;
 
-  //Appearance - Eve specific
-  String? height;
-  String? bodyType;
-  bool? drinkSelection;
-  bool? smokeSelection;
-  bool? meatSelection;
-  bool? greekSelection;
-  bool? hostSelection;
-  bool? travelSelection;
-  String? profession;
-  String? income;
-  List<String>? professionalVenues; // Field for multiple professional venues
-  String? otherProfessionalVenue; // Field for other professional venue text
+  @JsonKey(name: 'profilePhoto')
+  final String? profilePhoto;
 
-  //Background - Eve specific
-  String? ethnicity;
-  String? nationality;
-  String? languages; // Can be a comma-separated string or a List<String>
+  @JsonKey(name: 'email')
+  final String? email;
 
-  //Social Media - Eve specific
-  String? instagram;
-  String? twitter;
+  @JsonKey(name: 'name')
+  final String? name;
 
-  // Favorite, like and message
-  RxBool isFavorite; // Changed to RxBool
-  bool isLiked = false; // We might deprecate or repurpose this later
-  bool hasMessage = false;
-  Rx<LikeStatus> likeStatus; // New field for detailed like status
+  @JsonKey(name: 'age')
+  final int? age;
 
-  Person({
-    //Personal Info
+  @JsonKey(name: 'phoneNumber')
+  final String? phoneNumber;
+
+  @JsonKey(name: 'gender')
+  final String? gender;
+
+  @JsonKey(name: 'orientation')
+  final String? orientation;
+
+  @JsonKey(name: 'username')
+  final String? username;
+
+  @JsonKey(name: 'country')
+  final String? country;
+
+  @JsonKey(name: 'province')
+  final String? province;
+
+  @JsonKey(name: 'city')
+  final String? city;
+
+  @JsonKey(name: 'lookingForBreakfast')
+  final bool? lookingForBreakfast;
+
+  @JsonKey(name: 'lookingForLunch')
+  final bool? lookingForLunch;
+
+  @JsonKey(name: 'lookingForDinner')
+  final bool? lookingForDinner;
+
+  @JsonKey(name: 'lookingForLongTerm')
+  final bool? lookingForLongTerm;
+
+  @JsonKey(name: 'publishedDateTime')
+  final int? publishedDateTime;
+
+  // Appearance
+  @JsonKey(name: 'height')
+  final String? height;
+
+  @JsonKey(name: 'bodyType')
+  final String? bodyType;
+
+  @JsonKey(name: 'drinkSelection')
+  final bool? drinkSelection;
+
+  @JsonKey(name: 'smokeSelection')
+  final bool? smokeSelection;
+
+  @JsonKey(name: 'meatSelection')
+  final bool? meatSelection;
+
+  @JsonKey(name: 'greekSelection')
+  final bool? greekSelection;
+
+  @JsonKey(name: 'hostSelection')
+  final bool? hostSelection;
+
+  @JsonKey(name: 'travelSelection')
+  final bool? travelSelection;
+
+  @JsonKey(name: 'profession')
+  final String? profession;
+
+  @JsonKey(name: 'income')
+  final String? income;
+
+  @JsonKey(name: 'professionalVenues')
+  final List<String>? professionalVenues;
+
+  @JsonKey(name: 'otherProfessionalVenue')
+  final String? otherProfessionalVenue;
+
+  // Background
+  @JsonKey(name: 'ethnicity')
+  final String? ethnicity;
+
+  @JsonKey(name: 'nationality')
+  final String? nationality;
+
+  @JsonKey(name: 'languages')
+  final String? languages;
+
+  // Social Media
+  @JsonKey(name: 'instagram')
+  final String? instagram;
+
+  @JsonKey(name: 'twitter')
+  final String? twitter;
+
+  // Gallery Images
+  @JsonKey(name: 'urlImage1')
+  final String? urlImage1;
+
+  @JsonKey(name: 'urlImage2')
+  final String? urlImage2;
+
+  @JsonKey(name: 'urlImage3')
+  final String? urlImage3;
+
+  @JsonKey(name: 'urlImage4')
+  final String? urlImage4;
+
+  @JsonKey(name: 'urlImage5')
+  final String? urlImage5;
+
+  // Note: Reactive properties like isFavorite, isLiked, hasMessage, and likeStatus
+  // have been removed. This state describes the relationship between the current
+  // user and this Person, and should be managed in a controller that holds this Person object.
+
+  const Person({
     this.uid,
     this.profilePhoto,
     this.email,
-    this.password,
     this.name,
     this.age,
     this.phoneNumber,
@@ -79,8 +160,6 @@ class Person {
     this.lookingForDinner,
     this.lookingForLongTerm,
     this.publishedDateTime,
-
-    //Appearance - Eve specific
     this.height,
     this.bodyType,
     this.drinkSelection,
@@ -93,131 +172,107 @@ class Person {
     this.income,
     this.professionalVenues,
     this.otherProfessionalVenue,
-
-    //Background - Eve specific
     this.ethnicity,
     this.nationality,
     this.languages,
-
-    //Social Media - Eve specific
     this.instagram,
     this.twitter,
+    this.urlImage1,
+    this.urlImage2,
+    this.urlImage3,
+    this.urlImage4,
+    this.urlImage5,
+  });
 
-    // Favorite, like and message
-    bool? isFavorite, // Changed to nullable bool for constructor input
-    this.isLiked = false, // Keep for now
-    this.hasMessage = false,
-    LikeStatus initialLikeStatus = LikeStatus.none, // Allow optional initial status
-  }) : this.isFavorite = (isFavorite ?? false).obs, // Initialize RxBool
-       likeStatus = initialLikeStatus.obs; // Initialize Rx field for likeStatus
+  /// Connect the generated [_$PersonFromJson] function to the `fromJson` factory.
+  factory Person.fromJson(Map<String, dynamic> json) => _$PersonFromJson(json);
 
-  Map<String, dynamic> toJson() => {
-    //Personal Info
-    'uid': uid,
-    'profilePhoto': profilePhoto,
-    'email': email,
-    'password': password,
-    'name': name,
-    'age': age,
-    'phoneNumber': phoneNumber,
-    'gender': gender,
-    'orientation': orientation,
-    'username': username,
-    'country': country,
-    'province': province,
-    'city': city,
-    'lookingForBreakfast': lookingForBreakfast,
-    'lookingForLunch': lookingForLunch,
-    'lookingForDinner': lookingForDinner,
-    'lookingForLongTerm': lookingForLongTerm,
-    'publishedDateTime': publishedDateTime,
+  /// Connect the generated [_$PersonToJson] function to the `toJson` method.
+  Map<String, dynamic> toJson() => _$PersonToJson(this);
 
-    //Appearance - Eve specific
-    'height': height,
-    'bodyType': bodyType,
-    'drinkSelection': drinkSelection,
-    'smokeSelection': smokeSelection,
-    'meatSelection': meatSelection,
-    'greekSelection': greekSelection,
-    'hostSelection': hostSelection,
-    'travelSelection': travelSelection,
-    'profession': profession,
-    'income': income,
-    'professionalVenues': professionalVenues,
-    'otherProfessionalVenue': otherProfessionalVenue,
-
-    //Background - Eve specific
-    'ethnicity': ethnicity,
-    'nationality': nationality,
-    'languages': languages,
-
-    //Social Media - Eve specific
-    'instagram': instagram,
-    'twitter': twitter,
-
-    // Favorite, like and message
-    'isFavorite': isFavorite.value, // Serialize .value of RxBool
-    'isLiked': isLiked,
-    'hasMessage': hasMessage,
-  };
-
-  static Person fromDataSnapshot(DocumentSnapshot snapshot) {
-    var dataSnapshot = snapshot.data() as Map<String, dynamic>;
-
+  /// Creates a copy of the current Person with the given fields replaced
+  /// with the new values.
+  Person copyWith({
+    String? uid,
+    String? profilePhoto,
+    String? email,
+    String? name,
+    int? age,
+    String? phoneNumber,
+    String? gender,
+    String? orientation,
+    String? username,
+    String? country,
+    String? province,
+    String? city,
+    bool? lookingForBreakfast,
+    bool? lookingForLunch,
+    bool? lookingForDinner,
+    bool? lookingForLongTerm,
+    int? publishedDateTime,
+    String? height,
+    String? bodyType,
+    bool? drinkSelection,
+    bool? smokeSelection,
+    bool? meatSelection,
+    bool? greekSelection,
+    bool? hostSelection,
+    bool? travelSelection,
+    String? profession,
+    String? income,
+    List<String>? professionalVenues,
+    String? otherProfessionalVenue,
+    String? ethnicity,
+    String? nationality,
+    String? languages,
+    String? instagram,
+    String? twitter,
+    String? urlImage1,
+    String? urlImage2,
+    String? urlImage3,
+    String? urlImage4,
+    String? urlImage5,
+  }) {
     return Person(
-      //Personal Info
-      uid: dataSnapshot['uid'] as String?,
-      profilePhoto: dataSnapshot['profilePhoto'] as String?,
-      email: dataSnapshot['email'] as String?,
-      password: dataSnapshot['password'] as String?,
-      name: dataSnapshot['name'] as String?,
-      age: dataSnapshot['age'] as int?,
-      phoneNumber: dataSnapshot['phoneNumber'] as String?,
-      gender: dataSnapshot['gender'] as String?,
-      orientation: dataSnapshot['orientation'] as String?,
-      username: dataSnapshot['username'] as String?,
-      country: dataSnapshot['country'] as String?,
-      province: dataSnapshot['province'] as String?,
-      city: dataSnapshot['city'] as String?,
-      lookingForBreakfast: dataSnapshot['lookingForBreakfast'] as bool?,
-      lookingForLunch: dataSnapshot['lookingForLunch'] as bool?,
-      lookingForDinner: dataSnapshot['lookingForDinner'] as bool?,
-      lookingForLongTerm: dataSnapshot['lookingForLongTerm'] as bool?,
-      publishedDateTime: dataSnapshot['publishedDateTime'] as int?,
-
-      //Appearance - Eve specific
-      height: dataSnapshot['height'] as String?,
-      bodyType: dataSnapshot['bodyType'] as String?,
-      drinkSelection: dataSnapshot['drinkSelection'] as bool?,
-      smokeSelection: dataSnapshot['smokeSelection'] as bool?,
-      meatSelection: dataSnapshot['meatSelection'] as bool?,
-      greekSelection: dataSnapshot['greekSelection'] as bool?,
-      hostSelection: dataSnapshot['hostSelection'] as bool?,
-      travelSelection: dataSnapshot['travelSelection'] as bool?,
-      profession: dataSnapshot['profession'] as String?,
-      income: dataSnapshot['income'] as String?,
-      professionalVenues: dataSnapshot['professionalVenues'] == null
-          ? null
-          : List<String>.from(dataSnapshot['professionalVenues']),
-      otherProfessionalVenue:
-      dataSnapshot['otherProfessionalVenue'] as String?,
-
-      //Background - Eve specific
-      ethnicity: dataSnapshot['ethnicity'] as String?,
-      nationality: dataSnapshot['nationality'] as String?,
-      languages: dataSnapshot['languages'] as String?,
-
-      //Social Media - Eve specific
-      instagram: dataSnapshot['instagram'] as String?,
-      twitter: dataSnapshot['twitter'] as String?,
-
-      // Favorite, like and message
-      // Initialize RxBool from Firestore, defaulting to false if null
-      isFavorite: (dataSnapshot['isFavorite'] as bool? ?? false),
-      isLiked: dataSnapshot['isLiked'] as bool? ?? false,
-      hasMessage: dataSnapshot['hasMessage'] as bool? ?? false,
-      // likeStatus will be initialized to LikeStatus.none by default in the constructor
-      // and then updated by ProfileController based on specific like data for the current user.
+      uid: uid ?? this.uid,
+      profilePhoto: profilePhoto ?? this.profilePhoto,
+      email: email ?? this.email,
+      name: name ?? this.name,
+      age: age ?? this.age,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      gender: gender ?? this.gender,
+      orientation: orientation ?? this.orientation,
+      username: username ?? this.username,
+      country: country ?? this.country,
+      province: province ?? this.province,
+      city: city ?? this.city,
+      lookingForBreakfast: lookingForBreakfast ?? this.lookingForBreakfast,
+      lookingForLunch: lookingForLunch ?? this.lookingForLunch,
+      lookingForDinner: lookingForDinner ?? this.lookingForDinner,
+      lookingForLongTerm: lookingForLongTerm ?? this.lookingForLongTerm,
+      publishedDateTime: publishedDateTime ?? this.publishedDateTime,
+      height: height ?? this.height,
+      bodyType: bodyType ?? this.bodyType,
+      drinkSelection: drinkSelection ?? this.drinkSelection,
+      smokeSelection: smokeSelection ?? this.smokeSelection,
+      meatSelection: meatSelection ?? this.meatSelection,
+      greekSelection: greekSelection ?? this.greekSelection,
+      hostSelection: hostSelection ?? this.hostSelection,
+      travelSelection: travelSelection ?? this.travelSelection,
+      profession: profession ?? this.profession,
+      income: income ?? this.income,
+      professionalVenues: professionalVenues ?? this.professionalVenues,
+      otherProfessionalVenue: otherProfessionalVenue ?? this.otherProfessionalVenue,
+      ethnicity: ethnicity ?? this.ethnicity,
+      nationality: nationality ?? this.nationality,
+      languages: languages ?? this.languages,
+      instagram: instagram ?? this.instagram,
+      twitter: twitter ?? this.twitter,
+      urlImage1: urlImage1 ?? this.urlImage1,
+      urlImage2: urlImage2 ?? this.urlImage2,
+      urlImage3: urlImage3 ?? this.urlImage3,
+      urlImage4: urlImage4 ?? this.urlImage4,
+      urlImage5: urlImage5 ?? this.urlImage5,
     );
   }
 }

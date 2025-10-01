@@ -1,7 +1,61 @@
+import 'dart:async';
+import 'package:eavzappl/authenticationScreen/login_screen.dart';
+import 'package:eavzappl/controllers/profile_controller.dart';
+import 'package:eavzappl/homeScreen/home_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  StreamSubscription? _authSubscription;
+  StreamSubscription? _profileSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _setupNavigationListeners();
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    _profileSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _setupNavigationListeners() {
+    _authSubscription = FirebaseAuth.instance.authStateChanges().listen((user) {
+      // Find the controller *after* the auth state has changed.
+      final profileController = Get.find<ProfileController>();
+
+      // This listener will fire once upon app start, and again on login/logout.
+      if (user != null) {
+        // User is logged in.
+        // First, check if the profile is ALREADY initialized. This handles the race condition
+        if (profileController.isInitialized.value) {
+          Get.offAll(() => const HomeScreen());
+        } else {
+          // Otherwise, listen for the change.
+          _profileSubscription = profileController.isInitialized.listen((isInitialized) {
+            if (isInitialized) {
+              Get.offAll(() => const HomeScreen());
+              _profileSubscription?.cancel(); // Clean up the listener.
+            }
+          });
+        }
+      } else {
+        // User is not logged in, go to login screen.
+        Get.offAll(() => const LoginScreen());
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart'; // For date formatting
 import 'package:eavzappl/accountSettingsScreen/notifications_screen.dart';
+import 'package:eavzappl/controllers/authentication_controller.dart'; // Import the AuthenticationController
 
 class UserSettingsScreen extends StatefulWidget {
   const UserSettingsScreen({super.key});
@@ -15,20 +16,8 @@ class UserSettingsScreen extends StatefulWidget {
 }
 
 class _UserSettingsScreenState extends State<UserSettingsScreen> {
-
-  Future<void> _signOutUser() async {
-    try {
-      await FirebaseAuth.instance.signOut();
-      Get.offAll(() => const LoginScreen());
-    } catch (e) {
-      Get.snackbar(
-        "Logout Failed",
-        "An error occurred: ${e.toString()}",
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
-    }
-  }
+  // The AuthenticationController instance.
+  final AuthenticationController authController = Get.find<AuthenticationController>();
 
   Future<void> _showReauthenticationDialog({
     required BuildContext context,
@@ -587,6 +576,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
 
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -595,6 +585,40 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
         iconTheme: const IconThemeData(color: Colors.blueGrey),
         backgroundColor: Colors.black54,
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.blueGrey),
+            tooltip: 'Log Out',
+            onPressed: () async {
+              // Re-using the same confirmation dialog logic
+              bool? confirmLogout = await showDialog<bool>(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    backgroundColor: Colors.grey[850],
+                    title: const Text('Log Out', style: TextStyle(color: Colors.blueGrey)),
+                    content: const Text('Are you sure you want to log out?', style: TextStyle(color: Colors.white70)),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text('Log Out', style: TextStyle(color: Colors.redAccent)),
+                      ),
+                    ],
+                  );
+                },
+              );
+
+              if (confirmLogout == true) {
+                // CORRECT: Calling the controller's logout method to reset state.
+                await authController.logoutUser();
+              }
+            },
+          ),
+        ],
       ),
       body: ListView(
         children: <Widget>[
@@ -625,7 +649,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
             leading: Icon(Icons.password, color: Colors.yellow[700]),
             title: const Text("Change Password", style: TextStyle(color: Colors.blueGrey)),
             onTap: () {
-               _showReauthenticationDialog(
+              _showReauthenticationDialog(
                 context: context,
                 title: "Change Password",
                 onAuthenticated: () async {
@@ -641,11 +665,12 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
               _showAccountSecurityInfoDialog(context);
             },
           ),
-           ListTile(
+          ListTile(
             leading: Icon(Icons.notifications, color: Colors.yellow[700]),
             title: const Text("Notifications", style: TextStyle(color: Colors.blueGrey)),
             onTap: () {
-              Get.to(() => const NotificationsScreen());            },
+              Get.to(() => const NotificationsScreen());
+            },
           ),
           ListTile(
             leading: Icon(Icons.info_outline, color: Colors.yellow[700]),
@@ -669,10 +694,34 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.logout, color: Colors.redAccent),
-            title: const Text("Logout", style: TextStyle(color: Colors.redAccent)),
-            onTap: () {
-              _signOutUser();
+            leading: const Icon(Icons.logout, color: Colors.blueGrey),
+            title: const Text('Log Out', style: TextStyle(color: Colors.white)),
+            onTap: () async {
+              bool? confirmLogout = await showDialog<bool>(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    backgroundColor: Colors.grey[850],
+                    title: const Text('Log Out', style: TextStyle(color: Colors.blueGrey)),
+                    content: const Text('Are you sure you want to log out?', style: TextStyle(color: Colors.white70)),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text('Log Out', style: TextStyle(color: Colors.redAccent)),
+                      ),
+                    ],
+                  );
+                },
+              );
+
+              if (confirmLogout == true) {
+                // CORRECT: Call the controller's logout method which resets state.
+                await authController.logoutUser();
+              }
             },
           ),
         ],

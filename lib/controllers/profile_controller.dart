@@ -1,557 +1,344 @@
 import 'dart:async';
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eavzappl/models/filter_preferences.dart';
+import 'package:eavzappl/models/person.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import '../models/person.dart';
+
+enum ProfileLoadingStatus { loading, loaded, error }
 
 class ProfileController extends GetxController {
-  final RxList<Person> allUsersProfileList = <Person>[].obs;
-  final RxList<Person> usersProfileList = <Person>[].obs; // For filtered list
-  final Rx<Person?> currentUserProfile = Rx<Person?>(null);
-  // MODIFIED: Declaration to correctly handle nullable string value
-  final Rx<String?> _currentUserOrientation = Rx<String?>(null);
-  StreamSubscription? _profilesStreamSubscription;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // --- STATE MANAGEMENT ---
+  final RxBool isInitialized = false.obs;
+
+  // --- PRIVATE SOURCE OF TRUTH DATA ---
+  final RxList<String> _sentLikeUids = <String>[].obs;
+  final RxList<String> _receivedLikeUids = <String>[].obs;
+  final RxSet<String> _matchedUids = <String>{}.obs;
+  final RxList<String> _favoriteUids = <String>[].obs;
+  final Rx<Person?> _currentUserProfile = Rx<Person?>(null);
+
+  // --- PUBLIC UI-FACING REACTIVE LISTS ---
+  final RxList<Person> swipingProfileList = <Person>[].obs;
+  final RxList<Person> usersWhoViewedMe = <Person>[].obs;
+  final RxList<Person> usersWhoHaveLikedMe = <Person>[].obs;
+  final RxList<Person> usersIHaveLiked = <Person>[].obs;
+  final RxList<Person> usersIHaveFavourited = <Person>[].obs;
+
+  // --- PUBLIC DERIVED STATE ---
+  final RxMap<String, LikeStatus> likeStatusMap = <String, LikeStatus>{}.obs;
+  final Rx<FilterPreferences> activeFilters = FilterPreferences.initial().obs;
+
+  // --- ASYNC/LOADING STATE ---
+  final Rx<ProfileLoadingStatus> loadingStatus = ProfileLoadingStatus.loading.obs;
+  final RxBool isTogglingLike = false.obs;
+  final RxBool isTogglingFavorite = false.obs;
+
+  // --- STREAM SUBSCRIPTIONS ---
   StreamSubscription? _authStateSubscription;
-
-  // --- Filter Preferences ---
-  final Rx<FilterPreferences> activeFilters =
-  Rx<FilterPreferences>(FilterPreferences());
-
-  // --- Favorite Feature ---
-  final RxSet<String> favoritedUserIds = RxSet<String>();
+  StreamSubscription? _swipingProfilesSubscription;
   StreamSubscription? _favoritesSubscription;
+  StreamSubscription? _sentLikesSubscription;
+  StreamSubscription? _receivedLikesSubscription;
+  StreamSubscription? _matchesSubscription;
+  StreamSubscription? _viewersSubscription;
 
-  // --- Profile Viewers Feature ---
-  final String profileViewersSubCollection = "profileViewers";
-  RxList<Person> usersWhoViewedMeList = <Person>[].obs;
-  StreamSubscription? _usersWhoViewedMeSubscription;
-
+  // --- PUBLIC GETTERS ---
+  bool isFavorite(String uid) => _favoriteUids.contains(uid);
+  LikeStatus getLikeStatus(String uid) => likeStatusMap[uid] ?? LikeStatus.none;
 
   @override
   void onInit() {
     super.onInit();
-    _authStateSubscription =
-        FirebaseAuth.instance.authStateChanges().listen((User? user) {
-          if (user == null) {
-            print("ProfileController: User is currently signed out!");
-            _profilesStreamSubscription?.cancel();
-            _favoritesSubscription?.cancel();
-            _usersWhoViewedMeSubscription?.cancel();
-            allUsersProfileList.clear(); // Use clear for RxList
-            usersProfileList.clear();   // Use clear for RxList
-            currentUserProfile.value = null;
-            // MODIFIED: Correctly set null to Rx<String?>
-            _currentUserOrientation.value = null;
-            favoritedUserIds.clear();
-            usersWhoViewedMeList.clear();
-            activeFilters.value = FilterPreferences();
-          } else {
-            print("ProfileController: User is signed in! UID: ${user.uid}. Initializing/Refreshing profiles.");
-            _fetchAndStreamUserFavorites(user.uid);
-            _listenToUsersWhoViewedMe(user.uid);
-            _initializeAndStreamProfiles();
-            activeFilters.value = FilterPreferences(); // Consider if this should be reset elsewhere too
-          }
-        });
+    _authStateSubscription = _auth.authStateChanges().listen((user) {
+      if (user != null) {
+        _initializeAllStreams(user.uid);
+      } else {
+        _clearAllState();
+      }
+    });
+    everAll([_sentLikeUids, _receivedLikeUids, _matchedUids], (_) => _updateLikeStatusMap());
   }
 
   @override
   void onClose() {
-    _authStateSubscription?.cancel();
-    _favoritesSubscription?.cancel();
-    _profilesStreamSubscription?.cancel();
-    _usersWhoViewedMeSubscription?.cancel();
+    _cancelAllSubscriptions();
     super.onClose();
   }
 
-  void updateFilters(FilterPreferences newFilters) {
+  void applyFilters(FilterPreferences newFilters) {
     activeFilters.value = newFilters;
-    print(
-        "Filters updated in ProfileController. New filters: Age ${newFilters.ageRange}, Ethnicity ${newFilters.ethnicity}, Profession ${newFilters.profession}, Country ${newFilters.country}, Host ${newFilters.wantsHost}, Travel ${newFilters.wantsTravel}");
-    // MODIFIED: Use assignAll for RxList
-    usersProfileList.assignAll(filteredUsersProfileList);
-  }
-
-  List<Person> get filteredUsersProfileList {
-    List<Person> filteredList = allUsersProfileList.toList(); // Create a copy to modify
-    final filters = activeFilters.value;
-
-    // Apply Age Filter
-    if (filters.ageRange != null) {
-      filteredList = filteredList.where((person) {
-        if (person.age == null) return false;
-        return person.age! >= filters.ageRange!.start.round() &&
-            person.age! <= filters.ageRange!.end.round();
-      }).toList();
-    }
-
-    // Apply Gender Filter
-    if (filters.gender != null &&
-        filters.gender != "Any" &&
-        filters.gender!.isNotEmpty) {
-      filteredList = filteredList.where((person) {
-        if (person.gender == null) return false;
-        return person.gender!.toLowerCase() == filters.gender!.toLowerCase();
-      }).toList();
-    }
-
-    // Apply Ethnicity Filter
-    if (filters.ethnicity != null && filters.ethnicity != "Any") {
-      filteredList = filteredList
-          .where((person) =>
-      person.ethnicity?.toLowerCase() ==
-          filters.ethnicity!.toLowerCase())
-          .toList();
-    }
-
-    // Apply Wants Host Filter
-    if (filters.wantsHost != null) {
-      filteredList = filteredList
-          .where((person) => person.hostSelection == filters.wantsHost)
-          .toList();
-    }
-
-    // Apply Wants Travel Filter
-    if (filters.wantsTravel != null) {
-      filteredList = filteredList
-          .where((person) => person.travelSelection == filters.wantsTravel)
-          .toList();
-    }
-
-    // Apply Profession Filter
-    if (filters.profession != null && filters.profession != "Any") {
-      String filterProfessionLower = filters.profession!.toLowerCase();
-
-      if (filterProfessionLower == "professional") {
-        // If filtering for "Professional" category
-        filteredList = filteredList.where((person) {
-          String? personProfessionLower = person.profession?.toLowerCase();
-          // Match if profession is not null, not empty, and not "student" or "freelancer"
-          return personProfessionLower != null &&
-                 personProfessionLower.isNotEmpty &&
-                 personProfessionLower != "student" &&
-                 personProfessionLower != "freelancer";
-        }).toList();
-      } else {
-        // Existing behavior for exact matches (e.g., "Student", "Freelancer", or a specific typed profession)
-        filteredList = filteredList.where((person) =>
-          person.profession?.toLowerCase() == filterProfessionLower).toList();
-      }
-    }
-
-    // Apply Country Filter
-    if (filters.country != null &&
-        filters.country != "Any" &&
-        filters.country!.isNotEmpty) {
-      filteredList = filteredList
-          .where((person) =>
-      person.country?.toLowerCase() == filters.country!.toLowerCase())
-          .toList();
-    }
-
-    // Apply Province/State Filter
-    if (filters.country != null &&
-        filters.country != "Any" &&
-        filters.country!.isNotEmpty &&
-        filters.province != null &&
-        filters.province != "Any" &&
-        filters.province!.isNotEmpty) {
-      filteredList = filteredList
-          .where((person) =>
-      person.province?.toLowerCase() ==
-          filters.province!.toLowerCase())
-          .toList();
-    }
-
-    // Apply City Filter
-    if (filters.country != null &&
-        filters.country != "Any" &&
-        filters.country!.isNotEmpty &&
-        filters.province != null &&
-        filters.province != "Any" &&
-        filters.province!.isNotEmpty &&
-        filters.city != null &&
-        filters.city != "Any" &&
-        filters.city!.isNotEmpty) {
-      filteredList = filteredList
-          .where((person) =>
-      person.city?.toLowerCase() == filters.city!.toLowerCase())
-          .toList();
-    }
-    return filteredList;
-  }
-
-  // --- Favorite Feature Methods ---
-  void _fetchAndStreamUserFavorites(String currentUserId) {
-    _favoritesSubscription?.cancel();
-    _favoritesSubscription = FirebaseFirestore.instance
-        .collection("users")
-        .doc(currentUserId)
-        .collection("userFavorites")
-        .snapshots()
-        .listen((snapshot) {
-      final ids = snapshot.docs.map((doc) => doc.id).toSet();
-      favoritedUserIds.value = ids; // RxSet assignment is fine
-      _updateFavoriteStatusInProfileList();
-      print(
-          "ProfileController: User favorites updated: ${favoritedUserIds.length} favorites.");
-    }, onError: (error) {
-      print("ProfileController: Error fetching user favorites: $error");
-    });
-  }
-
-  void _updateFavoriteStatusInProfileList() {
-    bool changed = false;
-    for (var person in allUsersProfileList) {
-      bool isFav = favoritedUserIds.contains(person.uid);
-      if (person.isFavorite.value != isFav) {
-        person.isFavorite.value = isFav;
-        changed = true;
-      }
-    }
-    // Only update if there was a change or if lists might be out of sync
-    // MODIFIED: Use assignAll for RxList
-    if (changed || usersProfileList.length != filteredUsersProfileList.length) { // Basic check
-      usersProfileList.assignAll(filteredUsersProfileList);
+    final currentUserId = _auth.currentUser?.uid;
+    if (currentUserId != null) {
+      _listenToSwipingProfiles(currentUserId);
     }
   }
 
-  Future<bool> toggleFavoriteStatus(String personIdToToggle) async {
-    String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUserId == null) {
-      print(
-          "ProfileController Error: Current user is null. Cannot toggle favorite.");
-      // It's important to return a sensible default or throw an error based on your app's needs.
-      // Returning the current status if person is found, else false.
-      final personInList = allUsersProfileList.firstWhereOrNull((p) => p.uid == personIdToToggle);
-      return personInList?.isFavorite.value ?? false;
-    }
+  // --- CORE ACTIONS ---
+  Future<void> toggleLike(String targetUid) async {
+    final String? currentUserId = _auth.currentUser?.uid;
+    if (currentUserId == null || isTogglingLike.isTrue) return;
 
-    DocumentReference favoriteDocRef = FirebaseFirestore.instance
-        .collection("users")
-        .doc(currentUserId)
-        .collection("userFavorites")
-        .doc(personIdToToggle);
-
-    bool newFavoriteState;
+    isTogglingLike.value = true;
+    final batch = _firestore.batch();
+    final currentUserLikesSentRef = _firestore.collection('users').doc(currentUserId).collection('likesSent').doc(targetUid);
+    final targetUserLikesReceivedRef = _firestore.collection('users').doc(targetUid).collection('likesReceived').doc(currentUserId);
+    final matchId = [currentUserId, targetUid]..sort();
+    final matchRef = _firestore.collection('matches').doc(matchId.join('_'));
 
     try {
-      final personDoc = await favoriteDocRef.get();
-      final int personIndexInAll =
-          allUsersProfileList.indexWhere((p) => p.uid == personIdToToggle);
-
-      if (personDoc.exists) {
-        await favoriteDocRef.delete();
-        newFavoriteState = false;
-        print(
-            "ProfileController: User $personIdToToggle removed from favorites for $currentUserId");
+      final bool isCurrentlyLiked = _sentLikeUids.contains(targetUid);
+      if (isCurrentlyLiked) {
+        batch.delete(currentUserLikesSentRef);
+        batch.delete(targetUserLikesReceivedRef);
+        batch.delete(matchRef);
       } else {
-        await favoriteDocRef.set({'favoritedAt': FieldValue.serverTimestamp()});
-        newFavoriteState = true;
-        print(
-            "ProfileController: User $personIdToToggle added to favorites for $currentUserId");
+        final likeData = {'timestamp': FieldValue.serverTimestamp()};
+        batch.set(currentUserLikesSentRef, likeData);
+        batch.set(targetUserLikesReceivedRef, likeData);
+        if (_receivedLikeUids.contains(targetUid)) {
+          batch.set(matchRef, {'users': [currentUserId, targetUid], 'createdAt': FieldValue.serverTimestamp()});
+        }
       }
-
-      if (personIndexInAll != -1) {
-        allUsersProfileList[personIndexInAll].isFavorite.value = newFavoriteState;
-        usersProfileList.assignAll(filteredUsersProfileList); // Keep filtered list in sync
-      }
-      // favoritedUserIds will be updated by the stream in _fetchAndStreamUserFavorites.
-      return newFavoriteState;
-    } catch (e) {
-      print("ProfileController: Error toggling favorite status for $personIdToToggle: $e");
-      // In case of error, return the last known state from the list, or false if not found.
-      final personInList = allUsersProfileList.firstWhereOrNull((p) => p.uid == personIdToToggle);
-      return personInList?.isFavorite.value ?? false;
+      await batch.commit();
+    } catch (e, s) {
+      log('Error toggling like', name: 'ProfileController', error: e, stackTrace: s);
+    } finally {
+      isTogglingLike.value = false;
     }
   }
 
-  // --- Like Feature Methods ---
-  Future<void> updateInitialLikeStatusForPerson(
-      Person person, String currentUserId) async {
-    if (person.uid == null) {
-      person.likeStatus.value = LikeStatus.none;
-      return;
-    }
+  Future<void> toggleFavoriteStatus(String targetUid) async {
+    final String? currentUserId = _auth.currentUser?.uid;
+    if (currentUserId == null) return;
 
-    DocumentReference currentUserLikesTargetRef = FirebaseFirestore.instance
-        .collection("users")
-        .doc(currentUserId)
-        .collection("likesSent")
-        .doc(person.uid!);
-
-    DocumentReference targetLikesCurrentUserRef = FirebaseFirestore.instance
-        .collection("users")
-        .doc(person.uid!)
-        .collection("likesSent")
-        .doc(currentUserId);
+    isTogglingFavorite.value = true;
+    final docRef = _firestore.collection("users").doc(currentUserId).collection("userFavorites").doc(targetUid);
 
     try {
-      DocumentSnapshot currentUserLikesTargetSnap =
-      await currentUserLikesTargetRef.get();
-      DocumentSnapshot targetLikesCurrentUserSnap =
-      await targetLikesCurrentUserRef.get();
-
-      if (currentUserLikesTargetSnap.exists) {
-        if (targetLikesCurrentUserSnap.exists) {
-          person.likeStatus.value = LikeStatus.mutualLike;
-        } else {
-          person.likeStatus.value = LikeStatus.currentUserLiked;
-        }
+      if (_favoriteUids.contains(targetUid)) {
+        await docRef.delete();
       } else {
-        if (targetLikesCurrentUserSnap.exists) {
-          person.likeStatus.value = LikeStatus.targetUserLikedCurrentUser;
-        } else {
-          person.likeStatus.value = LikeStatus.none;
-        }
+        await docRef.set({'favoritedAt': FieldValue.serverTimestamp()});
       }
     } catch (e) {
-      print(
-          "ProfileController: Error updating initial like status for ${person.uid}: $e");
-      person.likeStatus.value = LikeStatus.none;
+      log('Error toggling favorite', name: 'ProfileController', error: e);
+    } finally {
+      isTogglingFavorite.value = false;
     }
-  }
-
-  Future<LikeStatus> toggleLike(String targetUserId) async {
-    String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUserId == null) {
-      print("ProfileController Error: Current user is null. Cannot toggle like.");
-      final personInList = allUsersProfileList.firstWhereOrNull((p) => p.uid == targetUserId);
-      return personInList?.likeStatus.value ?? LikeStatus.none;
-    }
-
-    Person? targetPerson = allUsersProfileList.firstWhereOrNull((p) => p.uid == targetUserId);
-    Person? currentUserData = currentUserProfile.value; // From onInit
-
-    if (targetPerson == null) {
-      print("ProfileController Warning: Person $targetUserId not found for like toggle.");
-      return LikeStatus.none; // Return a default status if target person not found
-    }
-    // currentUserData might be null if not fetched yet, handle gracefully for names
-    if (currentUserData == null) {
-        print("ProfileController Warning: Current user data (currentUserProfile) is null. Usernames for notification might be generic.");
-    }
-
-    DocumentReference currentUserLikesTargetRef = FirebaseFirestore.instance
-        .collection("users")
-        .doc(currentUserId)
-        .collection("likesSent")
-        .doc(targetUserId);
-
-    bool isLikingOperationInLikesSent = false;
-
-    try {
-      await FirebaseFirestore.instance.runTransaction((transaction) async {
-        DocumentSnapshot currentUserLikesTargetSnap = await transaction.get(currentUserLikesTargetRef);
-
-        if (currentUserLikesTargetSnap.exists) {
-          transaction.delete(currentUserLikesTargetRef);
-          isLikingOperationInLikesSent = false;
-          print("ProfileController: User $currentUserId unliked $targetUserId (from likesSent).");
-        } else {
-          transaction.set(currentUserLikesTargetRef, {'likedAt': FieldValue.serverTimestamp()});
-          isLikingOperationInLikesSent = true;
-          print("ProfileController: User $currentUserId liked $targetUserId (to likesSent).");
-        }
-      });
-
-      if (isLikingOperationInLikesSent) {
-        DocumentReference topLevelLikeDocRef = FirebaseFirestore.instance.collection("likes").doc();
-        final likeDataForCloudFunction = {
-          'likingUserId': currentUserId,
-          'likingUserName': currentUserData?.name ?? 'Someone',
-          'likedUserId': targetUserId,
-          'likedUserName': targetPerson.name ?? 'Someone',
-          'timestamp': FieldValue.serverTimestamp(),
-          'status': 'active',
-          'likeId': topLevelLikeDocRef.id
-        };
-        await topLevelLikeDocRef.set(likeDataForCloudFunction);
-        print("ProfileController: Recorded like in top-level 'likes' collection (ID: ${topLevelLikeDocRef.id}) for Cloud Function trigger.");
-      } else {
-        QuerySnapshot likeQuery = await FirebaseFirestore.instance.collection("likes")
-          .where("likingUserId", isEqualTo: currentUserId)
-          .where("likedUserId", isEqualTo: targetUserId)
-          .where("status", isEqualTo: "active")
-          .limit(1).get();
-
-        if (likeQuery.docs.isNotEmpty) {
-          await likeQuery.docs.first.reference.update({
-            "status": "inactive",
-            "unlikedAt": FieldValue.serverTimestamp()
-          });
-          print("ProfileController: Marked like as 'inactive' in top-level 'likes' collection for $currentUserId -> $targetUserId.");
-        } else {
-          print("ProfileController: No active like found in top-level 'likes' collection to mark as inactive for $currentUserId -> $targetUserId.");
-        }
-      }
-
-      await updateInitialLikeStatusForPerson(targetPerson, currentUserId);
-      return targetPerson.likeStatus.value; // Return the updated status
-
-    } catch (e) {
-      print("ProfileController: Error in toggleLike operation for $targetUserId: $e");
-      // In case of error, attempt to re-fetch and return the status, or return the current known status.
-      if (targetPerson != null && currentUserId != null) {
-        await updateInitialLikeStatusForPerson(targetPerson, currentUserId);
-      }
-      return targetPerson?.likeStatus.value ?? LikeStatus.none;
-    }
-  }
-
-  Future<void> _initializeAndStreamProfiles() async {
-    String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUserId == null) {
-      print("ProfileController: _initializeAndStreamProfiles called but user is null.");
-      allUsersProfileList.clear();
-      usersProfileList.clear();
-      currentUserProfile.value = null;
-      _currentUserOrientation.value = null; // Correctly assigns null
-      return;
-    }
-
-    print("ProfileController: Initializing for user: $currentUserId");
-    _profilesStreamSubscription?.cancel();
-
-    try {
-      DocumentSnapshot currentUserDoc = await FirebaseFirestore.instance
-          .collection("users")
-          .doc(currentUserId)
-          .get();
-
-      if (!currentUserDoc.exists || currentUserDoc.data() == null) {
-        print("ProfileController: Current user document ($currentUserId) not found or has no data.");
-        allUsersProfileList.clear();
-        usersProfileList.clear();
-        return;
-      }
-
-      currentUserProfile.value = Person.fromDataSnapshot(currentUserDoc);
-      _currentUserOrientation.value =
-          currentUserProfile.value?.orientation?.toLowerCase();
-
-      if (_currentUserOrientation.value == null) {
-        print(
-            "ProfileController: Current user '$currentUserId' orientation not found.");
-        allUsersProfileList.clear();
-        usersProfileList.clear();
-        return;
-      }
-
-      String targetOrientation;
-      final String? currentOrientation = _currentUserOrientation.value;
-
-      if (currentOrientation == 'adam') {
-        targetOrientation = 'eve';
-      } else if (currentOrientation == 'eve') {
-        targetOrientation = 'adam';
-      } else {
-        print(
-            "ProfileController: Unknown current user orientation ('$currentOrientation')");
-        allUsersProfileList.clear();
-        usersProfileList.clear();
-        return;
-      }
-
-      print(
-          "ProfileController: User '$currentUserId' orientation: $currentOrientation, fetching $targetOrientation profiles.");
-
-      Stream<QuerySnapshot> profilesStream = FirebaseFirestore.instance
-          .collection("users")
-          .where("uid", isNotEqualTo: currentUserId)
-          .where("orientation", isEqualTo: targetOrientation)
-          .snapshots();
-
-      _profilesStreamSubscription =
-          profilesStream.asyncMap((queryDataSnapshot) async {
-            print(
-                "ProfileController: Stream for user '$currentUserId' received ${queryDataSnapshot.docs.length} profiles matching target orientation '$targetOrientation'.");
-            List<Person> profilesList = [];
-            for (var eachProfileDoc in queryDataSnapshot.docs) {
-              Person person = Person.fromDataSnapshot(eachProfileDoc);
-              person.isFavorite.value = favoritedUserIds.contains(person.uid);
-              await updateInitialLikeStatusForPerson(person, currentUserId);
-              profilesList.add(person);
-            }
-            return profilesList;
-          }).listen((profilesWithLikeStatus) {
-            allUsersProfileList.assignAll(profilesWithLikeStatus);
-            usersProfileList.assignAll(filteredUsersProfileList);
-            print(
-                "ProfileController: allUsersProfileList updated with ${profilesWithLikeStatus.length} profiles. Filtered list has ${usersProfileList.length} profiles.");
-          }, onError: (e) {
-            print(
-                "ProfileController: Error in profiles stream for user '$currentUserId': $e");
-            allUsersProfileList.clear();
-            usersProfileList.clear();
-            currentUserProfile.value = null;
-            _currentUserOrientation.value = null;
-          });
-    } catch (e) {
-      print(
-          "ProfileController: General Error in _initializeAndStreamProfiles for user '$currentUserId': $e");
-      allUsersProfileList.clear();
-      usersProfileList.clear();
-      currentUserProfile.value = null;
-      _currentUserOrientation.value = null;
-    }
-  }
-
-  void _listenToUsersWhoViewedMe(String currentUserId) {
-    _usersWhoViewedMeSubscription?.cancel();
-    _usersWhoViewedMeSubscription = FirebaseFirestore.instance
-        .collection("users")
-        .doc(currentUserId)
-        .collection(profileViewersSubCollection)
-        .orderBy("lastViewed", descending: true)
-        .snapshots()
-        .asyncMap((snapshot) async {
-      List<String> viewerIds = snapshot.docs.map((doc) => doc.id).toList();
-      List<Person> viewers = [];
-      for (String id in viewerIds) {
-        if (id == currentUserId) continue;
-        try {
-          DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection("users").doc(id).get();
-          if (userDoc.exists) {
-            viewers.add(Person.fromDataSnapshot(userDoc));
-          }
-        } catch (e) {
-          print("ProfileController: Error fetching viewer profile $id: $e");
-        }
-      }
-      return viewers;
-    }).listen((viewersList) {
-      usersWhoViewedMeList.assignAll(viewersList);
-      print("ProfileController: Users who viewed me list updated. Count: ${usersWhoViewedMeList.length}");
-    }, onError: (error) {
-      print("ProfileController: Error listening to users who viewed me: $error");
-    });
   }
 
   Future<void> recordProfileView(String viewedUserId) async {
-    String? currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUserId == null || currentUserId == viewedUserId) {
-      if (currentUserId == viewedUserId) {
-        print("ProfileController: Self-view detected for $viewedUserId. Not recording.");
+    final String? currentUserId = _auth.currentUser?.uid;
+    if (currentUserId == null || currentUserId == viewedUserId) return;
+    try {
+      await _firestore.collection("users").doc(viewedUserId).collection("profileViewLog").doc(currentUserId).set({'lastViewed': FieldValue.serverTimestamp()});
+    } catch (e, s) {
+      log('Error recording profile view for $viewedUserId', name: 'ProfileController', error: e, stackTrace: s);
+    }
+  }
+
+  // --- STATE COMPUTATION ---
+  void _updateLikeStatusMap() {
+    final newStatusMap = <String, LikeStatus>{};
+    final allKnownUids = {...swipingProfileList.map((p) => p.uid).whereType<String>(), ..._sentLikeUids, ..._receivedLikeUids, ..._matchedUids};
+
+    for (final uid in allKnownUids) {
+      if (_matchedUids.contains(uid)) {
+        newStatusMap[uid] = LikeStatus.mutualLike;
+      } else if (_sentLikeUids.contains(uid)) {
+        newStatusMap[uid] = LikeStatus.liked;
       } else {
-        print("ProfileController: No current user ID. Cannot record profile view for $viewedUserId.");
+        newStatusMap[uid] = LikeStatus.none;
       }
+    }
+    likeStatusMap.value = newStatusMap;
+  }
+
+  // --- DATA FETCHING & STREAMING ---
+  Future<void> _initializeAllStreams(String userId) async {
+    loadingStatus.value = ProfileLoadingStatus.loading;
+    isInitialized.value = false;
+
+    try {
+      // --- FIX START: Add retry logic for fetching user document ---
+      DocumentSnapshot? currentUserDoc;
+      for (int i = 0; i < 5; i++) {
+        currentUserDoc = await _firestore.collection("users").doc(userId).get();
+        if (currentUserDoc.exists) {
+          break; // Document found, exit loop
+        }
+        // Wait for 1 second before retrying
+        await Future.delayed(const Duration(seconds: 1));
+      }
+
+      if (currentUserDoc != null && currentUserDoc.exists) {
+        final data = currentUserDoc.data() as Map<String, dynamic>;
+        data['uid'] = currentUserDoc.id;
+        _currentUserProfile.value = Person.fromJson(data);
+      } else {
+        // If the document still doesn't exist after retries, fail gracefully.
+        throw Exception("User document not found for UID: $userId after multiple retries.");
+      }
+      // --- FIX END ---
+
+      _listenToSwipingProfiles(userId);
+      _listenToFavorites(userId);
+      _listenToLikes(userId);
+      _listenToMatches(userId);
+      _listenToViewers(userId);
+
+      isInitialized.value = true; // Signal that initialization is complete
+
+    } catch(e, s) {
+      log('Fatal error during initialization', name: 'ProfileController', error: e, stackTrace: s);
+      loadingStatus.value = ProfileLoadingStatus.error;
+      isInitialized.value = false; // Ensure this is false on error
+    }
+  }
+
+  void _listenToSwipingProfiles(String userId) {
+    _swipingProfilesSubscription?.cancel();
+
+    Query query = _firestore.collection('users').where("uid", isNotEqualTo: userId);
+
+    // Safely determine the target orientation
+    final String? currentUserOrientation = _currentUserProfile.value?.orientation?.toLowerCase().trim();
+    String? targetOrientation;
+
+    if (currentUserOrientation == 'adam') {
+      targetOrientation = 'eve';
+    } else if (currentUserOrientation == 'eve') {
+      targetOrientation = 'adam';
+    }
+
+    if (targetOrientation != null) {
+      query = query.where("orientation", isEqualTo: targetOrientation);
+    } else {
+      log('Could not determine target orientation for user $userId. Current user orientation is $currentUserOrientation.', name: 'ProfileController');
+      swipingProfileList.assignAll([]);
+      loadingStatus.value = ProfileLoadingStatus.loaded;
       return;
     }
 
-    try {
-      await FirebaseFirestore.instance
-          .collection("users")
-          .doc(viewedUserId)
-          .collection(profileViewersSubCollection)
-          .doc(currentUserId)
-          .set({
-        "lastViewed": FieldValue.serverTimestamp(),
-      });
-      print("ProfileController: Profile view recorded. User $currentUserId viewed $viewedUserId.");
-    } catch (e) {
-      print("ProfileController: Error recording profile view for $viewedUserId by $currentUserId: $e");
+    final filters = activeFilters.value;
+    if (filters.gender != null && filters.gender != 'Any') {
+      query = query.where('gender', isEqualTo: filters.gender);
     }
+    if (filters.ethnicity != null && filters.ethnicity != 'Any') {
+      query = query.where('ethnicity', isEqualTo: filters.ethnicity);
+    }
+
+    _swipingProfilesSubscription = query.snapshots().listen((snapshot) {
+      final profiles = snapshot.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['uid'] = doc.id;
+        return Person.fromJson(data);
+      }).toList();
+      swipingProfileList.assignAll(profiles);
+      _updateLikeStatusMap();
+      loadingStatus.value = ProfileLoadingStatus.loaded;
+    }, onError: (e) {
+      log('Error in swiping profiles stream', name: 'ProfileController', error: e);
+      loadingStatus.value = ProfileLoadingStatus.error;
+    });
+  }
+
+
+  void _listenToFavorites(String userId) {
+    _favoritesSubscription?.cancel();
+    _favoritesSubscription = _firestore.collection("users").doc(userId).collection("userFavorites").snapshots().listen((snapshot) {
+      final uids = snapshot.docs.map((doc) => doc.id).toList();
+      _favoriteUids.assignAll(uids);
+      _fetchProfilesForUiList(uids, usersIHaveFavourited);
+    }, onError: (e) => log('Error in favorites stream', name: 'ProfileController', error: e));
+  }
+
+  void _listenToLikes(String userId) {
+    _sentLikesSubscription?.cancel();
+    _sentLikesSubscription = _firestore.collection('users').doc(userId).collection('likesSent').snapshots().listen((snapshot) {
+      final uids = snapshot.docs.map((doc) => doc.id).toList();
+      _sentLikeUids.assignAll(uids);
+      _fetchProfilesForUiList(uids, usersIHaveLiked);
+    }, onError: (e) => log('Error in sent likes stream', name: 'ProfileController', error: e));
+
+    _receivedLikesSubscription?.cancel();
+    _receivedLikesSubscription = _firestore.collection('users').doc(userId).collection('likesReceived').snapshots().listen((snapshot) {
+      final uids = snapshot.docs.map((doc) => doc.id).toList();
+      _receivedLikeUids.assignAll(uids);
+      _fetchProfilesForUiList(uids, usersWhoHaveLikedMe);
+    }, onError: (e) => log('Error in received likes stream', name: 'ProfileController', error: e));
+  }
+
+  void _listenToMatches(String userId) {
+    _matchesSubscription?.cancel();
+    _matchesSubscription = _firestore.collection('matches').where('users', arrayContains: userId).snapshots().listen((snapshot) {
+      final uids = <String>{};
+      for (final doc in snapshot.docs) {
+        final List<dynamic> users = doc.data()['users'] ?? [];
+        final otherUser = users.firstWhere((uid) => uid != userId, orElse: () => null);
+        if (otherUser != null) {
+          uids.add(otherUser);
+        }
+      }
+      _matchedUids.assignAll(uids);
+    }, onError: (e) => log('Error in matches stream', name: 'ProfileController', error: e));
+  }
+
+  void _listenToViewers(String userId) {
+    _viewersSubscription?.cancel();
+    _viewersSubscription = _firestore.collection('users').doc(userId).collection('profileViewLog').orderBy('lastViewed', descending: true).limit(50).snapshots().listen((snapshot) {
+      final uids = snapshot.docs.map((doc) => doc.id).toList();
+      _fetchProfilesForUiList(uids, usersWhoViewedMe);
+    }, onError: (e) => log('Error in viewers stream', name: 'ProfileController', error: e));
+  }
+
+  Future<void> _fetchProfilesForUiList(List<String> uids, RxList<Person> uiList) async {
+    if (uids.isEmpty) {
+      uiList.clear();
+      return;
+    }
+    try {
+      final querySnapshot = await _firestore.collection('users').where(FieldPath.documentId, whereIn: uids).get();
+      final profiles = querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        data['uid'] = doc.id;
+        return Person.fromJson(data);
+      }).toList();
+      uiList.assignAll(profiles);
+    } catch (e) {
+      log('Error fetching profiles for UI list', name: 'ProfileController', error: e);
+    }
+  }
+
+  void _clearAllState() {
+    _cancelAllSubscriptions();
+    isInitialized.value = false;
+    _sentLikeUids.clear();
+    _receivedLikeUids.clear();
+    _matchedUids.clear();
+    _favoriteUids.clear();
+    _currentUserProfile.value = null;
+    swipingProfileList.clear();
+    usersWhoViewedMe.clear();
+    usersWhoHaveLikedMe.clear();
+    usersIHaveLiked.clear();
+    usersIHaveFavourited.clear();
+    likeStatusMap.clear();
+    loadingStatus.value = ProfileLoadingStatus.loading;
+  }
+
+  void _cancelAllSubscriptions() {
+    _swipingProfilesSubscription?.cancel();
+    _favoritesSubscription?.cancel();
+    _sentLikesSubscription?.cancel();
+    _receivedLikesSubscription?.cancel();
+    _matchesSubscription?.cancel();
+    _viewersSubscription?.cancel();
   }
 }
