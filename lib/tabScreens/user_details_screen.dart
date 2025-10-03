@@ -60,7 +60,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                 message: 'Error loading profile: ${snapshot.error}');
           }
           if (!snapshot.hasData || !snapshot.data!.exists) {
-            return _ErrorScaffold(
+            return const _ErrorScaffold(
                 message: 'Profile for user ID not found.');
           }
 

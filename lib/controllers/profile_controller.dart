@@ -74,10 +74,23 @@ class ProfileController extends GetxController {
   void applyFilters(FilterPreferences newFilters) {
     activeFilters.value = newFilters;
     final currentUserId = _auth.currentUser?.uid;
-    if (currentUserId != null) {
-      _listenToSwipingProfiles(currentUserId);
+
+    // 1. Get the current user profile from your state.
+    final currentUserProfile = _currentUserProfile.value;
+
+    // 2. Ensure BOTH the user ID and the profile object are not null before proceeding.
+    if (currentUserId != null && currentUserProfile != null) {
+      // 3. Call the function with BOTH required arguments.
+      _listenToSwipingProfiles(currentUserId, currentUserProfile);
+    } else {
+      // Optional: Log an error if the profile isn't available when filters are applied.
+      log(
+        'Could not apply filters because user or profile was not loaded.',
+        name: 'ProfileController',
+      );
     }
   }
+
 
   // --- CORE ACTIONS ---
   Future<void> toggleLike(String targetUid) async {
@@ -166,49 +179,42 @@ class ProfileController extends GetxController {
     isInitialized.value = false;
 
     try {
-      // --- FIX START: Add retry logic for fetching user document ---
-      DocumentSnapshot? currentUserDoc;
-      for (int i = 0; i < 5; i++) {
-        currentUserDoc = await _firestore.collection("users").doc(userId).get();
-        if (currentUserDoc.exists) {
-          break; // Document found, exit loop
-        }
-        // Wait for 1 second before retrying
-        await Future.delayed(const Duration(seconds: 1));
-      }
+      final currentUserDoc = await _firestore.collection("users").doc(userId).get();
 
-      if (currentUserDoc != null && currentUserDoc.exists) {
+      if (currentUserDoc.exists) {
         final data = currentUserDoc.data() as Map<String, dynamic>;
         data['uid'] = currentUserDoc.id;
-        _currentUserProfile.value = Person.fromJson(data);
+        final person = Person.fromJson(data); // Create a local variable
+        _currentUserProfile.value = person;   // Update the state for the rest of the app
+
+        // --- THE FIX ---
+        // Pass the 'person' object directly to the function that needs it.
+        _listenToSwipingProfiles(userId, person);
+
+        // These other functions don't depend on the current user's profile data, so they are fine.
+        _listenToFavorites(userId);
+        _listenToLikes(userId);
+        _listenToMatches(userId);
+        _listenToViewers(userId);
+
+        isInitialized.value = true;
       } else {
-        // If the document still doesn't exist after retries, fail gracefully.
-        throw Exception("User document not found for UID: $userId after multiple retries.");
+        throw Exception("User document not found for UID: $userId");
       }
-      // --- FIX END ---
-
-      _listenToSwipingProfiles(userId);
-      _listenToFavorites(userId);
-      _listenToLikes(userId);
-      _listenToMatches(userId);
-      _listenToViewers(userId);
-
-      isInitialized.value = true; // Signal that initialization is complete
-
     } catch(e, s) {
       log('Fatal error during initialization', name: 'ProfileController', error: e, stackTrace: s);
       loadingStatus.value = ProfileLoadingStatus.error;
-      isInitialized.value = false; // Ensure this is false on error
+      isInitialized.value = false;
     }
   }
 
-  void _listenToSwipingProfiles(String userId) {
+  void _listenToSwipingProfiles(String userId, Person currentUserProfile) {
     _swipingProfilesSubscription?.cancel();
 
     Query query = _firestore.collection('users').where("uid", isNotEqualTo: userId);
 
-    // Safely determine the target orientation
-    final String? currentUserOrientation = _currentUserProfile.value?.orientation?.toLowerCase().trim();
+    // Now, use the object that was passed in. It's guaranteed to be available.
+    final String? currentUserOrientation = currentUserProfile.orientation?.toLowerCase().trim();
     String? targetOrientation;
 
     if (currentUserOrientation == 'adam') {
