@@ -38,7 +38,7 @@ Future<void> main() async {
   Get.put(AuthenticationController());
   Get.put(ProfileController());
   Get.put(FilterPreferences());
-  // Get.put(LikeController());
+  Get.put(LikeController());
   Get.put(push_notifications_service.PushNotifications());
 
   // Make the app go edge-to-edge

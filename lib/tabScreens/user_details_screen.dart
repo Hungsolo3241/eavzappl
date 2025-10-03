@@ -12,6 +12,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:eavzappl/controllers/authentication_controller.dart';
+import 'package:flutter/services.dart';
+import 'package:eavzappl/controllers/like_controller.dart';
+
 
 class UserDetailsScreen extends StatefulWidget {
   final String userID;
@@ -142,9 +145,12 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                         _ActionButtons(
                           person: person,
                           profileController: _profileController,
+                          likeController: Get.find<LikeController>(), // <-- ADD THIS LINE
                         ),
                       _DetailSection(
-                        title: "About",
+// ...
+
+                      title: "About",
                         details: {
                           "Profession": person.profession,
                           if (person.orientation?.toLowerCase() == 'eve')
@@ -410,14 +416,19 @@ class _ImageCarouselState extends State<_ImageCarousel> {
 }
 
 class _ActionButtons extends StatelessWidget {
+  // In _ActionButtons class
   const _ActionButtons({
     required this.person,
     required this.profileController,
+    required this.likeController,
   });
 
   final Person person;
   final ProfileController profileController;
+  final LikeController likeController;
 
+  // FIXED build method in _ActionButtons
+  // The new, FIXED build method
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -425,17 +436,24 @@ class _ActionButtons extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
+          // Favorite button (No changes needed here)
           Obx(() => _buildActionButton(
             isLoading: profileController.isTogglingFavorite.value,
-            onPressed: () => profileController.toggleFavoriteStatus(person.uid!),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              profileController.toggleFavoriteStatus(person.uid!);
+            },
             activeIconAsset: 'images/full_fave.png',
             inactiveIconAsset: 'images/default_fave.png',
             isActive: profileController.isFavorite(person.uid!),
             tooltip: 'Favorite',
           )),
+
+          // Message button (FIXED)
           Obx(() {
+            // Use the new likeController
             final bool canMessage =
-                profileController.getLikeStatus(person.uid!) == LikeStatus.mutualLike;
+                likeController.getLikeStatus(person.uid!) == LikeStatus.mutualLike;
             return _buildActionButton(
               onPressed: canMessage
                   ? () => _launchWhatsApp(person.phoneNumber)
@@ -445,14 +463,21 @@ class _ActionButtons extends StatelessWidget {
               ),
               inactiveIconAsset: 'images/default_whatsapp.png',
               isActive: canMessage,
-              tooltip: canMessage ? 'Message on WhatsApp' : 'Message (Requires Mutual Like)',
+              tooltip:
+              canMessage ? 'Message on WhatsApp' : 'Message (Requires Mutual Like)',
             );
           }),
+
+          // Like button (FIXED)
           Obx(() {
-            final likeStatus = profileController.getLikeStatus(person.uid!);
+            // Use the new likeController
+            final likeStatus = likeController.getLikeStatus(person.uid!);
             return _buildActionButton(
-              isLoading: profileController.isTogglingLike.value,
-              onPressed: () => profileController.toggleLike(person.uid!),
+              isLoading: likeController.isTogglingLike.value, // <-- Fixed
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                likeController.toggleLike(person.uid!); // <-- Fixed
+              },
               likeStatus: likeStatus,
               tooltip: 'Like',
             );
@@ -461,6 +486,8 @@ class _ActionButtons extends StatelessWidget {
       ),
     );
   }
+
+
 
   Widget _buildActionButton({
     required VoidCallback onPressed,
@@ -486,8 +513,9 @@ class _ActionButtons extends StatelessWidget {
     if (likeStatus != null) {
       switch (likeStatus) {
         case LikeStatus.liked:
+        case LikeStatus.likedBy: // <-- THE FIX IS HERE
           iconAsset = 'images/half_like.png';
-          iconColor = null;
+          iconColor = null; // Assuming you want the default image color
           break;
         case LikeStatus.mutualLike:
           iconAsset = 'images/full_like.png';

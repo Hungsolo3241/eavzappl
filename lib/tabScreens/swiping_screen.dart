@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
+import 'package:eavzappl/controllers/like_controller.dart';
 
 class SwipingScreen extends StatefulWidget {
   const SwipingScreen({super.key});
@@ -21,6 +22,7 @@ class SwipingScreen extends StatefulWidget {
 class _SwipingScreenState extends State<SwipingScreen> {
   final ProfileController profileController = Get.find<ProfileController>();
   int _currentPageIndex = 0;
+  final LikeController likeController = Get.find();
 
   void _showFilterModalBottomSheet() {
     showModalBottomSheet(
@@ -116,6 +118,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
                           _ActionButtons(
                             person: person,
                             profileController: profileController,
+                            likeController: likeController,     // <-- ADD THIS
                           ),
                           const SizedBox(height: 16.0),
                         ],
@@ -240,10 +243,12 @@ class _ActionButtons extends StatelessWidget {
   const _ActionButtons({
     required this.person,
     required this.profileController,
+    required this.likeController, // This line is correct from your previous work
   });
 
   final Person person;
   final ProfileController profileController;
+  final LikeController likeController; // <-- ADD THIS LINE
 
   @override
   Widget build(BuildContext context) {
@@ -267,8 +272,7 @@ class _ActionButtons extends StatelessWidget {
           );
         }),
         Obx(() {
-          final likeStatus = person.uid != null ? profileController.getLikeStatus(person.uid!) : LikeStatus.none;
-          final bool canMessage = likeStatus == LikeStatus.mutualLike;
+          final likeStatus = person.uid != null ? likeController.getLikeStatus(person.uid!) : LikeStatus.none;          final bool canMessage = likeStatus == LikeStatus.mutualLike;
           return _buildActionButton(
             onPressed: canMessage
                 ? () => _launchWhatsApp(person.phoneNumber)
@@ -285,13 +289,15 @@ class _ActionButtons extends StatelessWidget {
           );
         }),
         Obx(() {
-          final likeStatus = person.uid != null ? profileController.getLikeStatus(person.uid!) : LikeStatus.none;
+          final likeStatus = person.uid != null ? likeController.getLikeStatus(person.uid!) : LikeStatus.none;
           return _buildActionButton(
-            isLoading: profileController.isTogglingLike.value,
+            // --- AND THIS LINE ---
+            isLoading: likeController.isTogglingLike.value,
             onPressed: () {
               HapticFeedback.lightImpact();
               if (person.uid != null) {
-                profileController.toggleLike(person.uid!);
+                // --- AND THIS LINE ---
+                likeController.toggleLike(person.uid!);
               }
             },
             likeStatus: likeStatus,
@@ -330,8 +336,9 @@ class _ActionButtons extends StatelessWidget {
     if (likeStatus != null) {
       switch (likeStatus) {
         case LikeStatus.liked:
+        case LikeStatus.likedBy: // <-- THE FIX IS HERE
           iconAsset = 'images/half_like.png';
-          iconColor = null;
+          iconColor = null; // Assuming you want the default image color
           break;
         case LikeStatus.mutualLike:
           iconAsset = 'images/full_like.png';
@@ -340,7 +347,7 @@ class _ActionButtons extends StatelessWidget {
         case LikeStatus.none:
         default:
           iconAsset = 'images/default_like.png';
-          iconColor = inactiveColor;
+          iconColor = Colors.blueGrey;
           break;
       }
     } else {

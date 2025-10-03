@@ -6,7 +6,8 @@ part 'person.g.dart';
 // used across different models or controllers.
 enum LikeStatus {
   none, // Default state
-  liked, // Current user has liked the target, but not mutual (half-like)
+  liked,
+  likedBy,// Current user has liked the target, but not mutual (half-like)
   mutualLike, // Both users have liked each other (full-like)
 }
 

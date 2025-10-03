@@ -7,6 +7,8 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:eavzappl/models/person.dart' as personModel;
 import 'package:eavzappl/splashScreen/splash_screen.dart';
+import 'package:eavzappl/controllers/profile_controller.dart';
+import 'package:eavzappl/homeScreen/home_screen.dart';
 
 class AuthenticationController extends GetxController
 {
@@ -130,11 +132,22 @@ class AuthenticationController extends GetxController
         twitter: userData['twitter'] ?? '',
       );
 
+
       await FirebaseFirestore.instance.collection("users")
           .doc(credential.user!.uid)
           .set(personInstance.toJson());
 
+      // --- START OF THE FIX ---
+      // Manually trigger the ProfileController to load the new user's data.
+      final ProfileController profileController = Get.find();
+      await profileController.forceReload();
+      // --- END OF THE FIX ---
+
       Get.snackbar("Success", "Account created successfully!", backgroundColor: Colors.green, colorText: Colors.white);
+
+      // Now that the profile is loaded, navigate to the HomeScreen.
+      Get.offAll(() => const HomeScreen()); // <-- We'll navigate from here now.
+
       return true;
 
     } on FirebaseAuthException catch (e) {

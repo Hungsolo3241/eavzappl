@@ -6,6 +6,7 @@ import 'package:eavzappl/models/filter_preferences.dart';
 import 'package:eavzappl/models/person.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
+import 'package:eavzappl/controllers/like_controller.dart';
 
 enum ProfileLoadingStatus { loading, loaded, error }
 
@@ -17,9 +18,6 @@ class ProfileController extends GetxController {
   final RxBool isInitialized = false.obs;
 
   // --- PRIVATE SOURCE OF TRUTH DATA ---
-  final RxList<String> _sentLikeUids = <String>[].obs;
-  final RxList<String> _receivedLikeUids = <String>[].obs;
-  final RxSet<String> _matchedUids = <String>{}.obs;
   final RxList<String> _favoriteUids = <String>[].obs;
   final Rx<Person?> _currentUserProfile = Rx<Person?>(null);
 
@@ -31,12 +29,10 @@ class ProfileController extends GetxController {
   final RxList<Person> usersIHaveFavourited = <Person>[].obs;
 
   // --- PUBLIC DERIVED STATE ---
-  final RxMap<String, LikeStatus> likeStatusMap = <String, LikeStatus>{}.obs;
   final Rx<FilterPreferences> activeFilters = FilterPreferences.initial().obs;
 
   // --- ASYNC/LOADING STATE ---
   final Rx<ProfileLoadingStatus> loadingStatus = ProfileLoadingStatus.loading.obs;
-  final RxBool isTogglingLike = false.obs;
   final RxBool isTogglingFavorite = false.obs;
 
   // --- STREAM SUBSCRIPTIONS ---
@@ -47,10 +43,10 @@ class ProfileController extends GetxController {
   StreamSubscription? _receivedLikesSubscription;
   StreamSubscription? _matchesSubscription;
   StreamSubscription? _viewersSubscription;
+  StreamSubscription? _userDocSubscription;
 
   // --- PUBLIC GETTERS ---
   bool isFavorite(String uid) => _favoriteUids.contains(uid);
-  LikeStatus getLikeStatus(String uid) => likeStatusMap[uid] ?? LikeStatus.none;
 
   @override
   void onInit() {
@@ -62,7 +58,6 @@ class ProfileController extends GetxController {
         _clearAllState();
       }
     });
-    everAll([_sentLikeUids, _receivedLikeUids, _matchedUids], (_) => _updateLikeStatusMap());
   }
 
   @override
@@ -71,60 +66,32 @@ class ProfileController extends GetxController {
     super.onClose();
   }
 
+  // FIXED
   void applyFilters(FilterPreferences newFilters) {
     activeFilters.value = newFilters;
     final currentUserId = _auth.currentUser?.uid;
-
-    // 1. Get the current user profile from your state.
     final currentUserProfile = _currentUserProfile.value;
 
-    // 2. Ensure BOTH the user ID and the profile object are not null before proceeding.
     if (currentUserId != null && currentUserProfile != null) {
-      // 3. Call the function with BOTH required arguments.
-      _listenToSwipingProfiles(currentUserId, currentUserProfile);
+      // FIX IS HERE: Find the LikeController and pass it along
+      final LikeController likeController = Get.find();
+      _listenToSwipingProfiles(currentUserId, currentUserProfile, likeController);
     } else {
-      // Optional: Log an error if the profile isn't available when filters are applied.
-      log(
-        'Could not apply filters because user or profile was not loaded.',
-        name: 'ProfileController',
-      );
+      log('Could not apply filters because user or profile was not loaded.', name: 'ProfileController');
     }
   }
 
-
-  // --- CORE ACTIONS ---
-  Future<void> toggleLike(String targetUid) async {
-    final String? currentUserId = _auth.currentUser?.uid;
-    if (currentUserId == null || isTogglingLike.isTrue) return;
-
-    isTogglingLike.value = true;
-    final batch = _firestore.batch();
-    final currentUserLikesSentRef = _firestore.collection('users').doc(currentUserId).collection('likesSent').doc(targetUid);
-    final targetUserLikesReceivedRef = _firestore.collection('users').doc(targetUid).collection('likesReceived').doc(currentUserId);
-    final matchId = [currentUserId, targetUid]..sort();
-    final matchRef = _firestore.collection('matches').doc(matchId.join('_'));
-
-    try {
-      final bool isCurrentlyLiked = _sentLikeUids.contains(targetUid);
-      if (isCurrentlyLiked) {
-        batch.delete(currentUserLikesSentRef);
-        batch.delete(targetUserLikesReceivedRef);
-        batch.delete(matchRef);
-      } else {
-        final likeData = {'timestamp': FieldValue.serverTimestamp()};
-        batch.set(currentUserLikesSentRef, likeData);
-        batch.set(targetUserLikesReceivedRef, likeData);
-        if (_receivedLikeUids.contains(targetUid)) {
-          batch.set(matchRef, {'users': [currentUserId, targetUid], 'createdAt': FieldValue.serverTimestamp()});
-        }
-      }
-      await batch.commit();
-    } catch (e, s) {
-      log('Error toggling like', name: 'ProfileController', error: e, stackTrace: s);
-    } finally {
-      isTogglingLike.value = false;
+  Future<void> forceReload() async {
+    final currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      log("Forcing a reload of all streams.", name: "ProfileController");
+      // First, tear down everything.
+      _clearAllState();
+      // Now, initialize again with the current user.
+      await _initializeAllStreams(currentUser.uid);
     }
   }
+
 
   Future<void> toggleFavoriteStatus(String targetUid) async {
     final String? currentUserId = _auth.currentUser?.uid;
@@ -156,59 +123,52 @@ class ProfileController extends GetxController {
     }
   }
 
-  // --- STATE COMPUTATION ---
-  void _updateLikeStatusMap() {
-    final newStatusMap = <String, LikeStatus>{};
-    final allKnownUids = {...swipingProfileList.map((p) => p.uid).whereType<String>(), ..._sentLikeUids, ..._receivedLikeUids, ..._matchedUids};
-
-    for (final uid in allKnownUids) {
-      if (_matchedUids.contains(uid)) {
-        newStatusMap[uid] = LikeStatus.mutualLike;
-      } else if (_sentLikeUids.contains(uid)) {
-        newStatusMap[uid] = LikeStatus.liked;
-      } else {
-        newStatusMap[uid] = LikeStatus.none;
-      }
-    }
-    likeStatusMap.value = newStatusMap;
-  }
-
   // --- DATA FETCHING & STREAMING ---
+  // FIXED
   Future<void> _initializeAllStreams(String userId) async {
+    // First, cancel any previous user's document listener
+    _userDocSubscription?.cancel();
+
     loadingStatus.value = ProfileLoadingStatus.loading;
     isInitialized.value = false;
 
-    try {
-      final currentUserDoc = await _firestore.collection("users").doc(userId).get();
+    // Listen to the user's own document for real-time updates (or creation)
+    _userDocSubscription = _firestore.collection("users").doc(userId).snapshots().listen(
+            (userDoc) {
+          if (userDoc.exists && !isInitialized.value) {
+            // The document now exists, and we haven't initialized yet. Let's go!
+            log('User document for $userId found, proceeding with initialization.', name: 'ProfileController');
 
-      if (currentUserDoc.exists) {
-        final data = currentUserDoc.data() as Map<String, dynamic>;
-        data['uid'] = currentUserDoc.id;
-        final person = Person.fromJson(data); // Create a local variable
-        _currentUserProfile.value = person;   // Update the state for the rest of the app
+            final data = userDoc.data() as Map<String, dynamic>;
+            data['uid'] = userDoc.id;
+            final person = Person.fromJson(data);
+            _currentUserProfile.value = person;
 
-        // --- THE FIX ---
-        // Pass the 'person' object directly to the function that needs it.
-        _listenToSwipingProfiles(userId, person);
+            final LikeController likeController = Get.find();
 
-        // These other functions don't depend on the current user's profile data, so they are fine.
-        _listenToFavorites(userId);
-        _listenToLikes(userId);
-        _listenToMatches(userId);
-        _listenToViewers(userId);
+            _listenToSwipingProfiles(userId, person, likeController);
+            _listenToFavorites(userId);
+            _listenToLikes(userId, likeController);
+            _listenToMatches(userId, likeController);
+            _listenToViewers(userId);
 
-        isInitialized.value = true;
-      } else {
-        throw Exception("User document not found for UID: $userId");
-      }
-    } catch(e, s) {
-      log('Fatal error during initialization', name: 'ProfileController', error: e, stackTrace: s);
-      loadingStatus.value = ProfileLoadingStatus.error;
-      isInitialized.value = false;
-    }
+            isInitialized.value = true;
+            loadingStatus.value = ProfileLoadingStatus.loaded; // Make sure to update status
+          } else if (!userDoc.exists) {
+            // This is normal for a brand new user. We just wait.
+            log('User document for $userId not found yet, waiting for creation...', name: 'ProfileController');
+          }
+        },
+        onError: (e, s) {
+          log('Fatal error in user document stream', name: 'ProfileController', error: e, stackTrace: s);
+          loadingStatus.value = ProfileLoadingStatus.error;
+          isInitialized.value = false;
+        }
+    );
   }
 
-  void _listenToSwipingProfiles(String userId, Person currentUserProfile) {
+
+  void _listenToSwipingProfiles(String userId, Person currentUserProfile, LikeController likeController) {
     _swipingProfilesSubscription?.cancel();
 
     Query query = _firestore.collection('users').where("uid", isNotEqualTo: userId);
@@ -240,15 +200,32 @@ class ProfileController extends GetxController {
       query = query.where('ethnicity', isEqualTo: filters.ethnicity);
     }
 
-    _swipingProfilesSubscription = query.snapshots().listen((snapshot) {
+    _swipingProfilesSubscription = query.snapshots().listen((snapshot) async { // Add 'async' here
+      if (snapshot.docs.isEmpty) {
+        swipingProfileList.clear();
+        loadingStatus.value = ProfileLoadingStatus.loaded;
+        return;
+      }
+      // 1. Create the list of profiles from the snapshot
       final profiles = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['uid'] = doc.id;
         return Person.fromJson(data);
       }).toList();
+
+      // 2. Extract the user IDs from those profiles
+      final userIds = profiles.map((p) => p.uid!).toList();
+      // 3. Command the LikeController to preload the statuses
+      if (userIds.isNotEmpty) {
+        final LikeController likeController = Get.find();
+        await likeController.preloadLikeStatuses(userIds);
+      }
+      // 4. Update the public list that the UI is watching
       swipingProfileList.assignAll(profiles);
-      _updateLikeStatusMap();
+      // This old method is no longer needed here, as LikeController handles it
+      // _updateLikeStatusMap();
       loadingStatus.value = ProfileLoadingStatus.loaded;
+
     }, onError: (e) {
       log('Error in swiping profiles stream', name: 'ProfileController', error: e);
       loadingStatus.value = ProfileLoadingStatus.error;
@@ -265,23 +242,28 @@ class ProfileController extends GetxController {
     }, onError: (e) => log('Error in favorites stream', name: 'ProfileController', error: e));
   }
 
-  void _listenToLikes(String userId) {
+  // FIXED
+  void _listenToLikes(String userId, LikeController likeController) {
     _sentLikesSubscription?.cancel();
     _sentLikesSubscription = _firestore.collection('users').doc(userId).collection('likesSent').snapshots().listen((snapshot) {
       final uids = snapshot.docs.map((doc) => doc.id).toList();
-      _sentLikeUids.assignAll(uids);
+      // This is now correct because likeController is passed in.
+      likeController.updateSentLikes(uids);
       _fetchProfilesForUiList(uids, usersIHaveLiked);
     }, onError: (e) => log('Error in sent likes stream', name: 'ProfileController', error: e));
 
     _receivedLikesSubscription?.cancel();
     _receivedLikesSubscription = _firestore.collection('users').doc(userId).collection('likesReceived').snapshots().listen((snapshot) {
       final uids = snapshot.docs.map((doc) => doc.id).toList();
-      _receivedLikeUids.assignAll(uids);
+      // This is now correct because likeController is passed in.
+      likeController.updateReceivedLikes(uids);
       _fetchProfilesForUiList(uids, usersWhoHaveLikedMe);
     }, onError: (e) => log('Error in received likes stream', name: 'ProfileController', error: e));
   }
 
-  void _listenToMatches(String userId) {
+
+  // FIXED
+  void _listenToMatches(String userId, LikeController likeController) { // Capital 'C'
     _matchesSubscription?.cancel();
     _matchesSubscription = _firestore.collection('matches').where('users', arrayContains: userId).snapshots().listen((snapshot) {
       final uids = <String>{};
@@ -292,9 +274,11 @@ class ProfileController extends GetxController {
           uids.add(otherUser);
         }
       }
-      _matchedUids.assignAll(uids);
+      // This is now correct because likeController is passed in.
+      likeController.updateMatches(uids.toList());
     }, onError: (e) => log('Error in matches stream', name: 'ProfileController', error: e));
   }
+
 
   void _listenToViewers(String userId) {
     _viewersSubscription?.cancel();
@@ -325,9 +309,6 @@ class ProfileController extends GetxController {
   void _clearAllState() {
     _cancelAllSubscriptions();
     isInitialized.value = false;
-    _sentLikeUids.clear();
-    _receivedLikeUids.clear();
-    _matchedUids.clear();
     _favoriteUids.clear();
     _currentUserProfile.value = null;
     swipingProfileList.clear();
@@ -335,11 +316,12 @@ class ProfileController extends GetxController {
     usersWhoHaveLikedMe.clear();
     usersIHaveLiked.clear();
     usersIHaveFavourited.clear();
-    likeStatusMap.clear();
     loadingStatus.value = ProfileLoadingStatus.loading;
   }
 
   void _cancelAllSubscriptions() {
+    _userDocSubscription?.cancel();
+    _authStateSubscription?.cancel();
     _swipingProfilesSubscription?.cancel();
     _favoritesSubscription?.cancel();
     _sentLikesSubscription?.cancel();
