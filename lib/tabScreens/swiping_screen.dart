@@ -9,6 +9,7 @@ import 'package:eavzappl/tabScreens/user_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 
 class SwipingScreen extends StatefulWidget {
   const SwipingScreen({super.key});
@@ -254,6 +255,7 @@ class _ActionButtons extends StatelessWidget {
           return _buildActionButton(
             isLoading: profileController.isTogglingFavorite.value,
             onPressed: () {
+              HapticFeedback.lightImpact();
               if (person.uid != null) {
                 profileController.toggleFavoriteStatus(person.uid!);
               }
@@ -287,6 +289,7 @@ class _ActionButtons extends StatelessWidget {
           return _buildActionButton(
             isLoading: profileController.isTogglingLike.value,
             onPressed: () {
+              HapticFeedback.lightImpact();
               if (person.uid != null) {
                 profileController.toggleLike(person.uid!);
               }
