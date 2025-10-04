@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart' as path;
+import 'package:cached_network_image/cached_network_image.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -382,22 +383,40 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     });
   }
 
-  // --- UI BUILDERS (Unchanged) ---
   Widget _buildGalleryImageSlot(int index) {
     Widget imageWidget;
     if (_pickedImages[index] != null) {
       imageWidget = Image.file(_pickedImages[index]!, width: 120, height: 120, fit: BoxFit.cover);
-    } else if (_imageUrls[index] != null && _imageUrls[index]!.isNotEmpty) {
-      imageWidget = Image.network(_imageUrls[index]!, width: 120, height: 120, fit: BoxFit.cover,
-        loadingBuilder: (context, child, loadingProgress) => loadingProgress == null ? child : Center(child: CircularProgressIndicator(value: loadingProgress.expectedTotalBytes != null ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes! : null)),
-        errorBuilder: (context, error, stackTrace) => Image.network(_getPlaceholderUrlForSlot(index), width: 120, height: 120, fit: BoxFit.cover, errorBuilder: (c, e, s) => Container(width: 120, height: 120, color: Colors.grey[200], child: Icon(Icons.broken_image, color: Colors.grey[400]))),
-      );
-    } else {
-      imageWidget = Image.network(_getPlaceholderUrlForSlot(index), width: 120, height: 120, fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) => loadingProgress == null ? child : Center(child: CircularProgressIndicator(value: loadingProgress.expectedTotalBytes != null ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes! : null)),
-          errorBuilder: (c, e, s) => Container(width: 120, height: 120, color: Colors.grey[200], child: Icon(Icons.broken_image, color: Colors.grey[400]))
+    }
+    else if (_imageUrls[index] != null && _imageUrls[index]!.isNotEmpty) {
+      imageWidget = CachedNetworkImage(
+        imageUrl: _imageUrls[index]!,
+        width: 120,
+        height: 120,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          width: 120,
+          height: 120,
+          color: Colors.grey.shade800,
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2.0)),
+        ),
+        errorWidget: (context, url, error) => Image.network(
+          _getPlaceholderUrlForSlot(index),
+          width: 120,
+          height: 120,
+          fit: BoxFit.cover,
+        ),
       );
     }
+    else {
+      imageWidget = Image.network(
+        _getPlaceholderUrlForSlot(index),
+        width: 120,
+        height: 120,
+        fit: BoxFit.cover,
+      );
+    }
+
     return Column(children: [
       Container(width: 120, height: 120, margin: const EdgeInsets.all(4.0), decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(8.0)), clipBehavior: Clip.antiAlias, child: imageWidget),
       ElevatedButton(onPressed: () => _showGalleryImageSourceActionSheet(index), style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey), child: const Text("Change", style: TextStyle(color: Colors.white))),
@@ -449,21 +468,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       children: [
                         Text("Main Profile Picture", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
                         const SizedBox(height: 10),
+
                         GestureDetector(
                           onTap: _pickMainProfileImage,
                           child: CircleAvatar(
                             radius: 60,
                             backgroundColor: Colors.grey.shade700,
+                            // Use FileImage if a new image is picked, otherwise use CachedNetworkImageProvider
                             backgroundImage: _pickedMainProfileImageFile != null
-                                ? FileImage(_pickedMainProfileImageFile!)
+                                ? FileImage(_pickedMainProfileImageFile!) as ImageProvider
                                 : (_currentMainProfileImageUrl != null && _currentMainProfileImageUrl!.isNotEmpty)
-                                ? NetworkImage(_currentMainProfileImageUrl!)
+                                ? CachedNetworkImageProvider(_currentMainProfileImageUrl!)
                                 : null,
+                            // Show an icon only if there is no image at all
                             child: (_pickedMainProfileImageFile == null && (_currentMainProfileImageUrl == null || _currentMainProfileImageUrl!.isEmpty))
                                 ? Icon(Icons.person, size: 60, color: Colors.grey.shade400)
                                 : null,
                           ),
                         ),
+
                         TextButton(
                           onPressed: _pickMainProfileImage,
                           child: const Text("Change Main Photo", style: TextStyle(color: Colors.blueGrey)),

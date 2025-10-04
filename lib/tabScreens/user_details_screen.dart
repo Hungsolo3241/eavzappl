@@ -254,6 +254,7 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Determine the correct local placeholder asset
     final String defaultAvatarAsset =
     (person.orientation?.toLowerCase() == 'adam')
         ? 'images/adam_avatar.jpeg'
@@ -266,31 +267,37 @@ class _ProfileHeader extends StatelessWidget {
         const SizedBox(height: 16),
         CircleAvatar(
           radius: 70,
-          backgroundColor: Colors.grey.shade700,
-          child: ClipOval( // Use ClipOval to make the FadeInImage circular
-            child: (profilePhotoUrl != null && profilePhotoUrl.isNotEmpty)
-              ? FadeInImage.assetNetwork(
-                  placeholder: defaultAvatarAsset,
-                  image: profilePhotoUrl,
-                  fit: BoxFit.cover,
-                  width: 140, // double the radius
-                  height: 140, // double the radius
-                  imageErrorBuilder: (context, error, stackTrace) {
-                    // This is the fallback if the network image fails to load
-                    return Image.asset(
-                      defaultAvatarAsset,
-                      fit: BoxFit.cover,
-                      width: 140,
-                      height: 140,
-                    );
-                  },
-                )
-              : Image.asset( // This is the fallback if the URL is null/empty from the start
-                  defaultAvatarAsset,
-                  fit: BoxFit.cover,
-                  width: 140,
-                  height: 140,
-                ),
+          backgroundColor: Colors.grey.shade800, // Dark background for the loader
+          // Check if the URL from the database is valid
+          child: (profilePhotoUrl != null && profilePhotoUrl.isNotEmpty)
+              ? ClipOval(
+            // Use CachedNetworkImage for optimized loading and caching
+            child: CachedNetworkImage(
+              imageUrl: profilePhotoUrl,
+              fit: BoxFit.cover,
+              width: 140,  // double the radius
+              height: 140, // double the radius
+              // Show a loading spinner while the image is downloading
+              placeholder: (context, url) => const Center(
+                child: CircularProgressIndicator(strokeWidth: 2.0),
+              ),
+              // If the network image fails, show the default local avatar
+              errorWidget: (context, url, error) => Image.asset(
+                defaultAvatarAsset,
+                fit: BoxFit.cover,
+                width: 140,
+                height: 140,
+              ),
+            ),
+          )
+              : ClipOval(
+            // If the URL is null/empty from the start, show the default avatar immediately
+            child: Image.asset(
+              defaultAvatarAsset,
+              fit: BoxFit.cover,
+              width: 140,
+              height: 140,
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -313,6 +320,7 @@ class _ProfileHeader extends StatelessWidget {
     );
   }
 }
+
 class _ImageCarousel extends StatefulWidget {
   const _ImageCarousel({required this.person});
   final Person person;

@@ -12,7 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 import 'package:eavzappl/controllers/like_controller.dart';
 import 'package:transparent_image/transparent_image.dart';
-// REMOVED: csc_picker import is gone.
+
 
 class SwipingScreen extends StatefulWidget {
   const SwipingScreen({super.key});
@@ -95,23 +95,23 @@ class _SwipingScreenState extends State<SwipingScreen> {
                 return Stack(
                   fit: StackFit.expand,
                   children: [
-                    if (imageUrl != null && imageUrl.isNotEmpty)
-                      Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Container(color: Colors.black),
-                          FadeInImage.memoryNetwork(
-                            placeholder: kTransparentImage,
-                            image: imageUrl,
-                            fit: BoxFit.cover,
-                            imageErrorBuilder: (context, error, stackTrace) {
-                              return Image.asset(placeholderAsset, fit: BoxFit.cover);
-                            },
-                          ),
-                        ],
-                      )
-                    else
-                      Image.asset(placeholderAsset, fit: BoxFit.cover),
+                    // Use CachedNetworkImage for optimized loading and caching
+                    CachedNetworkImage(
+                      imageUrl: imageUrl ?? '', // Use the image URL or an empty string if null
+                      fit: BoxFit.cover,
+                      // Placeholder widget to show while the image is loading
+                      placeholder: (context, url) => Container(
+                        color: Colors.black, // A solid background is better than transparent
+                        child: Center(
+                          child: Image.asset(placeholderAsset, fit: BoxFit.cover),
+                        ),
+                      ),
+                      // Error widget to display the local placeholder if the network image fails
+                      errorWidget: (context, url, error) => Image.asset(
+                        placeholderAsset,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                     const _GradientOverlay(),
                     Positioned(
                       bottom: 20.0,

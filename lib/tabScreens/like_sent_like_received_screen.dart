@@ -90,21 +90,26 @@ class _LikesGridView extends StatelessWidget {
 }
 
 /// A dedicated widget to display a single user in the likes grid.
+/// A dedicated widget to display a single user in the likes grid.
 class _UserGridItem extends StatelessWidget {
   const _UserGridItem({required this.person});
 
   final Person person;
 
-  // Static constant for placeholder URL
-  static const String _placeholderUrl = 'https://via.placeholder.com/150';
-
-  String get _imageUrl =>
-      person.profilePhoto != null && person.profilePhoto!.isNotEmpty
-          ? person.profilePhoto!
-          : _placeholderUrl;
+  // --- START: IMPROVEMENT ---
+  // Use local assets for placeholders instead of a network URL.
+  String get _placeholderAsset {
+    return person.orientation?.toLowerCase() == 'adam'
+        ? 'images/adam_avatar.jpeg'
+        : 'images/eves_avatar.jpeg';
+  }
+  // --- END: IMPROVEMENT ---
 
   @override
   Widget build(BuildContext context) {
+    // This logic is now cleaner. We only need the real profile photo URL.
+    final imageUrl = person.profilePhoto;
+
     return InkWell(
       onTap: () {
         if (person.uid != null) {
@@ -125,22 +130,27 @@ class _UserGridItem extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              child: CachedNetworkImage(
-                imageUrl: _imageUrl,
+              // Check if the URL from Firestore is valid
+              child: (imageUrl != null && imageUrl.isNotEmpty)
+                  ? CachedNetworkImage(
+                imageUrl: imageUrl,
                 fit: BoxFit.cover,
-                placeholder: (context, url) =>
-                const Center(child: CircularProgressIndicator()),
+                placeholder: (context, url) => Container(
+                  color: Colors.black54, // A dark background for the loader
+                  child: const Center(child: CircularProgressIndicator(strokeWidth: 2.0)),
+                ),
                 errorWidget: (context, url, error) {
                   log(
-                    'Error loading image $_imageUrl for ${person.name}',
+                    'Error loading image $imageUrl for ${person.name}',
                     name: 'LikesScreen',
                     error: error,
                   );
-                  return const Center(
-                    child: Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                  );
+                  // If the network image fails, show the local placeholder
+                  return Image.asset(_placeholderAsset, fit: BoxFit.cover);
                 },
-              ),
+              )
+              // If there is no URL to begin with, show the local placeholder
+                  : Image.asset(_placeholderAsset, fit: BoxFit.cover),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -162,3 +172,4 @@ class _UserGridItem extends StatelessWidget {
     );
   }
 }
+
