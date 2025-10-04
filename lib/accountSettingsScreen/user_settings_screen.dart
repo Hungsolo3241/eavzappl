@@ -6,7 +6,8 @@ import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart'; // For date formatting
 import 'package:eavzappl/accountSettingsScreen/notifications_screen.dart';
-import 'package:eavzappl/controllers/authentication_controller.dart'; // Import the AuthenticationController
+import 'package:eavzappl/controllers/authentication_controller.dart';
+import 'package:eavzappl/controllers/profile_controller.dart';
 
 class UserSettingsScreen extends StatefulWidget {
   const UserSettingsScreen({super.key});
@@ -625,10 +626,21 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
           ListTile(
             leading: Icon(Icons.edit, color: Colors.yellow[700]),
             title: const Text("Edit Profile", style: TextStyle(color: Colors.blueGrey)),
-            onTap: () async {
-              var editProfileResult = await Get.to(() => const EditProfileScreen());
-              if (editProfileResult == true) {
-                // Optionally refresh user data if profile changes affect this screen
+            onTap: () async { // Make the function async
+
+              // Await the result from EditProfileScreen
+              final result = await Get.to(() => const EditProfileScreen());
+
+              // If the result is true, it means the profile was saved successfully
+              if (result == true) {
+                // Find the ProfileController and force it to reload everything
+                // This will update all profile lists across the app.
+                final ProfileController profileController = Get.find();
+                await profileController.forceReload();
+
+                // Optionally, you can also pop the settings screen to go back to the main view
+                // to see the changes immediately.
+                Get.back();
               }
             },
           ),

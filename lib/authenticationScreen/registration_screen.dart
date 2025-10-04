@@ -42,6 +42,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   List<String> countriesList = [];
   List<String> provincesList = [];
   List<String> citiesList = [];
+  String? selectedRelationshipStatus;
+  List<String> relationshipStatusOptions = ["Single", "Married", "Divorced"];
+
 
   final Map<String, Map<String, List<String>>> africanLocations = {
     'South Africa': {
@@ -306,18 +309,18 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       width: MediaQuery.of(context).size.width - 40,
                       // Height might adjust automatically or you can wrap IntlPhoneField if needed
                       child: IntlPhoneField(
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Phone Number',
-                          labelStyle: const TextStyle(color: Colors.grey, fontSize: 16),
-                          border: const OutlineInputBorder(
+                          labelStyle: TextStyle(color: Colors.grey, fontSize: 16),
+                          border: OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(22.0)),
                             borderSide: BorderSide(color: Colors.grey),
                           ),
-                          enabledBorder: const OutlineInputBorder(
+                          enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(22.0)),
                             borderSide: BorderSide(color: Colors.grey),
                           ),
-                          focusedBorder: const OutlineInputBorder(
+                          focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(22.0)),
                             borderSide: BorderSide(color: Colors.grey),
                           ),
@@ -325,7 +328,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         ),
                         style: const TextStyle(color: Colors.white, fontSize: 16),
                         dropdownTextStyle: const TextStyle(color: Colors.white, fontSize: 16), // For dropdown text
-                        dropdownIcon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                        dropdownIcon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                         initialCountryCode: 'ZA', // Set an initial default country if desired
                         onChanged: (phone) {
                           setState(() {
@@ -384,19 +387,19 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                     SizedBox(
                       width: MediaQuery.of(context).size.width - 40,
                       child: DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           prefixIcon: Icon(Icons.wc_outlined, color: Colors.grey),
                           hintText: "Gender",
-                          hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                          hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                            borderSide: const BorderSide(
+                            borderSide: BorderSide(
                               color: Colors.grey,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                            borderSide: const BorderSide(
+                            borderSide: BorderSide(
                               color: Colors.grey,
                             ),
                           ),
@@ -404,7 +407,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         ),
                         value: selectedGender,
                         isExpanded: true,
-                        icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                        icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                         dropdownColor: Colors.black,
                         style: const TextStyle(color: Colors.white, fontSize: 16),
                         items: genderOptions.map((String value) {
@@ -416,6 +419,46 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         onChanged: (String? newValue) {
                           setState(() {
                             selectedGender = newValue;
+                          });
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(
+                      height: 20,
+                    ),
+
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width - 40,
+                      child: DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(
+                          prefixIcon: Icon(Icons.favorite_border, color: Colors.grey),
+                          hintText: "Relationship Status",
+                          hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(22.0)),
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(22.0)),
+                            borderSide: BorderSide(color: Colors.grey),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                        ),
+                        value: selectedRelationshipStatus,
+                        isExpanded: true,
+                        icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                        dropdownColor: Colors.black,
+                        style: const TextStyle(color: Colors.white, fontSize: 16),
+                        items: relationshipStatusOptions.map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            selectedRelationshipStatus = newValue;
                           });
                         },
                       ),
@@ -1307,6 +1350,11 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                             setState(() { showProgressBar = false; });
                             return;
                           }
+                          if (selectedRelationshipStatus == null) {
+                            Get.snackbar("Missing Field", "Please select your relationship status.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            setState(() { showProgressBar = false; });
+                            return;
+                          }
                           if (selectedOrientation == null) {
                             Get.snackbar("Missing Field", "Please select your orientation.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
@@ -1388,6 +1436,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                               'age': age,
                               'phoneNumber': normalizedPhoneNumber, // Use the normalized number
                               'gender': selectedGender,
+                              'relationshipStatus': selectedRelationshipStatus,
                               'orientation': selectedOrientation,
                               'username': usernameController.text.trim(),
                               'city': selectedCity,
@@ -1503,7 +1552,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           onPressed: () {
                             Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
                           },
-                          child: Text(
+                          child: const Text(
                             "Login",
                             style: TextStyle(
                               fontSize: 16,

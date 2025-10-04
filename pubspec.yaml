@@ -36,6 +36,10 @@ dependencies:
   equatable:
   json_annotation: ^4.9.0
   logger: ^2.3.0
+  transparent_image: ^2.0.1
+  image: ^4.1.7
+  path_provider: ^2.0.0
+
 
 
 dev_dependencies:
@@ -44,6 +48,7 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   build_runner: ^2.4.10
   json_serializable: ^6.8.0
+
 
 flutter:
   uses-material-design: true

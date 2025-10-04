@@ -43,7 +43,7 @@ class FilterPreferences extends Equatable {
   final String? country;
   final String? province;
   final String? city;
-  final double? maxDistance;
+  final String? relationshipStatus;
 
   @JsonKey(name: 'ageRange')
   @RangeValuesConverter()
@@ -59,7 +59,7 @@ class FilterPreferences extends Equatable {
     this.province,
     this.city,
     this.ageRange,
-    this.maxDistance,
+    this.relationshipStatus,
   });
 
   double? get minAge => ageRange?.start;
@@ -67,8 +67,7 @@ class FilterPreferences extends Equatable {
   bool get hostsOnly => wantsHost ?? false;
   bool get travelersOnly => wantsTravel ?? false;
 
-  /// A factory constructor for creating a new [FilterPreferences] instance
-  /// with default values.
+
   factory FilterPreferences.initial() => const FilterPreferences(
     gender: 'Any',
     ethnicity: 'Any',
@@ -76,7 +75,7 @@ class FilterPreferences extends Equatable {
     wantsHost: null,
     wantsTravel: null,
     ageRange: RangeValues(18, 99),
-    maxDistance: 100.0,
+    relationshipStatus: 'Any',
   );
 
   factory FilterPreferences.fromJson(Map<String, dynamic> json) =>
@@ -94,7 +93,7 @@ class FilterPreferences extends Equatable {
     String? province,
     String? city,
     RangeValues? ageRange,
-    double? maxDistance,
+    String? relationshipStatus,
   }) {
     return FilterPreferences(
       gender: gender ?? this.gender,
@@ -106,7 +105,7 @@ class FilterPreferences extends Equatable {
       province: province ?? this.province,
       city: city ?? this.city,
       ageRange: ageRange ?? this.ageRange,
-      maxDistance: maxDistance ?? this.maxDistance,
+      relationshipStatus: relationshipStatus ?? this.relationshipStatus,
     );
   }
 
@@ -121,6 +120,6 @@ class FilterPreferences extends Equatable {
     province,
     city,
     ageRange,
-    maxDistance,
+    relationshipStatus,
   ];
 }

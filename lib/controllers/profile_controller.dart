@@ -18,6 +18,7 @@ class ProfileController extends GetxController {
   final RxBool isInitialized = false.obs;
 
   // --- PRIVATE SOURCE OF TRUTH DATA ---
+  final RxList<Person> swipingProfiles = <Person>[].obs;
   final RxList<String> _favoriteUids = <String>[].obs;
   final Rx<Person?> _currentUserProfile = Rx<Person?>(null);
 
@@ -36,6 +37,7 @@ class ProfileController extends GetxController {
   final RxBool isTogglingFavorite = false.obs;
 
   // --- STREAM SUBSCRIPTIONS ---
+  Completer<void>? _swipingProfilesCompleter;
   StreamSubscription? _authStateSubscription;
   StreamSubscription? _swipingProfilesSubscription;
   StreamSubscription? _favoritesSubscription;
@@ -53,12 +55,18 @@ class ProfileController extends GetxController {
     super.onInit();
     _authStateSubscription = _auth.authStateChanges().listen((user) {
       if (user != null) {
+        ever(activeFilters, (_) {
+          print("[ProfileController] Filters changed! Re-initializing streams for new filters.");
+          // When filters change, re-run the method that sets up the database query.
+          _initializeAllStreams(user.uid);
+        });
         _initializeAllStreams(user.uid);
       } else {
         _clearAllState();
       }
     });
   }
+
 
   @override
   void onClose() {
@@ -85,12 +93,19 @@ class ProfileController extends GetxController {
     final currentUser = _auth.currentUser;
     if (currentUser != null) {
       log("Forcing a reload of all streams.", name: "ProfileController");
-      // First, tear down everything.
+
+      // --- START of Changes ---
+      _swipingProfilesCompleter = Completer<void>(); // 1. Create the gate.
       _clearAllState();
-      // Now, initialize again with the current user.
       await _initializeAllStreams(currentUser.uid);
+
+      // 2. Tell the login process to wait here until the gate is opened.
+      await _swipingProfilesCompleter!.future;
+      log("Swiping profiles have loaded. Proceeding with navigation.", name: "ProfileController");
+      // --- END of Changes ---
     }
   }
+
 
 
   Future<void> toggleFavoriteStatus(String targetUid) async {
@@ -171,9 +186,8 @@ class ProfileController extends GetxController {
   void _listenToSwipingProfiles(String userId, Person currentUserProfile, LikeController likeController) {
     _swipingProfilesSubscription?.cancel();
 
+    // 1. BUILD A BROAD, EFFICIENT QUERY
     Query query = _firestore.collection('users').where("uid", isNotEqualTo: userId);
-
-    // Now, use the object that was passed in. It's guaranteed to be available.
     final String? currentUserOrientation = currentUserProfile.orientation?.toLowerCase().trim();
     String? targetOrientation;
 
@@ -186,46 +200,75 @@ class ProfileController extends GetxController {
     if (targetOrientation != null) {
       query = query.where("orientation", isEqualTo: targetOrientation);
     } else {
-      log('Could not determine target orientation for user $userId. Current user orientation is $currentUserOrientation.', name: 'ProfileController');
-      swipingProfileList.assignAll([]);
-      loadingStatus.value = ProfileLoadingStatus.loaded;
+      // ... (your existing handling for no orientation is fine)
       return;
     }
 
     final filters = activeFilters.value;
-    if (filters.gender != null && filters.gender != 'Any') {
-      query = query.where('gender', isEqualTo: filters.gender);
-    }
-    if (filters.ethnicity != null && filters.ethnicity != 'Any') {
-      query = query.where('ethnicity', isEqualTo: filters.ethnicity);
+
+    // Use Firestore ONLY for the age range filter, as it's a range.
+    if (filters.ageRange != null) {
+      query = query.where('age', isGreaterThanOrEqualTo: filters.ageRange!.start.round());
+      query = query.where('age', isLessThanOrEqualTo: filters.ageRange!.end.round());
     }
 
-    _swipingProfilesSubscription = query.snapshots().listen((snapshot) async { // Add 'async' here
-      if (snapshot.docs.isEmpty) {
-        swipingProfileList.clear();
-        loadingStatus.value = ProfileLoadingStatus.loaded;
-        return;
+    // 2. LISTEN TO THE BROAD QUERY
+    _swipingProfilesSubscription = query.snapshots().listen((snapshot) async {
+      if (_swipingProfilesCompleter != null && !_swipingProfilesCompleter!.isCompleted) {
+        _swipingProfilesCompleter!.complete();
       }
-      // 1. Create the list of profiles from the snapshot
-      final profiles = snapshot.docs.map((doc) {
+
+      // This gives us all users of the target orientation within the age range.
+      var profiles = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['uid'] = doc.id;
         return Person.fromJson(data);
       }).toList();
 
-      // 2. Extract the user IDs from those profiles
+      // 3. --- FILTER LOCALLY (IN DART) ---
+      // Now, we apply all the other simple filters here.
+      if (filters.gender != null && filters.gender != 'Any') {
+        profiles = profiles.where((p) => p.gender == filters.gender).toList();
+      }
+      if (filters.ethnicity != null && filters.ethnicity != 'Any') {
+        profiles = profiles.where((p) => p.ethnicity == filters.ethnicity).toList();
+      }
+      if (filters.relationshipStatus != null && filters.relationshipStatus != 'Any') {
+        profiles = profiles.where((p) => p.relationshipStatus == filters.relationshipStatus).toList();
+      }
+      if (filters.country != null && filters.country!.isNotEmpty) {
+        profiles = profiles.where((p) => p.country == filters.country).toList();
+      }
+      if (filters.province != null && filters.province!.isNotEmpty) {
+        profiles = profiles.where((p) => p.province == filters.province).toList();
+      }
+      if (filters.city != null && filters.city!.isNotEmpty) {
+        profiles = profiles.where((p) => p.city == filters.city).toList();
+      }
+      if (filters.wantsHost == true) {
+        profiles = profiles.where((p) => p.hostSelection == true).toList();
+      }
+      if (filters.wantsTravel == true) {
+        profiles = profiles.where((p) => p.travelSelection == true).toList();
+      }
+      // Special 'Professional' logic
+      if (filters.profession != null && filters.profession != 'Any') {
+        if (filters.profession == 'Professional') {
+          profiles = profiles.where((p) => p.profession != 'Student' && p.profession != 'Freelancer').toList();
+        } else {
+          profiles = profiles.where((p) => p.profession == filters.profession).toList();
+        }
+      }
+      // --- END OF LOCAL FILTERING ---
+
+
+      // 4. Update the UI with the final, filtered list.
       final userIds = profiles.map((p) => p.uid!).toList();
-      // 3. Command the LikeController to preload the statuses
       if (userIds.isNotEmpty) {
-        final LikeController likeController = Get.find();
         await likeController.preloadLikeStatuses(userIds);
       }
-      // 4. Update the public list that the UI is watching
       swipingProfileList.assignAll(profiles);
-      // This old method is no longer needed here, as LikeController handles it
-      // _updateLikeStatusMap();
-      loadingStatus.value = ProfileLoadingStatus.loaded;
-
+      loadingStatus.value = ProfileLoadingStatus.loaded; // Corrected status
     }, onError: (e) {
       log('Error in swiping profiles stream', name: 'ProfileController', error: e);
       loadingStatus.value = ProfileLoadingStatus.error;

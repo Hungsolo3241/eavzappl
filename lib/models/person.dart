@@ -54,6 +54,9 @@ class Person {
   @JsonKey(name: 'city')
   final String? city;
 
+  @JsonKey(name: 'relationshipStatus')
+  final String? relationshipStatus;
+
   @JsonKey(name: 'lookingForBreakfast')
   final bool? lookingForBreakfast;
 
@@ -156,6 +159,7 @@ class Person {
     this.country,
     this.province,
     this.city,
+    this.relationshipStatus,
     this.lookingForBreakfast,
     this.lookingForLunch,
     this.lookingForDinner,
@@ -206,6 +210,7 @@ class Person {
     String? country,
     String? province,
     String? city,
+    String? relationshipStatus,
     bool? lookingForBreakfast,
     bool? lookingForLunch,
     bool? lookingForDinner,
@@ -247,6 +252,7 @@ class Person {
       country: country ?? this.country,
       province: province ?? this.province,
       city: city ?? this.city,
+      relationshipStatus: relationshipStatus ?? this.relationshipStatus,
       lookingForBreakfast: lookingForBreakfast ?? this.lookingForBreakfast,
       lookingForLunch: lookingForLunch ?? this.lookingForLunch,
       lookingForDinner: lookingForDinner ?? this.lookingForDinner,
