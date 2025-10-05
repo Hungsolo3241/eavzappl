@@ -4,6 +4,9 @@ class ImageConstants {
   // Prevent instantiation
   ImageConstants._();
 
+  // --- Branding / General ---
+  static const String splashBackground = 'images/splash_screen_background.jpeg';
+
   // --- Avatars ---
   static const String adamAvatar = 'images/adam_avatar.jpeg';
   static const String eveAvatar = 'images/eves_avatar.jpeg';
