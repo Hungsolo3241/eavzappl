@@ -8,6 +8,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:eavzappl/controllers/like_controller.dart';
 
+import 'dart:convert'; // For jsonDecode
+import 'package:shared_preferences/shared_preferences.dart';
+
 enum ProfileLoadingStatus { loading, loaded, error }
 
 class ProfileController extends GetxController {
@@ -50,43 +53,29 @@ class ProfileController extends GetxController {
   // --- PUBLIC GETTERS ---
   bool isFavorite(String uid) => _favoriteUids.contains(uid);
 
+  // In lib/controllers/profile_controller.dart
+
   @override
   void onInit() {
     super.onInit();
     _authStateSubscription = _auth.authStateChanges().listen((user) {
       if (user != null) {
-        ever(activeFilters, (_) {
-          print("[ProfileController] Filters changed! Re-initializing streams for new filters.");
-          // When filters change, re-run the method that sets up the database query.
-          _initializeAllStreams(user.uid);
-        });
+        // When the user logs in, initialize everything.
+        // The initialization will automatically load saved filters.
         _initializeAllStreams(user.uid);
       } else {
+        // When the user logs out, clear all data.
         _clearAllState();
       }
     });
   }
 
 
+
   @override
   void onClose() {
     _cancelAllSubscriptions();
     super.onClose();
-  }
-
-  // FIXED
-  void applyFilters(FilterPreferences newFilters) {
-    activeFilters.value = newFilters;
-    final currentUserId = _auth.currentUser?.uid;
-    final currentUserProfile = _currentUserProfile.value;
-
-    if (currentUserId != null && currentUserProfile != null) {
-      // FIX IS HERE: Find the LikeController and pass it along
-      final LikeController likeController = Get.find();
-      _listenToSwipingProfiles(currentUserId, currentUserProfile, likeController);
-    } else {
-      log('Could not apply filters because user or profile was not loaded.', name: 'ProfileController');
-    }
   }
 
   Future<void> forceReload() async {
@@ -106,6 +95,86 @@ class ProfileController extends GetxController {
     }
   }
 
+  // In lib/controllers/profile_controller.dart
+
+// ... (inside the ProfileController class)
+
+// Method to update, save, and re-apply filters.
+  Future<void> updateAndApplyFilters(FilterPreferences newFilters) async {
+    activeFilters.value = newFilters; // Update the live filters
+    await _saveFiltersToPrefs(newFilters); // Save them to device storage
+    await fetchSwipingProfiles(); // Re-fetch profiles with the new filters
+  }
+
+// Method to reset filters to default, save, and re-apply.
+  Future<void> resetFilters() async {
+    final defaultFilters = FilterPreferences.initial(); // Get a fresh, empty filter object
+    activeFilters.value = defaultFilters;
+    await _saveFiltersToPrefs(defaultFilters);
+    await fetchSwipingProfiles();
+  }
+
+  // In lib/controllers/profile_controller.dart, inside the ProfileController class
+
+// ... (after resetFilters method)
+
+  Future<void> fetchSwipingProfiles() async {
+    final currentUserId = _auth.currentUser?.uid;
+    final currentUserProfile = _currentUserProfile.value;
+
+    if (currentUserId != null && currentUserProfile != null) {
+      log("Fetching swiping profiles with new filters...", name: "ProfileController");
+      loadingStatus.value = ProfileLoadingStatus.loading;
+      // Re-use the existing stream logic by just calling it again.
+      // It will cancel the old stream and start a new one with the updated activeFilters.
+      final LikeController likeController = Get.find();
+      _listenToSwipingProfiles(currentUserId, currentUserProfile, likeController);
+    } else {
+      log('Could not fetch profiles because user or profile was not loaded.', name: 'ProfileController');
+      // If there's no user, there are no profiles to show.
+      swipingProfileList.clear();
+      loadingStatus.value = ProfileLoadingStatus.loaded;
+    }
+  }
+
+  // NEW, CORRECTED VERSION
+  Future<void> _saveFiltersToPrefs(FilterPreferences filters) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // 1. Convert the FilterPreferences object to a Map using the generated toJson()
+      final Map<String, dynamic> filtersMap = filters.toJson();
+      // 2. Encode the Map into a JSON String before saving
+      final String filtersJsonString = json.encode(filtersMap);
+      await prefs.setString('user_filters', filtersJsonString);
+      log('Filters saved to local storage.', name: 'ProfileController');
+    } catch (e) {
+      log('Failed to save filters', name: 'ProfileController', error: e);
+    }
+  }
+
+
+  // NEW, CORRECTED VERSION
+  Future<void> _loadFiltersFromPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? filtersJsonString = prefs.getString('user_filters');
+      if (filtersJsonString != null) {
+        // 1. Decode the JSON String from storage into a Map
+        final Map<String, dynamic> filtersMap = json.decode(filtersJsonString);
+        // 2. Use the generated fromJson factory to create the object from the Map
+        activeFilters.value = FilterPreferences.fromJson(filtersMap);
+        log('Filters successfully loaded from local storage.', name: 'ProfileController');
+      } else {
+        log('No saved filters found. Using initial filters.', name: 'ProfileController');
+        // Set to initial if nothing is saved
+        activeFilters.value = FilterPreferences.initial();
+      }
+    } catch (e) {
+      log('Failed to load filters', name: 'ProfileController', error: e);
+      // Fallback to initial filters on any error
+      activeFilters.value = FilterPreferences.initial();
+    }
+  }
 
 
   Future<void> toggleFavoriteStatus(String targetUid) async {
@@ -146,6 +215,8 @@ class ProfileController extends GetxController {
 
     loadingStatus.value = ProfileLoadingStatus.loading;
     isInitialized.value = false;
+
+    await _loadFiltersFromPrefs(); // Load filters before fetching any data
 
     // Listen to the user's own document for real-time updates (or creation)
     _userDocSubscription = _firestore.collection("users").doc(userId).snapshots().listen(
@@ -213,9 +284,11 @@ class ProfileController extends GetxController {
     }
 
     // 2. LISTEN TO THE BROAD QUERY
+    // NEW, CORRECTED CODE
     _swipingProfilesSubscription = query.snapshots().listen((snapshot) async {
       if (_swipingProfilesCompleter != null && !_swipingProfilesCompleter!.isCompleted) {
         _swipingProfilesCompleter!.complete();
+        _swipingProfilesCompleter = null; // <-- ADD THIS LINE
       }
 
       // This gives us all users of the target orientation within the age range.
