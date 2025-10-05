@@ -1,10 +1,9 @@
+// lib/tabScreens/like_sent_like_received_screen.dart
 
-import 'dart:developer';
-
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eavzappl/controllers/profile_controller.dart';
 import 'package:eavzappl/models/person.dart';
-import 'package:eavzappl/tabScreens/user_details_screen.dart';
+// --- STEP 1: Import the new reusable widget. ---
+import 'package:eavzappl/widgets/profile_grid_item.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -13,7 +12,7 @@ class LikeSentLikeReceivedScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // A single controller is needed for the entire screen.
+    // Find the single controller needed for the entire screen.
     final ProfileController profileController = Get.find<ProfileController>();
 
     return DefaultTabController(
@@ -25,6 +24,9 @@ class LikeSentLikeReceivedScreen extends StatelessWidget {
           automaticallyImplyLeading: false,
           centerTitle: true,
           bottom: const TabBar(
+            indicatorColor: Colors.yellow,
+            labelColor: Colors.yellow,
+            unselectedLabelColor: Colors.white70,
             tabs: [
               Tab(text: 'Likes Sent'),
               Tab(text: 'Likes Received'),
@@ -33,12 +35,12 @@ class LikeSentLikeReceivedScreen extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            // "Likes Sent" Tab
+            // "Likes Sent" Tab now uses the simplified grid view widget.
             _LikesGridView(
               userList: profileController.usersIHaveLiked,
               emptyMessage: "You haven't liked anyone yet.",
             ),
-            // "Likes Received" Tab
+            // "Likes Received" Tab also uses the simplified grid view widget.
             _LikesGridView(
               userList: profileController.usersWhoHaveLikedMe,
               emptyMessage: "No one has liked you yet.",
@@ -50,7 +52,8 @@ class LikeSentLikeReceivedScreen extends StatelessWidget {
   }
 }
 
-/// A reusable widget to display a grid of users for a given list of UIDs.
+/// A reusable widget to display a grid of users.
+/// This widget itself has been simplified.
 class _LikesGridView extends StatelessWidget {
   const _LikesGridView({
     required this.userList,
@@ -68,6 +71,7 @@ class _LikesGridView extends StatelessWidget {
           child: Text(
             emptyMessage,
             style: const TextStyle(fontSize: 18, color: Colors.blueGrey),
+            textAlign: TextAlign.center,
           ),
         );
       }
@@ -78,98 +82,16 @@ class _LikesGridView extends StatelessWidget {
           crossAxisCount: 2,
           crossAxisSpacing: 8.0,
           mainAxisSpacing: 8.0,
-          childAspectRatio: 0.75,
+          childAspectRatio: 0.75, // Matches the new widget's aspect ratio
         ),
         itemCount: userList.length,
         itemBuilder: (context, index) {
-          return _UserGridItem(person: userList[index]);
+          // --- STEP 2: Use the new reusable ProfileGridItem widget. ---
+          return ProfileGridItem(person: userList[index]);
         },
       );
     });
   }
 }
 
-/// A dedicated widget to display a single user in the likes grid.
-/// A dedicated widget to display a single user in the likes grid.
-class _UserGridItem extends StatelessWidget {
-  const _UserGridItem({required this.person});
-
-  final Person person;
-
-  // --- START: IMPROVEMENT ---
-  // Use local assets for placeholders instead of a network URL.
-  String get _placeholderAsset {
-    return person.orientation?.toLowerCase() == 'adam'
-        ? 'images/adam_avatar.jpeg'
-        : 'images/eves_avatar.jpeg';
-  }
-  // --- END: IMPROVEMENT ---
-
-  @override
-  Widget build(BuildContext context) {
-    // This logic is now cleaner. We only need the real profile photo URL.
-    final imageUrl = person.profilePhoto;
-
-    return InkWell(
-      onTap: () {
-        if (person.uid != null) {
-          Get.to(() => UserDetailsScreen(userID: person.uid!));
-        } else {
-          log(
-            'Tap failed: UID is null for ${person.name}',
-            name: 'LikesScreen',
-          );
-          Get.snackbar('Error', 'User ID is missing. Cannot open details.');
-        }
-      },
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        elevation: 4.0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              // Check if the URL from Firestore is valid
-              child: (imageUrl != null && imageUrl.isNotEmpty)
-                  ? CachedNetworkImage(
-                imageUrl: imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: Colors.black54, // A dark background for the loader
-                  child: const Center(child: CircularProgressIndicator(strokeWidth: 2.0)),
-                ),
-                errorWidget: (context, url, error) {
-                  log(
-                    'Error loading image $imageUrl for ${person.name}',
-                    name: 'LikesScreen',
-                    error: error,
-                  );
-                  // If the network image fails, show the local placeholder
-                  return Image.asset(_placeholderAsset, fit: BoxFit.cover);
-                },
-              )
-              // If there is no URL to begin with, show the local placeholder
-                  : Image.asset(_placeholderAsset, fit: BoxFit.cover),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                person.age != null ? '${person.name ?? 'N/A'} • ${person.age}' : (person.name ?? 'N/A'),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.yellow[700],
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
+// --- STEP 3: The entire '_UserGridItem' class has been deleted. ---

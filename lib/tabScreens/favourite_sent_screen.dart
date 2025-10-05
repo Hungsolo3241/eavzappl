@@ -1,9 +1,11 @@
-import 'dart:developer';
+// lib/tabScreens/favourite_sent_screen.dart
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eavzappl/controllers/profile_controller.dart';
 import 'package:eavzappl/models/person.dart';
-import 'package:eavzappl/tabScreens/user_details_screen.dart';
+// --- START: STEP 1 ---
+// Import the new reusable widget.
+import 'package:eavzappl/widgets/profile_grid_item.dart';
+// --- END: STEP 1 ---
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -41,11 +43,14 @@ class FavouriteSentScreen extends StatelessWidget {
             crossAxisCount: 2,
             crossAxisSpacing: 8.0,
             mainAxisSpacing: 8.0,
-            childAspectRatio: 0.75,
+            childAspectRatio: 0.75, // Aspect ratio can be adjusted if needed
           ),
           itemCount: favouriteProfiles.length,
           itemBuilder: (context, index) {
-            return _FavoriteGridItem(person: favouriteProfiles[index]);
+            // --- START: STEP 2 ---
+            // Use the new reusable ProfileGridItem widget.
+            return ProfileGridItem(person: favouriteProfiles[index]);
+            // --- END: STEP 2 ---
           },
         );
       }),
@@ -53,76 +58,6 @@ class FavouriteSentScreen extends StatelessWidget {
   }
 }
 
-/// A dedicated widget to display a single user in the favorites grid.
-class _FavoriteGridItem extends StatelessWidget {
-  const _FavoriteGridItem({required this.person});
-
-  final Person person;
-
-  // Static constant for placeholder URL
-  static const String _placeholderUrl = 'https://via.placeholder.com/150';
-
-  String get _imageUrl =>
-      person.profilePhoto != null && person.profilePhoto!.isNotEmpty
-          ? person.profilePhoto!
-          : _placeholderUrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        if (person.uid != null) {
-          Get.to(() => UserDetailsScreen(userID: person.uid!));
-        } else {
-          log(
-            'Tap failed: UID is null for ${person.name}',
-            name: 'FavouriteSentScreen',
-          );
-          Get.snackbar('Error', 'User ID is missing. Cannot open details.');
-        }
-      },
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        elevation: 4.0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: CachedNetworkImage(
-                imageUrl: _imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) =>
-                const Center(child: CircularProgressIndicator()),
-                errorWidget: (context, url, error) {
-                  log(
-                    'Error loading image $_imageUrl for ${person.name}',
-                    name: 'FavouriteSentScreen',
-                    error: error,
-                  );
-                  return const Center(
-                    child: Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                  );
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                person.age != null ? '${person.name ?? 'N/A'} • ${person.age}' : (person.name ?? 'N/A'),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.yellow[700],
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// --- START: STEP 3 ---
+// The entire '_FavoriteGridItem' class has been deleted.
+// --- END: STEP 3 ---
