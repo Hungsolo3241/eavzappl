@@ -1,3 +1,5 @@
+// lib/pushNotifications/push_notifications.dart
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -6,6 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:eavzappl/tabScreens/user_details_screen.dart';
 import 'package:get/get.dart';
 import 'dart:developer';
+
+// --- NEW --- Import the model and CachedNetworkImage
+import 'package:eavzappl/models/push_notification_payload.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 
 @pragma('vm:entry-point')
@@ -19,6 +25,7 @@ class PushNotifications {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<void> initialize(BuildContext context) async {
+    // ... (This section remains unchanged)
     await _firebaseMessaging.requestPermission(
       alert: true,
       announcement: false,
@@ -47,6 +54,7 @@ class PushNotifications {
   }
 
   Future<void> _getAndSaveFCMToken() async {
+    // ... (This section remains unchanged)
     String? token = await _firebaseMessaging.getToken();
     if (token != null) {
       await _saveTokenToDatabase(token);
@@ -54,6 +62,7 @@ class PushNotifications {
   }
 
   Future<void> _saveTokenToDatabase(String token) async {
+    // ... (This section remains unchanged)
     String? userId = _auth.currentUser?.uid;
     if (userId == null) return;
 
@@ -68,6 +77,7 @@ class PushNotifications {
   }
 
   Future<Map<String, dynamic>> _getNotificationPreferences(String userId) async {
+    // ... (This section remains unchanged)
     try {
       DocumentSnapshot settingsDoc = await _firestore
           .collection('users')
@@ -86,6 +96,7 @@ class PushNotifications {
   }
 
   bool _shouldShowNotification(String? type, Map<String, dynamic> prefs) {
+    // ... (This section remains unchanged)
     if (!(prefs['receiveAllNotifications'] ?? true)) return false;
 
     switch (type) {
@@ -100,28 +111,29 @@ class PushNotifications {
     }
   }
 
+  // --- REFACTORED to use the model ---
   Future<void> _showForegroundNotification(BuildContext context, RemoteMessage message) async {
     String? userId = _auth.currentUser?.uid;
     if (userId == null) return;
 
     final userPreferences = await _getNotificationPreferences(userId);
-    final String? type = message.data['type'] as String?;
+    // Create a payload object from the data map for type-safety
+    final payload = PushNotificationPayload.fromMap(message.data);
 
-    if (!_shouldShowNotification(type, userPreferences)) return;
-
-    final data = message.data;
-    final String? navigateToUserId = data['relatedItemId'] as String?;
+    if (!_shouldShowNotification(payload.type, userPreferences)) return;
 
     if (!context.mounted) return;
 
-    if (navigateToUserId == null || navigateToUserId.isEmpty) {
+    // Use the payload to make decisions
+    if (payload.relatedItemId == null || payload.relatedItemId!.isEmpty) {
       _showGenericDialog(context, message.notification);
     } else {
-      _showCustomDialog(context, data);
+      _showCustomDialog(context, payload); // Pass the strongly-typed object
     }
   }
 
   void _showGenericDialog(BuildContext context, RemoteNotification? notification) {
+    // ... (This section remains unchanged)
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -139,34 +151,39 @@ class PushNotifications {
     );
   }
 
-  void _showCustomDialog(BuildContext context, Map<String, dynamic> data) {
+  // --- REFACTORED to accept the model ---
+  void _showCustomDialog(BuildContext context, PushNotificationPayload payload) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
+        // Pass the safe, typed data from the payload to the dialog
         return NotificationDialogBox(
-          profilePhoto: data['senderPhotoUrl'] as String? ?? "",
-          name: data['senderName'] as String? ?? "New Notification",
-          navigateToUserId: data['relatedItemId'] as String,
-          age: data['senderAge'] as String? ?? "",
-          city: data['senderCity'] as String? ?? "",
-          profession: data['senderProfession'] as String? ?? "",
+          profilePhoto: payload.senderPhotoUrl ?? "",
+          name: payload.senderName ?? "Someone",
+          navigateToUserId: payload.relatedItemId!, // We know it's not null here
+          age: payload.senderAge ?? "",
+          city: payload.senderCity ?? "",
+          profession: payload.senderProfession ?? "",
         );
       },
     );
   }
 
+  // --- REFACTORED to use the model ---
   void _handleNotificationTapNavigation(Map<String, dynamic> data) {
-    final String? type = data['type'] as String?;
-    final String? relatedItemId = data['relatedItemId'] as String?;
+    // Create a payload object for type-safety
+    final payload = PushNotificationPayload.fromMap(data);
 
-    if (relatedItemId == null || relatedItemId.isEmpty) return;
+    if (payload.relatedItemId == null || payload.relatedItemId!.isEmpty) return;
 
-    if (type == 'profile_view' || type == 'new_like' || type == 'mutual_match') {
-      Get.to(() => UserDetailsScreen(userID: relatedItemId));
+    // Check the type from the payload
+    if (['profile_view', 'new_like', 'mutual_match'].contains(payload.type)) {
+      Get.to(() => UserDetailsScreen(userID: payload.relatedItemId!));
     }
   }
 }
 
+// --- FULLY REFACTORED NotificationDialogBox ---
 class NotificationDialogBox extends StatelessWidget {
   final String profilePhoto;
   final String name;
@@ -175,52 +192,63 @@ class NotificationDialogBox extends StatelessWidget {
   final String city;
   final String profession;
 
+  // Added a const constructor for performance
   const NotificationDialogBox({
-    Key? key,
+    super.key, // Use super.key
     required this.profilePhoto,
     required this.name,
     required this.navigateToUserId,
     required this.age,
     required this.city,
     required this.profession,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('New Notification from $name'),
+      backgroundColor: Colors.grey[900],
+      title: Text(
+        'New from $name',
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Center(
-            child: CircleAvatar(
-              radius: 30,
-              backgroundImage: profilePhoto.isNotEmpty ? NetworkImage(profilePhoto) : null,
-              onBackgroundImageError: profilePhoto.isNotEmpty ? (exception, stackTrace) {
-                log('Error loading profile image: $exception');
-              } : null,
-              child: profilePhoto.isEmpty ? const Icon(Icons.person) : null,
+          // Replaced NetworkImage with a robust CachedNetworkImage
+          ClipOval(
+            child: CachedNetworkImage(
+              imageUrl: profilePhoto,
+              height: 80,
+              width: 80,
+              fit: BoxFit.cover,
+              memCacheHeight: 160, // Performance optimization
+              placeholder: (context, url) => Container(color: Colors.grey[800]),
+              errorWidget: (context, url, error) => Container(
+                height: 80,
+                width: 80,
+                color: Colors.grey[800],
+                child: Icon(Icons.person, color: Colors.blueGrey[200], size: 40),
+              ),
             ),
           ),
           const SizedBox(height: 16),
-          Text('Name: $name'),
-          const SizedBox(height: 4),
-          if (age.isNotEmpty) Text('Age: $age'),
-          if (city.isNotEmpty) Text('City: $city'),
-          if (profession.isNotEmpty) Text('Profession: $profession'),
+          // Improved text styling for dark mode
+          if (age.isNotEmpty) Text('Age: $age', style: const TextStyle(color: Colors.white70)),
+          if (city.isNotEmpty) Text('City: $city', style: const TextStyle(color: Colors.white70)),
+          if (profession.isNotEmpty) Text('Profession: $profession', style: const TextStyle(color: Colors.white70)),
         ],
       ),
       actions: [
         TextButton(
-          child: const Text("View"),
+          child: Text("View Profile", style: TextStyle(color: Colors.yellow[700])),
           onPressed: () {
             Navigator.of(context).pop(); // Close the dialog
             Get.to(() => UserDetailsScreen(userID: navigateToUserId));
           },
         ),
         TextButton(
-          child: const Text("Dismiss"),
+          child: Text("Dismiss", style: TextStyle(color: Colors.blueGrey[200])),
           onPressed: () {
             Navigator.of(context).pop();
           },
@@ -229,3 +257,4 @@ class NotificationDialogBox extends StatelessWidget {
     );
   }
 }
+
