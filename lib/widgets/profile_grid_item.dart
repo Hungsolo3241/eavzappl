@@ -45,6 +45,7 @@ class ProfileGridItem extends StatelessWidget {
                 imageUrl: person.profilePhoto ?? '',
                 // --- END OF FIX 2 ---
                 fit: BoxFit.cover,
+                memCacheWidth: 400,
                 placeholder: (context, url) => Container(
                   color: Colors.grey[800],
                   child: const Center(

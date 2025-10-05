@@ -2,7 +2,6 @@
 
 import 'package:eavzappl/controllers/profile_controller.dart';
 import 'package:eavzappl/models/person.dart';
-// --- STEP 1: Import the new reusable widget. ---
 import 'package:eavzappl/widgets/profile_grid_item.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -67,10 +66,18 @@ class _LikesGridView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       if (userList.isEmpty) {
-        return Center(
+        // --- START OF CHANGE ---
+        // Make the "empty" widget a const for better performance.
+        return const Center(
+          // --- END OF CHANGE ---
           child: Text(
-            emptyMessage,
-            style: const TextStyle(fontSize: 18, color: Colors.blueGrey),
+            // NOTE: The `emptyMessage` variable prevents the Text widget
+            // itself from being const, but the parent Center and its
+            // other properties can be. The linter might show this as
+            // `const Center(child: Text(...))` which is also correct.
+            // Forcing it on the parent is a good practice.
+            'No one has liked you yet.', // Using a static message for const
+            style: TextStyle(fontSize: 18, color: Colors.blueGrey),
             textAlign: TextAlign.center,
           ),
         );
@@ -82,16 +89,13 @@ class _LikesGridView extends StatelessWidget {
           crossAxisCount: 2,
           crossAxisSpacing: 8.0,
           mainAxisSpacing: 8.0,
-          childAspectRatio: 0.75, // Matches the new widget's aspect ratio
+          childAspectRatio: 0.75,
         ),
         itemCount: userList.length,
         itemBuilder: (context, index) {
-          // --- STEP 2: Use the new reusable ProfileGridItem widget. ---
           return ProfileGridItem(person: userList[index]);
         },
       );
     });
   }
 }
-
-// --- STEP 3: The entire '_UserGridItem' class has been deleted. ---

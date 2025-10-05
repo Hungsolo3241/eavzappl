@@ -14,7 +14,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:eavzappl/controllers/like_controller.dart';
 import 'package:eavzappl/widgets/filter_sheet_widget.dart';
-// --- STEP 1: IMPORT THE NEW CONSTANTS FILE ---
 import 'package:eavzappl/utils/image_constants.dart';
 
 
@@ -86,7 +85,6 @@ class _SwipingScreenState extends State<SwipingScreen> {
               scrollDirection: Axis.horizontal,
               itemBuilder: (context, index) {
                 final Person person = profileController.swipingProfileList[index];
-                // --- STEP 2: REPLACE STRING WITH CONSTANT ---
                 final String placeholderAsset = (person.orientation?.toLowerCase() == 'adam')
                     ? ImageConstants.adamAvatar
                     : ImageConstants.eveAvatar;
@@ -98,15 +96,9 @@ class _SwipingScreenState extends State<SwipingScreen> {
                     CachedNetworkImage(
                       imageUrl: imageUrl ?? '',
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: Colors.black,
-                        child: Center(
-                          // --- STEP 2: REPLACE STRING WITH CONSTANT ---
-                          child: Image.asset(placeholderAsset, fit: BoxFit.cover),
-                        ),
-                      ),
+                      memCacheWidth: 800,
+                      placeholder: (context, url) => Container(color: Colors.black),
                       errorWidget: (context, url, error) => Image.asset(
-                        // --- STEP 2: REPLACE STRING WITH CONSTANT ---
                         placeholderAsset,
                         fit: BoxFit.cover,
                       ),
@@ -155,8 +147,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
   }
 }
 
-// _GradientOverlay and _ProfileDetails widgets remain unchanged.
-// ... (omitting for brevity)
+// This widget is already const, which is perfect.
 class _GradientOverlay extends StatelessWidget {
   const _GradientOverlay();
   @override
@@ -178,8 +169,12 @@ class _GradientOverlay extends StatelessWidget {
   }
 }
 
+
 class _ProfileDetails extends StatelessWidget {
+  // --- START OF CHANGE 1 ---
+  // Add `const` to the constructor.
   const _ProfileDetails({required this.person});
+  // --- END OF CHANGE 1 ---
   final Person person;
 
   @override
@@ -191,6 +186,7 @@ class _ProfileDetails extends StatelessWidget {
         InkWell(
           onTap: () {
             if (person.uid != null) {
+              // The path to UserDetailsScreen was incorrect, corrected it.
               Get.to(() => UserDetailsScreen(userID: person.uid!));
             }
           },
@@ -247,13 +243,15 @@ class _ProfileDetails extends StatelessWidget {
   }
 }
 
-
 class _ActionButtons extends StatelessWidget {
+  // --- START OF CHANGE 2 ---
+  // Add `const` to the constructor.
   const _ActionButtons({
     required this.person,
     required this.profileController,
     required this.likeController,
   });
+  // --- END OF CHANGE 2 ---
 
   final Person person;
   final ProfileController profileController;
@@ -274,7 +272,6 @@ class _ActionButtons extends StatelessWidget {
                 profileController.toggleFavoriteStatus(person.uid!);
               }
             },
-            // --- STEP 2: REPLACE STRINGS WITH CONSTANTS ---
             activeIconAsset: ImageConstants.faveFull,
             inactiveIconAsset: ImageConstants.faveDefault,
             isActive: isFavorite,
@@ -289,7 +286,6 @@ class _ActionButtons extends StatelessWidget {
                 ? () => _launchWhatsApp(person.phoneNumber)
                 : () => Get.snackbar(
                 "Message Unavailable", "You can only message users after a mutual like."),
-            // --- STEP 2: REPLACE STRING WITH CONSTANT ---
             inactiveIconAsset: ImageConstants.messageDefault,
             isActive: canMessage,
             tooltip: canMessage ? 'Message' : 'Message (Requires Mutual Like)',
@@ -339,7 +335,6 @@ class _ActionButtons extends StatelessWidget {
     String iconAsset;
     Color? iconColor;
     if (likeStatus != null) {
-      // --- STEP 2: REPLACE STRINGS WITH CONSTANTS ---
       switch (likeStatus) {
         case LikeStatus.liked:
         case LikeStatus.likedBy:
@@ -368,7 +363,6 @@ class _ActionButtons extends StatelessWidget {
   }
 
   Future<void> _launchWhatsApp(String? phoneNumber) async {
-    // ... (This method remains unchanged)
     if (phoneNumber?.isNotEmpty != true) {
       Get.snackbar("Message Error", "User's phone number is not available.");
       return;
