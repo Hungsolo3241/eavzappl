@@ -1,18 +1,21 @@
+// lib/tabScreens/swiping_screen.dart
+
 import 'dart:async';
 import 'dart:developer';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eavzappl/controllers/profile_controller.dart';
-import 'package:eavzappl/models/filter_preferences.dart';
 import 'package:eavzappl/models/person.dart';
-import 'package:eavzappl/tabScreens/user_details_screen.dart';
+import 'package:eavzappl/tabScreens/user_details_screen.dart'; // Corrected Path
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/services.dart';
+
 import 'package:eavzappl/controllers/like_controller.dart';
-import 'package:transparent_image/transparent_image.dart';
 import 'package:eavzappl/widgets/filter_sheet_widget.dart';
+// --- STEP 1: IMPORT THE NEW CONSTANTS FILE ---
+import 'package:eavzappl/utils/image_constants.dart';
 
 
 class SwipingScreen extends StatefulWidget {
@@ -24,10 +27,9 @@ class SwipingScreen extends StatefulWidget {
 
 class _SwipingScreenState extends State<SwipingScreen> {
   final ProfileController profileController = Get.find<ProfileController>();
-  int _currentPageIndex = 0;
   final LikeController likeController = Get.find();
 
-  // NEW, CORRECTED METHOD
+  // Method to show the filter bottom sheet
   void _showFilterModalBottomSheet() {
     showModalBottomSheet(
       context: context,
@@ -47,7 +49,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
                   topRight: Radius.circular(20.0),
                 ),
               ),
-              child: FilterSheetWidget( // This is the new, external widget
+              child: FilterSheetWidget(
                 profileController: profileController,
                 scrollController: controller,
               ),
@@ -57,7 +59,6 @@ class _SwipingScreenState extends State<SwipingScreen> {
       },
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -82,35 +83,30 @@ class _SwipingScreenState extends State<SwipingScreen> {
 
             return PageView.builder(
               itemCount: profileController.swipingProfileList.length,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentPageIndex = index;
-                });
-              },
               scrollDirection: Axis.horizontal,
               itemBuilder: (context, index) {
                 final Person person = profileController.swipingProfileList[index];
+                // --- STEP 2: REPLACE STRING WITH CONSTANT ---
                 final String placeholderAsset = (person.orientation?.toLowerCase() == 'adam')
-                    ? 'images/adam_avatar.jpeg'
-                    : 'images/eves_avatar.jpeg';
+                    ? ImageConstants.adamAvatar
+                    : ImageConstants.eveAvatar;
                 final String? imageUrl = person.profilePhoto;
 
                 return Stack(
                   fit: StackFit.expand,
                   children: [
-                    // Use CachedNetworkImage for optimized loading and caching
                     CachedNetworkImage(
-                      imageUrl: imageUrl ?? '', // Use the image URL or an empty string if null
+                      imageUrl: imageUrl ?? '',
                       fit: BoxFit.cover,
-                      // Placeholder widget to show while the image is loading
                       placeholder: (context, url) => Container(
-                        color: Colors.black, // A solid background is better than transparent
+                        color: Colors.black,
                         child: Center(
+                          // --- STEP 2: REPLACE STRING WITH CONSTANT ---
                           child: Image.asset(placeholderAsset, fit: BoxFit.cover),
                         ),
                       ),
-                      // Error widget to display the local placeholder if the network image fails
                       errorWidget: (context, url, error) => Image.asset(
+                        // --- STEP 2: REPLACE STRING WITH CONSTANT ---
                         placeholderAsset,
                         fit: BoxFit.cover,
                       ),
@@ -159,9 +155,8 @@ class _SwipingScreenState extends State<SwipingScreen> {
   }
 }
 
-// _GradientOverlay, _ProfileDetails, and _ActionButtons widgets remain the same as your provided code.
-// I'm omitting them here for brevity but they are part of the final code.
-
+// _GradientOverlay and _ProfileDetails widgets remain unchanged.
+// ... (omitting for brevity)
 class _GradientOverlay extends StatelessWidget {
   const _GradientOverlay();
   @override
@@ -252,6 +247,7 @@ class _ProfileDetails extends StatelessWidget {
   }
 }
 
+
 class _ActionButtons extends StatelessWidget {
   const _ActionButtons({
     required this.person,
@@ -278,8 +274,9 @@ class _ActionButtons extends StatelessWidget {
                 profileController.toggleFavoriteStatus(person.uid!);
               }
             },
-            activeIconAsset: 'images/full_fave.png',
-            inactiveIconAsset: 'images/default_fave.png',
+            // --- STEP 2: REPLACE STRINGS WITH CONSTANTS ---
+            activeIconAsset: ImageConstants.faveFull,
+            inactiveIconAsset: ImageConstants.faveDefault,
             isActive: isFavorite,
             tooltip: 'Favorite',
           );
@@ -292,7 +289,8 @@ class _ActionButtons extends StatelessWidget {
                 ? () => _launchWhatsApp(person.phoneNumber)
                 : () => Get.snackbar(
                 "Message Unavailable", "You can only message users after a mutual like."),
-            inactiveIconAsset: 'images/default_message.png',
+            // --- STEP 2: REPLACE STRING WITH CONSTANT ---
+            inactiveIconAsset: ImageConstants.messageDefault,
             isActive: canMessage,
             tooltip: canMessage ? 'Message' : 'Message (Requires Mutual Like)',
             iconSize: 75,
@@ -341,19 +339,20 @@ class _ActionButtons extends StatelessWidget {
     String iconAsset;
     Color? iconColor;
     if (likeStatus != null) {
+      // --- STEP 2: REPLACE STRINGS WITH CONSTANTS ---
       switch (likeStatus) {
         case LikeStatus.liked:
         case LikeStatus.likedBy:
-          iconAsset = 'images/half_like.png';
+          iconAsset = ImageConstants.likeHalf;
           iconColor = null;
           break;
         case LikeStatus.mutualLike:
-          iconAsset = 'images/full_like.png';
+          iconAsset = ImageConstants.likeFull;
           iconColor = Colors.yellow[700];
           break;
         case LikeStatus.none:
         default:
-          iconAsset = 'images/default_like.png';
+          iconAsset = ImageConstants.likeDefault;
           iconColor = Colors.blueGrey;
           break;
       }
@@ -369,6 +368,7 @@ class _ActionButtons extends StatelessWidget {
   }
 
   Future<void> _launchWhatsApp(String? phoneNumber) async {
+    // ... (This method remains unchanged)
     if (phoneNumber?.isNotEmpty != true) {
       Get.snackbar("Message Error", "User's phone number is not available.");
       return;
