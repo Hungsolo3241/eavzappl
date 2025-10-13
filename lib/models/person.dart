@@ -7,7 +7,7 @@ part 'person.g.dart';
 enum LikeStatus {
   none, // Default state
   liked,
-  likedBy,// Current user has liked the target, but not mutual (half-like)
+  likedBy, // Current user has liked the target, but not mutual (half-like)
   mutualLike, // Both users have liked each other (full-like)
 }
 
@@ -142,10 +142,6 @@ class Person {
   @JsonKey(name: 'urlImage5')
   final String? urlImage5;
 
-  // Note: Reactive properties like isFavorite, isLiked, hasMessage, and likeStatus
-  // have been removed. This state describes the relationship between the current
-  // user and this Person, and should be managed in a controller that holds this Person object.
-
   const Person({
     this.uid,
     this.profilePhoto,
@@ -189,8 +185,20 @@ class Person {
     this.urlImage5,
   });
 
+  // --- START OF CHANGE ---
   /// Connect the generated [_$PersonFromJson] function to the `fromJson` factory.
-  factory Person.fromJson(Map<String, dynamic> json) => _$PersonFromJson(json);
+  /// This custom implementation handles potential data type mismatches from Firestore.
+  factory Person.fromJson(Map<String, dynamic> json) {
+    // Check if the 'income' field exists and is of type int.
+    if (json['income'] is int) {
+      // If it's an int, convert it to a String before decoding.
+      // This prevents the app from crashing on old data.
+      json['income'] = (json['income'] as int).toString();
+    }
+    // Now that the data is clean, proceed with the auto-generated parser.
+    return _$PersonFromJson(json);
+  }
+  // --- END OF CHANGE ---
 
   /// Connect the generated [_$PersonToJson] function to the `toJson` method.
   Map<String, dynamic> toJson() => _$PersonToJson(this);

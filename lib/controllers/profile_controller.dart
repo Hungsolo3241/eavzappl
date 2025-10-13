@@ -11,7 +11,7 @@ import 'package:eavzappl/controllers/like_controller.dart';
 import 'dart:convert'; // For jsonDecode
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum ProfileLoadingStatus { loading, loaded, error }
+enum ProfileLoadingStatus { initial, loading, done, error }
 
 class ProfileController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -36,7 +36,7 @@ class ProfileController extends GetxController {
   final Rx<FilterPreferences> activeFilters = FilterPreferences.initial().obs;
 
   // --- ASYNC/LOADING STATE ---
-  final Rx<ProfileLoadingStatus> loadingStatus = ProfileLoadingStatus.loading.obs;
+  final Rx<ProfileLoadingStatus> loadingStatus = Rx(ProfileLoadingStatus.initial);
   final RxBool isTogglingFavorite = false.obs;
 
   // --- STREAM SUBSCRIPTIONS ---
@@ -124,7 +124,6 @@ class ProfileController extends GetxController {
 
     if (currentUserId != null && currentUserProfile != null) {
       log("Fetching swiping profiles with new filters...", name: "ProfileController");
-      loadingStatus.value = ProfileLoadingStatus.loading;
       // Re-use the existing stream logic by just calling it again.
       // It will cancel the old stream and start a new one with the updated activeFilters.
       final LikeController likeController = Get.find();
@@ -133,7 +132,7 @@ class ProfileController extends GetxController {
       log('Could not fetch profiles because user or profile was not loaded.', name: 'ProfileController');
       // If there's no user, there are no profiles to show.
       swipingProfileList.clear();
-      loadingStatus.value = ProfileLoadingStatus.loaded;
+      loadingStatus.value = ProfileLoadingStatus.done;
     }
   }
 
@@ -239,7 +238,6 @@ class ProfileController extends GetxController {
             _listenToViewers(userId);
 
             isInitialized.value = true;
-            loadingStatus.value = ProfileLoadingStatus.loaded; // Make sure to update status
           } else if (!userDoc.exists) {
             // This is normal for a brand new user. We just wait.
             log('User document for $userId not found yet, waiting for creation...', name: 'ProfileController');
@@ -341,7 +339,12 @@ class ProfileController extends GetxController {
         await likeController.preloadLikeStatuses(userIds);
       }
       swipingProfileList.assignAll(profiles);
-      loadingStatus.value = ProfileLoadingStatus.loaded; // Corrected status
+
+      // ADD THIS LINE
+      if (loadingStatus.value != ProfileLoadingStatus.done) {
+        loadingStatus.value = ProfileLoadingStatus.done;
+      }
+
     }, onError: (e) {
       log('Error in swiping profiles stream', name: 'ProfileController', error: e);
       loadingStatus.value = ProfileLoadingStatus.error;

@@ -50,7 +50,7 @@ class ProfileGridItem extends StatelessWidget {
                   color: Colors.grey[800],
                   child: const Center(
                     child: CircularProgressIndicator(
-                      color: Colors.white,
+                      color: Colors.blueGrey,
                       strokeWidth: 2.0,
                     ),
                   ),
@@ -59,7 +59,7 @@ class ProfileGridItem extends StatelessWidget {
                   color: Colors.grey[800],
                   child: const Icon(
                     Icons.broken_image,
-                    color: Colors.white54,
+                    color: Colors.blueGrey,
                     size: 40,
                   ),
                 ),
@@ -86,7 +86,7 @@ class ProfileGridItem extends StatelessWidget {
                     person.name ?? 'Unnamed',
                     // --- END OF FIX 3 ---
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Colors.blueGrey,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),

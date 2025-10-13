@@ -5,6 +5,8 @@ import 'package:get/get.dart'; // Added for Obx
 import 'package:eavzappl/widgets/custom_text_field_widget.dart';
 import 'package:eavzappl/authenticationScreen/login_screen.dart';
 import 'package:intl_phone_field/intl_phone_field.dart'; // Added for IntlPhoneField
+import 'package:eavzappl/controllers/location_controller.dart';
+import 'package:eavzappl/utils/app_constants.dart';
 
 import '../controllers/authentication_controller.dart';
 
@@ -32,59 +34,17 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   String? selectedGender;
   String? selectedOrientation;
   bool _isOrientationFinalized = false; // Added to track if orientation is set
-  List<String> genderOptions = ["Male", "Female"];
   List<String> orientationOptions = ["Adam", "Eve"];
 
   TextEditingController usernameController = TextEditingController();
   String? selectedCountry;
   String? selectedProvince;
   String? selectedCity;
-  List<String> countriesList = [];
-  List<String> provincesList = [];
-  List<String> citiesList = [];
+  String? selectedEthnicity;
   String? selectedRelationshipStatus;
-  List<String> relationshipStatusOptions = ["Single", "Married", "Divorced"];
+  String? selectedIncome;
 
-
-  final Map<String, Map<String, List<String>>> africanLocations = {
-    'South Africa': {
-      'Gauteng': ['Johannesburg', 'Pretoria', 'Vereeniging'],
-      'Western Cape': ['Cape Town', 'Stellenbosch', 'Paarl'],
-      'KwaZulu-Natal': ['Durban', 'Pietermaritzburg', 'Richards Bay'],
-    },
-    'Nigeria': {
-      'Lagos': ['Ikeja', 'Lekki', 'Badagry'],
-      'Abuja (FCT)': ['Central Business District', 'Garki', 'Wuse'],
-      'Rivers': ['Port Harcourt', 'Bonny', 'Okrika'],
-    },
-    'Kenya': {
-      'Nairobi': ['Nairobi CBD', 'Westlands', 'Karen'],
-      'Mombasa': ['Mombasa Island', 'Nyali', 'Likoni'],
-      'Kisumu': ['Kisumu City', 'Ahero', 'Maseno'],
-    },
-  };
-
-  // --- START OF MODIFICATION 1: Define asianLocations and allLocations ---
-  final Map<String, Map<String, List<String>>> asianLocations = {
-    'Vietnam': {
-      'Hanoi Capital Region': ['Hanoi', 'Haiphong'],
-      'Ho Chi Minh City Region': ['Ho Chi Minh City', 'Can Tho'],
-      'Da Nang Province': ['Da Nang', 'Hoi An'],
-    },
-    'Thailand': {
-      'Bangkok Metropolitan Region': ['Bangkok', 'Nonthaburi', 'Samut Prakan'],
-      'Chiang Mai Province': ['Chiang Mai City', 'Chiang Rai City'],
-      'Phuket Province': ['Phuket Town', 'Patong'],
-    },
-    'Indonesia': {
-      'Jakarta Special Capital Region': ['Jakarta', 'South Tangerang'],
-      'Bali Province': ['Denpasar', 'Ubud', 'Kuta'],
-      'West Java Province': ['Bandung', 'Bogor'],
-    }
-  };
-
-  late final Map<String, Map<String, List<String>>> allLocations;
-  // --- END OF MODIFICATION 1 ---
+  final LocationController locationController = Get.put(LocationController());
 
   bool lookingForBreakfast = false;
   bool lookingForLunch = false;
@@ -105,9 +65,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
   //Appearance
   String? selectedHeight;
-  List<String> heightOptions = ["Short", "Average", "Tall"];
   String? selectedBodyType;
-  List<String> bodyTypeOptions = ["Slim", "Athletic", "Curvy", "BBW"];
 
   //Lifestyle
   bool drinkSelection = false;
@@ -116,13 +74,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   bool greekSelection = false;
   bool hostSelection = false;
   bool travelSelection = false;
-  TextEditingController incomeController = TextEditingController();
 
   // Background
   TextEditingController nationalityController = TextEditingController();
   TextEditingController languagesController = TextEditingController();
-  String? selectedEthnicity;
-  List<String> ethnicityOptions = ["Black", "White", "Asian", "Mixed"];
 
   // Social Media
   TextEditingController instagramController = TextEditingController();
@@ -138,10 +93,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
   void initState() {
     super.initState();
     authenticationController.resetProfilePhoto(); // Reset profile photo on init
-    // --- START OF MODIFICATION 2: Combine maps and update countriesList source ---
-    allLocations = {...africanLocations, ...asianLocations};
-    countriesList = allLocations.keys.toList();
-    // --- END OF MODIFICATION 2 ---
+
     for (var venue in _professionalVenueOptions) {
       _selectedProfessionalVenues[venue] = false;
     }
@@ -155,7 +107,6 @@ class _RegistrationScreenState extends State<RegistrationScreen>
     ageController.dispose();
     // phoneNumberController.dispose(); // REMOVED
     usernameController.dispose();
-    incomeController.dispose();
     nationalityController.dispose();
     languagesController.dispose();
     instagramController.dispose();
@@ -221,7 +172,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                     // choose image circle avatar
                     GestureDetector(
-                      onTap: () 
+                      onTap: ()
                       {
                         // Default action, can be overridden by specific icon buttons below
                         // Or remove this if only icons should trigger actions
@@ -230,8 +181,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         radius: 100,
                         backgroundImage: authenticationController.profilePhoto != null
                             ? FileImage(authenticationController.profilePhoto!)
-                            : (selectedOrientation == 'Eve' 
-                                ? const AssetImage("images/eves_avatar.jpeg") 
+                            : (selectedOrientation == 'Eve'
+                                ? const AssetImage("images/eves_avatar.jpeg")
                                 : const AssetImage("images/adam_avatar.jpeg")) as ImageProvider,
                         backgroundColor: Colors.black,
                       )),
@@ -410,7 +361,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                         dropdownColor: Colors.black,
                         style: const TextStyle(color: Colors.white, fontSize: 16),
-                        items: genderOptions.map((String value) {
+                        items: AppConstants.genders
+                            .where((gender) => gender != "Any") // <-- Removes "Any" from the list
+                            .map((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
                             child: Text(value),
@@ -450,10 +403,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                         dropdownColor: Colors.black,
                         style: const TextStyle(color: Colors.white, fontSize: 16),
-                        items: relationshipStatusOptions.map((String value) {
+                        items: AppConstants.relationshipStatuses.map<DropdownMenuItem<String>>((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
-                            child: Text(value),
+                            child: Text(value, style: const TextStyle(color: Colors.white)), // Added style for visibility
                           );
                         }).toList(),
                         onChanged: (String? newValue) {
@@ -548,142 +501,130 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       height: 20,
                     ),
 
+                    // --- START: UNIFIED, STYLED, AND CONTROLLER-DRIVEN LOCATION DROPDOWNS ---
+                    const SizedBox(height: 30),
+                    const Text("Location", style: TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                    const SizedBox(height: 10),
+
                     // Country Dropdown
                     SizedBox(
                       width: MediaQuery.of(context).size.width - 40,
                       child: DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.public_outlined, color: Colors.grey),
+                        decoration: const InputDecoration(
+                          prefixIcon: Icon(Icons.public, color: Colors.grey),
                           hintText: "Country",
-                          hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                          hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                            borderSide: const BorderSide(color: Colors.grey),
+                            borderSide: BorderSide(color: Colors.grey),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                            borderSide: const BorderSide(color: Colors.grey),
+                            borderSide: BorderSide(color: Colors.grey),
                           ),
                           contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                         ),
                         value: selectedCountry,
                         isExpanded: true,
-                        icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                        icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                         dropdownColor: Colors.black,
                         style: const TextStyle(color: Colors.white, fontSize: 16),
-                        items: countriesList.map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
+                        items: locationController.getCountries().map((String item) {
+                          return DropdownMenuItem<String>(value: item, child: Text(item));
                         }).toList(),
-                        onChanged: (String? newValue) {
+                        onChanged: (newValue) {
                           setState(() {
                             selectedCountry = newValue;
-                            // --- START OF MODIFICATION 3: Use allLocations ---
-                            provincesList = newValue != null && allLocations.containsKey(newValue)
-                                ? allLocations[newValue]!.keys.toList()
-                                : [];
-                            // --- END OF MODIFICATION 3 ---
-                            selectedProvince = null;
-                            citiesList = [];
+                            selectedProvince = null; // Reset dependent fields
                             selectedCity = null;
                           });
                         },
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 20,
-                    ),
+                    const SizedBox(height: 20),
 
                     // Province/State Dropdown
                     SizedBox(
                       width: MediaQuery.of(context).size.width - 40,
                       child: DropdownButtonFormField<String>(
                         decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.map_outlined, color: Colors.grey),
-                          hintText: "Province/State",
+                          prefixIcon: const Icon(Icons.map_outlined, color: Colors.grey),
+                          hintText: "Province / State",
                           hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
-                          enabledBorder: OutlineInputBorder(
+                          enabledBorder: const OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                            borderSide: const BorderSide(color: Colors.grey),
+                            borderSide: BorderSide(color: Colors.grey),
                           ),
-                          focusedBorder: OutlineInputBorder(
+                          focusedBorder: const OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                            borderSide: const BorderSide(color: Colors.grey),
+                            borderSide: BorderSide(color: Colors.grey),
                           ),
-                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                          disabledBorder: OutlineInputBorder( // Style for when it's disabled
+                            borderRadius: const BorderRadius.all(Radius.circular(22.0)),
+                            borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                         ),
                         value: selectedProvince,
                         isExpanded: true,
-                        icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                        icon: Icon(Icons.arrow_drop_down, color: selectedCountry != null ? Colors.grey : Colors.grey.withOpacity(0.5)),
                         dropdownColor: Colors.black,
                         style: const TextStyle(color: Colors.white, fontSize: 16),
-                        items: provincesList.map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
+                        items: locationController.getProvinces(selectedCountry).map((String item) {
+                          return DropdownMenuItem<String>(value: item, child: Text(item));
                         }).toList(),
-                        onChanged: (String? newValue) {
+                        onChanged: selectedCountry == null ? null : (newValue) { // Disable if no country
                           setState(() {
                             selectedProvince = newValue;
-                            // --- START OF MODIFICATION 4: Use allLocations ---
-                            if (selectedCountry != null && newValue != null &&
-                                allLocations.containsKey(selectedCountry!) &&
-                                allLocations[selectedCountry!]!.containsKey(newValue)) {
-                              citiesList = allLocations[selectedCountry!]![newValue]!;
-                            } else {
-                              citiesList = [];
-                            }
-                            // --- END OF MODIFICATION 4 ---
-                            selectedCity = null;
+                            selectedCity = null; // Reset city
                           });
                         },
                       ),
                     ),
 
-                    const SizedBox(
-                      height: 20,
-                    ),
+                    const SizedBox(height: 20),
 
-                    // City/Town Dropdown
+                    // City Dropdown
                     SizedBox(
                       width: MediaQuery.of(context).size.width - 40,
                       child: DropdownButtonFormField<String>(
                         decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.location_city_outlined, color: Colors.grey),
-                          hintText: "City/Town",
+                          prefixIcon: const Icon(Icons.location_city_outlined, color: Colors.grey),
+                          hintText: "City",
                           hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
-                          enabledBorder: OutlineInputBorder(
+                          enabledBorder: const OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                            borderSide: const BorderSide(color: Colors.grey),
+                            borderSide: BorderSide(color: Colors.grey),
                           ),
-                          focusedBorder: OutlineInputBorder(
+                          focusedBorder: const OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                            borderSide: const BorderSide(color: Colors.grey),
+                            borderSide: BorderSide(color: Colors.grey),
                           ),
-                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                          disabledBorder: OutlineInputBorder( // Style for when it's disabled
+                            borderRadius: const BorderRadius.all(Radius.circular(22.0)),
+                            borderSide: BorderSide(color: Colors.grey.withOpacity(0.5)),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                         ),
                         value: selectedCity,
                         isExpanded: true,
-                        icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                        icon: Icon(Icons.arrow_drop_down, color: selectedProvince != null ? Colors.grey : Colors.grey.withOpacity(0.5)),
                         dropdownColor: Colors.black,
                         style: const TextStyle(color: Colors.white, fontSize: 16),
-                        items: citiesList.map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
+                        items: locationController.getCities(selectedCountry, selectedProvince).map((String item) {
+                          return DropdownMenuItem<String>(value: item, child: Text(item));
                         }).toList(),
-                        onChanged: (String? newValue) {
+                        onChanged: selectedProvince == null ? null : (newValue) { // Disable if no province
                           setState(() {
                             selectedCity = newValue;
                           });
                         },
                       ),
                     ),
+                    // --- END OF LOCATION DROPDOWNS ---
+
 
                     const SizedBox(
                       height: 20,
@@ -835,10 +776,10 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
                           dropdownColor: Colors.black,
                           style: const TextStyle(color: Colors.white, fontSize: 16),
-                          items: heightOptions.map((String value) {
+                          items: AppConstants.heights.map<DropdownMenuItem<String>>((String value) {
                             return DropdownMenuItem<String>(
                               value: value,
-                              child: Text(value),
+                              child: Text(value, style: const TextStyle(color: Colors.white)), // Added style for visibility
                             );
                           }).toList(),
                           onChanged: (String? newValue) {
@@ -880,7 +821,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
                           dropdownColor: Colors.black,
                           style: const TextStyle(color: Colors.white, fontSize: 16),
-                          items: bodyTypeOptions.map((String value) {
+                          items: AppConstants.bodyTypes.map((String value) {
                             return DropdownMenuItem<String>(
                               value: value,
                               child: Text(value),
@@ -1148,18 +1089,45 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         height: 20,
                       ),
 
+
+
                       //income
                       SizedBox(
                         width: MediaQuery.of(context).size.width - 40,
-                        height: 45,
-                        child: CustomTextFieldWidget(
-                          editingController: incomeController,
-                          iconData: Icons.attach_money_outlined,
-                          labelText: "Income Range",
-                          isObscure: false,
-                          textStyle: const TextStyle(color: Colors.white, fontSize: 16),
+                        child: DropdownButtonFormField<String>(
+                          decoration: InputDecoration(
+                            prefixIcon: Icon(Icons.attach_money_outlined, color: Colors.grey),
+                            hintText: "Income Bracket",
+                            hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(22.0)),
+                              borderSide: const BorderSide(color: Colors.grey),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(22.0)),
+                              borderSide: const BorderSide(color: Colors.grey),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                          ),
+                          value: selectedIncome, // USES THE CORRECT STATE VARIABLE
+                          isExpanded: true,
+                          icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                          dropdownColor: Colors.black,
+                          style: const TextStyle(color: Colors.white, fontSize: 16),
+                          items: AppConstants.incomeBrackets.map((String value) { // USES AppConstants
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              selectedIncome = newValue; // UPDATES THE CORRECT STATE VARIABLE
+                            });
+                          },
                         ),
                       ),
+
 
                       // Background Title
                       const SizedBox(height: 30),
@@ -1231,7 +1199,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
                           dropdownColor: Colors.black,
                           style: const TextStyle(color: Colors.white, fontSize: 16),
-                          items: ethnicityOptions.map((String value) {
+                          items: AppConstants.ethnicities.map((String value) {
                             return DropdownMenuItem<String>(
                               value: value,
                               child: Text(value),
@@ -1404,8 +1372,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                               setState(() { showProgressBar = false; });
                               return;
                             }
-                            if (incomeController.text.trim().isEmpty) {
-                              Get.snackbar("Missing Field (Eve Profile)", "Please enter your income range.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            if (selectedIncome == null) {
+                              Get.snackbar("Missing Field (Eve Profile)", "Please select your income bracket.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
                               setState(() { showProgressBar = false; });
                               return;
                             }
@@ -1459,8 +1427,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                 'greekSelection': greekSelection,
                                 'hostSelection': hostSelection,
                                 'travelSelection': travelSelection,
-                                'profession': selectedProfession,
-                                'income': incomeController.text.trim(),
+                                'profession': selectedProfession,'income': selectedIncome,
                                 'nationality': nationalityController.text.trim(),
                                 'languages': languagesController.text.trim(),
                                 'ethnicity': selectedEthnicity,
@@ -1578,7 +1545,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                 ),
               ),
             ),
-            // --- END OF THE ONLY MODIFICATION --- 
+            // --- END OF THE ONLY MODIFICATION ---
           ],
         )
     );

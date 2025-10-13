@@ -27,6 +27,7 @@ class SwipingScreen extends StatefulWidget {
 class _SwipingScreenState extends State<SwipingScreen> {
   final ProfileController profileController = Get.find<ProfileController>();
   final LikeController likeController = Get.find();
+  DateTime? _lastPressedAt;
 
   // Method to show the filter bottom sheet
   void _showFilterModalBottomSheet() {
@@ -63,11 +64,52 @@ class _SwipingScreenState extends State<SwipingScreen> {
   Widget build(BuildContext context) {
     final double statusBarHeight = MediaQuery.of(context).padding.top;
 
-    return Scaffold(
-      body: Stack(
-        children: [
+    // In the build method
+    return PopScope(
+        canPop: false, // Prevents automatic back navigation
+        onPopInvoked: (didPop) async {
+          if (didPop) {
+            // This case should not happen because canPop is false, but as a safeguard.
+            return;
+          }
+
+          final now = DateTime.now();
+          // If _lastPressedAt is null or it was more than 2 seconds ago
+          if (_lastPressedAt == null || now.difference(_lastPressedAt!) > const Duration(seconds: 2)) {
+            // Store the current time
+            _lastPressedAt = now;
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text(
+                  'Press back again to exit',
+                  style: TextStyle(color: Colors.white), // Set text color to white for contrast
+                ),
+                backgroundColor: Colors.black.withOpacity(0.8), // Black background with 80% opacity
+                behavior: SnackBarBehavior.floating, // Makes the SnackBar float above the content
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24), // Add rounded corners
+                ),
+                margin: const EdgeInsets.only(
+                    bottom: 40,
+                    right: 20,
+                    left: 20), // Add margins to lift it from the bottom
+                duration: const Duration(seconds: 2),
+              ),
+            );
+
+          } else {
+            // If the back button is pressed again within 2 seconds, exit the app.
+            SystemNavigator.pop();
+          }
+        },
+        child: Scaffold(
+          body: Stack(
+          children: [
           Obx(() {
-            if (profileController.loadingStatus.value == ProfileLoadingStatus.loading) {
+            if (profileController.loadingStatus.value == ProfileLoadingStatus.loading ||
+                profileController.loadingStatus.value == ProfileLoadingStatus.initial) {
+
               return const Center(child: CircularProgressIndicator());
             }
 
@@ -143,6 +185,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
           ),
         ],
       ),
+    )
     );
   }
 }

@@ -46,6 +46,10 @@ class FilterPreferences extends Equatable {
   final String? province;
   final String? city;
   final String? relationshipStatus;
+  final String? height;             // ADDED
+  final String? bodyType;           // ADDED
+  final String? income;             // ADDED
+
 
   @JsonKey(name: 'ageRange')
   @RangeValuesConverter()
@@ -62,6 +66,9 @@ class FilterPreferences extends Equatable {
     this.city,
     this.ageRange,
     this.relationshipStatus,
+    this.height,                    // ADDED
+    this.bodyType,                  // ADDED
+    this.income,                    // ADDED
   });
 
   double? get minAge => ageRange?.start;
@@ -71,14 +78,21 @@ class FilterPreferences extends Equatable {
 
 
   factory FilterPreferences.initial() => const FilterPreferences(
-    gender: 'Any',
-    ethnicity: 'Any',
-    profession: 'Any',
+    gender: null,
+    ethnicity: null,
     wantsHost: null,
     wantsTravel: null,
-    ageRange: RangeValues(18, 99),
-    relationshipStatus: 'Any',
+    profession: null,
+    country: null,
+    province: null,
+    city: null,
+    relationshipStatus: null,
+    height: null,
+    bodyType: null,
+    income: null,
+    ageRange: RangeValues(18, 85), // A safe, full range
   );
+
 
   factory FilterPreferences.fromJson(Map<String, dynamic> json) =>
       _$FilterPreferencesFromJson(json);
@@ -96,7 +110,10 @@ class FilterPreferences extends Equatable {
     String? city,
     RangeValues? ageRange,
     String? relationshipStatus,
-  }) {
+    String? height,                 // ADDED
+    String? bodyType,               // ADDED
+    String? income,     }) {
+
     return FilterPreferences(
       gender: gender ?? this.gender,
       ethnicity: ethnicity ?? this.ethnicity,
@@ -108,6 +125,9 @@ class FilterPreferences extends Equatable {
       city: city ?? this.city,
       ageRange: ageRange ?? this.ageRange,
       relationshipStatus: relationshipStatus ?? this.relationshipStatus,
+      height: height ?? this.height,                          // ADD THIS
+      bodyType: bodyType ?? this.bodyType,                    // ADD THIS
+      income: income ?? this.income,                          // ADD THIS
     );
   }
 
@@ -123,5 +143,8 @@ class FilterPreferences extends Equatable {
     city,
     ageRange,
     relationshipStatus,
+    height,                         // ADDED
+    bodyType,                       // ADDED
+    income,                         // ADDED
   ];
 }
