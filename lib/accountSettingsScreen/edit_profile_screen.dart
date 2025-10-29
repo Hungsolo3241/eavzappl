@@ -14,6 +14,10 @@ import 'package:path/path.dart' as path;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eavzappl/controllers/location_controller.dart';
 import 'package:eavzappl/utils/app_constants.dart';
+// lib/screens/edit_profile_screen.dart
+import 'package:eavzappl/pushNotifications/push_notifications.dart';
+import 'package:eavzappl/models/push_notification_payload.dart';
+
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -280,8 +284,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-
-  // --- IMAGE HELPERS (Unchanged) ---
   Future<String?> _uploadMainProfileFileToFirebaseStorage(File file, String userId) async {
     try {
       String fileName = 'main_profile_pic_${DateTime.now().millisecondsSinceEpoch}${path.extension(file.path)}';
@@ -347,7 +349,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     });
   }
 
-  // =========== PASTE THIS ENTIRE BLOCK AT THE END OF YOUR FILE ===========
 
   Widget _buildGalleryImageSlot(int index) {
     Widget imageWidget;
@@ -372,6 +373,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       );
     } else {
+      final bool isEve = _currentUserData?.orientation?.toLowerCase() == 'eve';
+      final IconData placeholderIcon = isEve ? Icons.female : Icons.male;
+
       imageWidget = Container(
           width: 100, height: 100,
           decoration: BoxDecoration(
@@ -379,7 +383,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             borderRadius: BorderRadius.circular(12.0),
             border: Border.all(color: Colors.blueGrey, width: 1),
           ),
-          child: const Icon(Icons.add_a_photo, color: Colors.blueGrey, size: 40)
+          child: Icon(placeholderIcon, color: Colors.blueGrey, size: 50)
       );
     }
 
@@ -389,15 +393,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  // =======================================================================
-  // =================== THE FINAL BUILD METHOD STARTS HERE ====================
-  // =======================================================================
 
   @override
   Widget build(BuildContext context) {
     final bool isEveOrientation = _currentUserData?.orientation?.toLowerCase() == 'eve';
 
-    // Helper to ensure dropdown values are valid or null to prevent crashes.
     String? safeDropdownValue(String? currentValue, List<String> items) {
       if (currentValue != null && items.contains(currentValue)) {
         return currentValue;
@@ -592,6 +592,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ],
 
                 const SizedBox(height: 24),
+
                 Text("Lifestyle Preferences", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
                 SwitchListTile(title: const Text('Do you drink?', style: TextStyle(color: Colors.white70)), value: _drinkSelection, onChanged: (val) => setState(() => _drinkSelection = val), activeColor: Colors.yellow[700]),
                 SwitchListTile(title: const Text('Do you smoke?', style: TextStyle(color: Colors.white70)), value: _smokeSelection, onChanged: (val) => setState(() => _smokeSelection = val), activeColor: Colors.yellow[700]),
@@ -599,6 +600,86 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 SwitchListTile(title: const Text('Are you open to Greek?', style: TextStyle(color: Colors.white70)), value: _greekSelection, onChanged: (val) => setState(() => _greekSelection = val), activeColor: Colors.yellow[700]),
                 SwitchListTile(title: const Text('Are you able to host?', style: TextStyle(color: Colors.white70)), value: _hostSelection, onChanged: (val) => setState(() => _hostSelection = val), activeColor: Colors.yellow[700]),
                 SwitchListTile(title: const Text('Are you able to travel?', style: TextStyle(color: Colors.white70)), value: _travelSelection, onChanged: (val) => setState(() => _travelSelection = val), activeColor: Colors.yellow[700]),
+
+                const SizedBox(height: 24),
+
+                // --- START: TEMPORARY NOTIFICATION TEST PANEL ---
+// This panel simulates the three key notification types.
+// It should be removed before production.
+
+                const Divider(height: 40, thickness: 1, color: Colors.blueGrey),
+                const Text(
+                  'Developer: Notification Test Panel',
+                  style: TextStyle(fontSize: 16, color: Colors.yellow, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 15),
+
+                // --- Test "Profile View" ---
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.visibility),
+                  label: const Text('Simulate "Profile View" Notification'),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+                  onPressed: () {
+                    final testPayload = PushNotificationPayload(
+                      senderId: 'viewer_user_id_123',
+                      senderName: 'Alex',
+                      senderPhotoUrl: 'https://randomuser.me/api/portraits/men/75.jpg',
+                      senderAge: '30',
+                      senderCity: 'Toronto',
+                      senderProfession: 'Architect',
+                      type: 'profile_view',
+                      relatedItemId: _currentUserData?.uid, // The user who was viewed (you)
+                    );
+                    // Directly call the static method from your PushNotifications class
+                    PushNotifications.showTestForegroundNotification(context, testPayload);
+                  },
+                ),
+                const SizedBox(height: 8),
+
+                // --- Test "New Like" ---
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.favorite),
+                  label: const Text('Simulate "New Like" Notification'),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.pinkAccent),
+                  onPressed: () {
+                    final testPayload = PushNotificationPayload(
+                      senderId: 'liker_user_id_456',
+                      senderName: 'Jessica',
+                      senderPhotoUrl: 'https://randomuser.me/api/portraits/women/75.jpg',
+                      senderAge: '28',
+                      senderCity: 'New York',
+                      senderProfession: 'Graphic Designer',
+                      type: 'new_like',
+                      relatedItemId: _currentUserData?.uid, // The user who was liked (you)
+                    );
+                    PushNotifications.showTestForegroundNotification(context, testPayload);
+                  },
+                ),
+                const SizedBox(height: 8),
+
+                // --- Test "Mutual Match" ---
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.message),
+                  label: const Text('Simulate "Mutual Match" Notification'),
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent),
+                  onPressed: () {
+                    final testPayload = PushNotificationPayload(
+                      senderId: 'matcher_user_id_789',
+                      senderName: 'Sarah',
+                      senderPhotoUrl: 'https://randomuser.me/api/portraits/women/44.jpg',
+                      senderAge: '29',
+                      senderCity: 'Chicago',
+                      senderProfession: 'Doctor',
+                      type: 'mutual_match',
+                      relatedItemId: _currentUserData?.uid, // The user who was matched (you)
+                    );
+                    PushNotifications.showTestForegroundNotification(context, testPayload);
+                  },
+                ),
+                const Divider(height: 40, thickness: 1, color: Colors.blueGrey),
+// --- END: TEMPORARY NOTIFICATION TEST PANEL ---
+
               ],
             ),
           ),

@@ -57,6 +57,7 @@ class PushNotifications {
     // ... (This section remains unchanged)
     String? token = await _firebaseMessaging.getToken();
     if (token != null) {
+      log("<<<<< FCM TOKEN: $token >>>>>", name: "PushNotifications");
       await _saveTokenToDatabase(token);
     }
   }
@@ -152,7 +153,7 @@ class PushNotifications {
   }
 
   // --- REFACTORED to accept the model ---
-  void _showCustomDialog(BuildContext context, PushNotificationPayload payload) {
+  static void _showCustomDialog(BuildContext context, PushNotificationPayload payload) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -170,7 +171,7 @@ class PushNotifications {
   }
 
   // --- REFACTORED to use the model ---
-  void _handleNotificationTapNavigation(Map<String, dynamic> data) {
+  static void _handleNotificationTapNavigation(Map<String, dynamic> data) {
     // Create a payload object for type-safety
     final payload = PushNotificationPayload.fromMap(data);
 
@@ -180,6 +181,11 @@ class PushNotifications {
     if (['profile_view', 'new_like', 'mutual_match'].contains(payload.type)) {
       Get.to(() => UserDetailsScreen(userID: payload.relatedItemId!));
     }
+  }
+
+  static void showTestForegroundNotification(BuildContext context, PushNotificationPayload payload) {
+    // This uses the exact same logic as your real foreground handler
+    _showCustomDialog(context, payload);
   }
 }
 

@@ -11,6 +11,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:eavzappl/models/filter_preferences.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:eavzappl/controllers/location_controller.dart';
+import 'package:eavzappl/bindings/initial_bindings.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,13 +24,7 @@ Future<void> main() async {
       androidProvider: AndroidProvider.debug,
       appleProvider: AppleProvider.appAttest, // For iOS
     );
-  // Initialize GetX controllers AFTER Firebase and App Check are ready.
-  Get.put(AuthenticationController());
-  Get.put(ProfileController());
-  Get.put(LocationController());
-  Get.put(FilterPreferences());
-  Get.put(LikeController());
-  Get.put(push_notifications_service.PushNotifications());
+
   // Make the app go edge-to-edge
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   // Optional: Set preferred orientations to portrait only
@@ -49,9 +44,24 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'eavzappl',
       debugShowCheckedModeBanner: false,
-      home: const SplashScreen(),
+      home: const WaitingScreen(),
+      initialBinding: InitialBindings(),
+
       theme: ThemeData.dark().copyWith(
         scaffoldBackgroundColor: Colors.black,
+      ),
+    );
+  }
+}
+
+class WaitingScreen extends StatelessWidget {
+  const WaitingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
       ),
     );
   }

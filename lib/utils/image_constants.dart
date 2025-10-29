@@ -8,16 +8,15 @@ class ImageConstants {
   // --- Branding / Splash ---
   static const String loginSplash = 'images/loginSplashScreen.jpeg';
 
-  // --- NEW: A list of all possible splash backgrounds ---
-  static const List<String> splashBackgrounds = [
-    'images/splash_1.jpeg',
-    'images/splash_2.jpeg',
-    'images/splash_3.jpeg',
-    'images/splash_4.jpeg',
-    // Add as many image paths as you want here
-  ];
+  // Dynamically generate the list of splash screen images
+  static final List<String> splashBackgrounds = _generateSplashImagePaths();
 
-  // --- NEW: A helper function to get a random splash image ---
+  static List<String> _generateSplashImagePaths() {
+    // Generates a list of paths from 'images/splashScreen/splash_1.webp' to 'images/splashScreen/splash_945.webp'
+    return List.generate(945, (i) => 'images/splashScreen/splash_${i + 1}.webp');
+  }
+
+  // A helper function to get a random splash image from the generated list
   static String getRandomSplashImage() {
     final random = Random();
     return splashBackgrounds[random.nextInt(splashBackgrounds.length)];

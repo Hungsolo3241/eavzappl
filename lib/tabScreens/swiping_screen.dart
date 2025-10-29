@@ -1,12 +1,10 @@
-// lib/tabScreens/swiping_screen.dart
-
 import 'dart:async';
 import 'dart:developer';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eavzappl/controllers/profile_controller.dart';
 import 'package:eavzappl/models/person.dart';
-import 'package:eavzappl/tabScreens/user_details_screen.dart'; // Corrected Path
+import 'package:eavzappl/tabScreens/user_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -93,7 +91,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
                 margin: const EdgeInsets.only(
                     bottom: 40,
                     right: 20,
-                    left: 20), // Add margins to lift it from the bottom
+                    left: 20),
                 duration: const Duration(seconds: 2),
               ),
             );
@@ -114,18 +112,51 @@ class _SwipingScreenState extends State<SwipingScreen> {
             }
 
             if (profileController.swipingProfileList.isEmpty) {
-              return const Center(
-                child: Text(
-                  "No profiles match your criteria.",
-                  style: TextStyle(fontSize: 18, color: Colors.grey),
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      "No profiles match your criteria.",
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      // This re-uses the exact same method as the filter icon!
+                      onPressed: _showFilterModalBottomSheet,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.yellow[700],
+                        foregroundColor: Colors.black,
+                      ),
+                      child: const Text("Adjust Filters"),
+                    ),
+                  ],
                 ),
               );
             }
 
-            return PageView.builder(
-              itemCount: profileController.swipingProfileList.length,
-              scrollDirection: Axis.horizontal,
-              itemBuilder: (context, index) {
+
+            return RefreshIndicator(
+              // Call the new method in your ProfileController
+                onRefresh: () => profileController.refreshSwipingProfiles(),
+                // Optional: Style the loading spinner to match your app's theme
+                color: Colors.yellow[700],
+                child: PageView.builder(
+                  itemCount: profileController.swipingProfileList.length,
+                  scrollDirection: Axis.horizontal,
+                  itemBuilder: (context, index) {
+                // Check if there is a next profile and if it has a photo
+                if ((index + 1) < profileController.swipingProfileList.length) {
+                  final nextPerson = profileController.swipingProfileList[index + 1];
+                  if (nextPerson.profilePhoto != null && nextPerson.profilePhoto!.isNotEmpty) {
+                    // Pre-cache the next image. This runs in the background.
+                    precacheImage(
+                      CachedNetworkImageProvider(nextPerson.profilePhoto!),
+                      context,
+                    );
+
+                  }
+                }
                 final Person person = profileController.swipingProfileList[index];
                 final String placeholderAsset = (person.orientation?.toLowerCase() == 'adam')
                     ? ImageConstants.adamAvatar
@@ -167,6 +198,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
                   ],
                 );
               },
+            )
             );
           }),
           Positioned(
@@ -214,10 +246,9 @@ class _GradientOverlay extends StatelessWidget {
 
 
 class _ProfileDetails extends StatelessWidget {
-  // --- START OF CHANGE 1 ---
-  // Add `const` to the constructor.
+
   const _ProfileDetails({required this.person});
-  // --- END OF CHANGE 1 ---
+
   final Person person;
 
   @override
@@ -229,7 +260,7 @@ class _ProfileDetails extends StatelessWidget {
         InkWell(
           onTap: () {
             if (person.uid != null) {
-              // The path to UserDetailsScreen was incorrect, corrected it.
+
               Get.to(() => UserDetailsScreen(userID: person.uid!));
             }
           },
@@ -287,14 +318,12 @@ class _ProfileDetails extends StatelessWidget {
 }
 
 class _ActionButtons extends StatelessWidget {
-  // --- START OF CHANGE 2 ---
-  // Add `const` to the constructor.
+
   const _ActionButtons({
     required this.person,
     required this.profileController,
     required this.likeController,
   });
-  // --- END OF CHANGE 2 ---
 
   final Person person;
   final ProfileController profileController;
@@ -325,10 +354,14 @@ class _ActionButtons extends StatelessWidget {
           final likeStatus = person.uid != null ? likeController.getLikeStatus(person.uid!) : LikeStatus.none;
           final bool canMessage = likeStatus == LikeStatus.mutualLike;
           return _buildActionButton(
-            onPressed: canMessage
-                ? () => _launchWhatsApp(person.phoneNumber)
-                : () => Get.snackbar(
-                "Message Unavailable", "You can only message users after a mutual like."),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              if (canMessage) {
+                _launchWhatsApp(person.phoneNumber);
+              } else {
+                Get.snackbar("Message Unavailable", "You can only message users after a mutual like.");
+              }
+            },
             inactiveIconAsset: ImageConstants.messageDefault,
             isActive: canMessage,
             tooltip: canMessage ? 'Message' : 'Message (Requires Mutual Like)',

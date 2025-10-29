@@ -161,6 +161,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                               .where((s) => s != null && s.isNotEmpty)
                               .join(", "),
                           "Ethnicity": person.ethnicity,
+                          "Relationship Status": person.relationshipStatus,
                         },
                       ),
                       if (person.orientation?.toLowerCase() == 'eve')
