@@ -85,9 +85,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
   bool showProgressBar = false;
 
-  var authenticationController = AuthenticationController.authController;
-
-
+  var authenticationController = AuthenticationController.instance;
 
   @override
   void initState() {

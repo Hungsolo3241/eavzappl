@@ -615,7 +615,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
 
               if (confirmLogout == true) {
                 // CORRECT: Calling the controller's logout method to reset state.
-                await authController.logoutUser();
+                await authController.signOutUser();
               }
             },
           ),
@@ -732,7 +732,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
 
               if (confirmLogout == true) {
                 // CORRECT: Call the controller's logout method which resets state.
-                await authController.logoutUser();
+                await authController.signOutUser();
               }
             },
           ),

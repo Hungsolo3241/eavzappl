@@ -10,15 +10,19 @@ class SplashScreen extends StatelessWidget {
     final selectedSplashImage = ImageConstants.getRandomSplashImage();
 
     return Scaffold(
+      // The background color will show as letterboxing if the screen aspect ratio is not exactly 9:16
       backgroundColor: Colors.black,
       body: Stack(
         fit: StackFit.expand,
         children: <Widget>[
           Image.asset(
             selectedSplashImage,
-            fit: BoxFit.cover,
+            // --- CHANGE IS HERE ---
+            // BoxFit.fitHeight ensures the entire image is visible vertically, preventing cropping.
+            fit: BoxFit.fitHeight,
             errorBuilder: (context, error, stackTrace) {
-              return Image.asset(ImageConstants.loginSplash, fit: BoxFit.cover);
+              // Also apply the fix to the fallback image.
+              return Image.asset(ImageConstants.loginSplash, fit: BoxFit.fitHeight);
             },
           ),
           Container(
@@ -38,4 +42,3 @@ class SplashScreen extends StatelessWidget {
     );
   }
 }
-

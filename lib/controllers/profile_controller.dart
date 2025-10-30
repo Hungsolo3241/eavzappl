@@ -45,14 +45,8 @@ class ProfileController extends GetxController {
 
   // --- STREAM SUBSCRIPTIONS ---
   Completer<void>? _swipingProfilesCompleter;
+  final List<StreamSubscription> _subscriptions = [];
   StreamSubscription? _authStateSubscription;
-  StreamSubscription? _swipingProfilesSubscription;
-  StreamSubscription? _favoritesSubscription;
-  StreamSubscription? _sentLikesSubscription;
-  StreamSubscription? _receivedLikesSubscription;
-  StreamSubscription? _matchesSubscription;
-  StreamSubscription? _viewersSubscription;
-  StreamSubscription? _userDocSubscription;
 
   // --- PUBLIC GETTERS ---
   bool isFavorite(String uid) => _favoriteUids.contains(uid);
@@ -79,8 +73,7 @@ class ProfileController extends GetxController {
     // _initializeAllStreams already sets the loading status, which handles the UI.
     // The logic inside _listenToSwipingProfiles that completes the completer
     // will now only apply to the forceReload/login flow, which is correct.
-    await initializeAllStreams(currentUserId);
-  }
+    await fetchSwipingProfiles(); }
 
 
   Future<void> forceReload() async {
@@ -200,15 +193,15 @@ class ProfileController extends GetxController {
   }
 
   // --- DATA FETCHING & STREAMING ---
-  Future<void> initializeAllStreams(String userId) async {
+  Future<void> initializeUserStreams(String userId) async {
     // First, cancel any previous user's document listener
-    _userDocSubscription?.cancel();
+    //_userDocSubscription?.cancel();
 
     loadingStatus.value = ProfileLoadingStatus.loading;
 
     await _loadFiltersFromPrefs(); // Load filters before fetching any data
     // Listen to the user's own document for real-time updates (or creation)
-    _userDocSubscription =
+    final userDocSubscription =
         _firestore.collection("users").doc(userId).snapshots().listen(
                 (userDoc) {
               if (userDoc.exists) {
@@ -247,12 +240,13 @@ class ProfileController extends GetxController {
               loadingStatus.value = ProfileLoadingStatus.error;
             }
         );
+    _subscriptions.add(userDocSubscription);
   }
 
 
   void _listenToSwipingProfiles(String userId, Person currentUserProfile,
       LikeController likeController) {
-    _swipingProfilesSubscription?.cancel();
+    //_swipingProfilesSubscription?.cancel();
 
     // 1. BUILD A BROAD, EFFICIENT QUERY
     Query query = _firestore.collection('users').where(
@@ -286,7 +280,7 @@ class ProfileController extends GetxController {
     }
 
     // 2. LISTEN TO THE BROAD QUERY
-    _swipingProfilesSubscription = query.snapshots().listen((snapshot) async {
+    final swipingProfilesSubscription = query.snapshots().listen((snapshot) async {
       if (_swipingProfilesCompleter != null &&
           !_swipingProfilesCompleter!.isCompleted) {
         _swipingProfilesCompleter!.complete();
@@ -358,12 +352,13 @@ class ProfileController extends GetxController {
           error: e);
       loadingStatus.value = ProfileLoadingStatus.error;
     });
+    _subscriptions.add(swipingProfilesSubscription);
   }
 
 
   void _listenToFavorites(String userId) {
-    _favoritesSubscription?.cancel();
-    _favoritesSubscription = _firestore
+    //_favoritesSubscription?.cancel();
+    final favoritesSubscription = _firestore
         .collection("users")
         .doc(userId)
         .collection("userFavorites")
@@ -374,12 +369,13 @@ class ProfileController extends GetxController {
       _fetchProfilesForUiList(uids, usersIHaveFavourited);
     }, onError: (e) =>
         log('Error in favorites stream', name: 'ProfileController', error: e));
+    _subscriptions.add(favoritesSubscription);
   }
 
   // FIXED
   void _listenToLikes(String userId, LikeController likeController) {
-    _sentLikesSubscription?.cancel();
-    _sentLikesSubscription = _firestore
+    //_sentLikesSubscription?.cancel();
+    final sentLikesSubscription = _firestore
         .collection('users')
         .doc(userId)
         .collection('likesSent')
@@ -391,9 +387,10 @@ class ProfileController extends GetxController {
       _fetchProfilesForUiList(uids, usersIHaveLiked);
     }, onError: (e) =>
         log('Error in sent likes stream', name: 'ProfileController', error: e));
+    _subscriptions.add(sentLikesSubscription);
 
-    _receivedLikesSubscription?.cancel();
-    _receivedLikesSubscription = _firestore
+    //_receivedLikesSubscription?.cancel();
+    final receivedLikesSubscription = _firestore
         .collection('users')
         .doc(userId)
         .collection('likesReceived')
@@ -406,11 +403,12 @@ class ProfileController extends GetxController {
     }, onError: (e) =>
         log('Error in received likes stream', name: 'ProfileController',
             error: e));
+    _subscriptions.add(receivedLikesSubscription);
   }
 
   void _listenToMatches(String userId, LikeController likeController) {
-    _matchesSubscription?.cancel();
-    _matchesSubscription = _firestore
+    //_matchesSubscription?.cancel();
+    final matchesSubscription = _firestore
         .collection('matches')
         .where('users', arrayContains: userId)
         .snapshots()
@@ -428,12 +426,13 @@ class ProfileController extends GetxController {
       likeController.updateMatches(uids.toList());
     }, onError: (e) =>
         log('Error in matches stream', name: 'ProfileController', error: e));
+    _subscriptions.add(matchesSubscription);
   }
 
 
   void _listenToViewers(String userId) {
-    _viewersSubscription?.cancel();
-    _viewersSubscription = _firestore
+    //_viewersSubscription?.cancel();
+    final viewersSubscription = _firestore
         .collection('users')
         .doc(userId)
         .collection('profileViewLog')
@@ -445,6 +444,7 @@ class ProfileController extends GetxController {
       _fetchProfilesForUiList(uids, usersWhoViewedMe);
     }, onError: (e) =>
         log('Error in viewers stream', name: 'ProfileController', error: e));
+    _subscriptions.add(viewersSubscription);
   }
 
   Future<void> _fetchProfilesForUiList(List<String> uids,
@@ -468,20 +468,13 @@ class ProfileController extends GetxController {
     }
   }
 
-  void _cancelAllSubscriptions() {
+  void clearAllSubscriptions() {
     log('Clearing all user state and cancelling streams due to logout.',
         name: 'ProfileController');
-
-    // 1. Cancel all active stream subscriptions to prevent errors and memory leaks.
-    _userDocSubscription?.cancel();
-    _swipingProfilesSubscription?.cancel();
-    _favoritesSubscription?.cancel();
-    _sentLikesSubscription?.cancel();
-    _receivedLikesSubscription?.cancel();
-    _matchesSubscription?.cancel();
-    _viewersSubscription?.cancel();
-
-    // Do NOT cancel _authStateSubscription here. Let onClose handle that.
+    for (final sub in _subscriptions) {
+      sub.cancel();
+    }
+    _subscriptions.clear();
 
     // 2. Clear all local data lists and state variables.
     _currentUserProfile.value = null;
@@ -501,12 +494,11 @@ class ProfileController extends GetxController {
     }
   }
 
-
   @override
   void onClose() {
     log('ProfileController onClose called. Disposing all subscriptions.', name: 'ProfileController');
     _authStateSubscription?.cancel(); // Cancel the main listener
-    _cancelAllSubscriptions(); // And clean up everything else
+    clearAllSubscriptions(); // And clean up everything else
     super.onClose();
   }
 

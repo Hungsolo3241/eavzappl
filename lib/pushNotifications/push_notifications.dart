@@ -9,9 +9,9 @@ import 'package:eavzappl/tabScreens/user_details_screen.dart';
 import 'package:get/get.dart';
 import 'dart:developer';
 
-// --- NEW --- Import the model and CachedNetworkImage
 import 'package:eavzappl/models/push_notification_payload.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 
 @pragma('vm:entry-point')
@@ -25,16 +25,41 @@ class PushNotifications {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<void> initialize(BuildContext context) async {
-    // ... (This section remains unchanged)
-    await _firebaseMessaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
+    NotificationSettings settings = await _firebaseMessaging.getNotificationSettings();
+    if (settings.authorizationStatus == AuthorizationStatus.denied) {
+      // If permission is denied, show a dialog to the user
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Notification Permission'),
+          content: const Text('Please enable notifications to receive updates.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                openAppSettings();
+                Navigator.of(context).pop();
+              },
+              child: const Text('Open Settings'),
+            ),
+          ],
+        ),
+      );
+    } else if (settings.authorizationStatus == AuthorizationStatus.notDetermined) {
+      // If permission is not determined, request it
+      await _firebaseMessaging.requestPermission(
+        alert: true,
+        announcement: false,
+        badge: true,
+        carPlay: false,
+        criticalAlert: false,
+        provisional: false,
+        sound: true,
+      );
+    }
 
     await _getAndSaveFCMToken();
     _firebaseMessaging.onTokenRefresh.listen(_saveTokenToDatabase);
@@ -263,4 +288,3 @@ class NotificationDialogBox extends StatelessWidget {
     );
   }
 }
-

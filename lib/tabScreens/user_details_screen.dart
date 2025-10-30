@@ -117,7 +117,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                     if (confirmLogout == true) {
                       // Correctly find the controller and call the logout method to reset state.
                       final AuthenticationController authController = Get.find();
-                      await authController.logoutUser();
+                      await authController.signOutUser();
                     }
                   },
                 ),
