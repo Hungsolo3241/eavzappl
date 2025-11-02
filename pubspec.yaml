@@ -41,6 +41,9 @@ dependencies:
   path_provider: ^2.0.0
   shared_preferences: ^2.2.2
   permission_handler: ^11.0.1
+  flutter_dotenv: ^5.1.0
+  firebase_crashlytics: ^3.4.9
+  firebase_analytics: ^10.8.0
 
 
 dev_dependencies:
@@ -57,3 +60,4 @@ flutter:
   assets:
     - images/
     - images/splashScreen/
+    - .env

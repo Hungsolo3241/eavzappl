@@ -32,6 +32,10 @@ class AuthenticationController extends GetxController {
   final verificationId = ''.obs;
   bool _hasInitialized = false;
 
+  // ✅ ADD: Mutex for auth operations
+  bool _isAuthOperationInProgress = false;
+  final Completer<void> _authCompleter = Completer<void>();
+
   @override
   void onReady() {
     super.onReady();
@@ -41,54 +45,77 @@ class AuthenticationController extends GetxController {
     _setInitialScreen(_firebaseUser.value);
   }
 
-  // lib/controllers/authentication_controller.dart
+  void _setInitialScreen(User? user) async {
+    // Prevent concurrent auth operations
+    if (_isAuthOperationInProgress) {
+      await _authCompleter.future;
+      return;
+    }
 
-// ... inside the AuthenticationController class ...
+    _isAuthOperationInProgress = true;
 
-  void _setInitialScreen(User? user) async { // Add async
-    if (user == null) {
-      log("User is null, navigating to LoginScreen");
-      _hasInitialized = false;
+    try {
+      if (user == null) {
+        log("User is null, navigating to LoginScreen");
+        _hasInitialized = false;
 
-      if (Get.isRegistered<ProfileController>()) {
-        Get.find<ProfileController>().clearAllSubscriptions();
+        // Clear controllers in correct order
+        if (Get.isRegistered<LikeController>()) {
+          Get.find<LikeController>().clear();
+        }
+        if (Get.isRegistered<ProfileController>()) {
+          Get.find<ProfileController>().clearAllSubscriptions();
+        }
+
+        Get.offAll(() => const LoginScreen());
+      } else {
+        if (_hasInitialized) return;
+
+        log("User is not null, navigating to SplashScreen");
+        Get.offAll(() => const SplashScreen());
+        _hasInitialized = true;
+
+        final profileController = Get.find<ProfileController>();
+        
+        // Start initialization
+        profileController.initializeUserStreams(user.uid);
+
+        const minimumSplashDuration = Duration(seconds: 3);
+        final splashTimer = Future.delayed(minimumSplashDuration);
+
+        final dataLoadingFuture = profileController.initialization.timeout(
+          const Duration(seconds: 15),  // Increased to 15s
+          onTimeout: () {
+            log("Data loading timed out - proceeding anyway", 
+                name: "AuthenticationController");
+          },
+        );
+
+        await Future.wait([
+          splashTimer,
+          dataLoadingFuture,
+        ]);
+
+        log("Initialization complete, navigating to HomeScreen");
+        Get.offAll(() => const HomeScreen());
       }
-      if (Get.isRegistered<LikeController>()) {
-        Get.find<LikeController>().clear();
+    } catch (e, stackTrace) {
+      log("Error in _setInitialScreen", 
+          error: e, 
+          stackTrace: stackTrace, 
+          name: "AuthenticationController");
+      
+      // Fallback navigation
+      if (user != null) {
+        Get.offAll(() => const HomeScreen());
+      } else {
+        Get.offAll(() => const LoginScreen());
       }
-
-      Get.offAll(() => const LoginScreen());
-    } else {
-      if (_hasInitialized) return;
-
-      log("User is not null, navigating to SplashScreen");
-      Get.offAll(() => const SplashScreen());
-      _hasInitialized = true;
-
-      final profileController = Get.find<ProfileController>();
-      profileController.initializeUserStreams(user.uid);
-
-      const minimumSplashDuration = Duration(seconds: 3);
-      final splashTimer = Future.delayed(minimumSplashDuration);
-
-      // Add a timeout to the data loading future to prevent getting stuck
-      final dataLoadingFuture = profileController.initialization.timeout(
-        const Duration(seconds: 10), // 10-second timeout
-        onTimeout: () {
-          log("Data loading timed out.", name: "AuthenticationController");
-          // You might want to navigate to an error screen or just proceed
-          return;
-        },
-      );
-
-      // Wait for both the splash timer and data loading (with timeout) to complete
-      await Future.wait([
-        splashTimer,
-        dataLoadingFuture,
-      ]);
-
-      log("Splash screen duration and data loading complete, navigating to HomeScreen");
-      Get.offAll(() => const HomeScreen());
+    } finally {
+      _isAuthOperationInProgress = false;
+      if (!_authCompleter.isCompleted) {
+        _authCompleter.complete();
+      }
     }
   }
 
@@ -191,20 +218,24 @@ class AuthenticationController extends GetxController {
     }
   }
 
-  // Logout
   Future<void> signOutUser() async {
     log('[AuthCtrl] Initiating sign out.');
 
+    // Clear controllers BEFORE signing out
+    if (Get.isRegistered<LikeController>()) {
+      Get.find<LikeController>().clear();
+    }
     if (Get.isRegistered<ProfileController>()) {
       Get.find<ProfileController>().clearAllSubscriptions();
     }
-    if (Get.isRegistered<LikeController>()) {
-      Get.find<LikeController>().clear(); // <-- FIX: Renamed 'clearAllSubscriptions' to 'clear' to match your call. Or change this to clearAllSubscriptions() if that's the method name.
-    }
+
+    // Small delay to ensure cleanup completes
+    await Future.delayed(const Duration(milliseconds: 500));
 
     await FirebaseAuth.instance.signOut();
+    _hasInitialized = false;
 
-    log('[AuthCtrl] Sign out complete. Navigation will be handled by auth state listener.');
+    log('[AuthCtrl] Sign out complete.');
   }
 
   // Registration

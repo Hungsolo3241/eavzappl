@@ -13,6 +13,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:eavzappl/controllers/location_controller.dart';
 import 'package:eavzappl/firebase_options.dart'; // <-- THIS IS THE FIX
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // The background handler must be a top-level function (outside a class).
 @pragma('vm:entry-point')
@@ -20,6 +21,9 @@ Future<void> main() async { // 1. Ensure your main function is marked 'async'
   try {
     // 2. This line is CRITICAL. It ensures Flutter is ready.
     WidgetsFlutterBinding.ensureInitialized();
+
+    // ← LOAD ENVIRONMENT VARIABLES FIRST
+    await dotenv.load(fileName: ".env");
 
     // 3. This line is the ENTIRE FIX. It forces the app to WAIT
     //    until Firebase is fully initialized before doing anything else.
