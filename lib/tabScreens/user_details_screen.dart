@@ -141,6 +141,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       const SizedBox(height: 20),
                       _ImageCarousel(person: person),
                       const SizedBox(height: 24),
+                      _EditableBio(person: person, isCurrentUserProfile: isCurrentUserProfile),
                       if (!isCurrentUserProfile)
                         _ActionButtons(
                           person: person,
@@ -659,6 +660,145 @@ class _DetailSection extends StatelessWidget {
                   : content,
             );
           }),
+        ],
+      ),
+    );
+  }
+}
+
+class _EditableBio extends StatefulWidget {
+  final Person person;
+  final bool isCurrentUserProfile;
+
+  const _EditableBio({
+    required this.person,
+    required this.isCurrentUserProfile,
+  });
+
+  @override
+  State<_EditableBio> createState() => _EditableBioState();
+}
+
+class _EditableBioState extends State<_EditableBio> {
+  late final TextEditingController _bioController;
+  bool _isEditing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _bioController = TextEditingController(text: widget.person.bio ?? '');
+  }
+
+  @override
+  void dispose() {
+    _bioController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveBio() async {
+    final newBio = _bioController.text.trim();
+    if (newBio.length > 140) {
+      Get.snackbar(
+        "Error",
+        "Bio cannot be more than 140 characters.",
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.person.uid)
+          .update({'bio': newBio});
+      setState(() {
+        _isEditing = false;
+      });
+      Get.snackbar(
+        "Success",
+        "Bio updated successfully.",
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar(
+        "Error",
+        "Failed to update bio: ${e.toString()}",
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.isCurrentUserProfile) {
+      return widget.person.bio?.isNotEmpty == true
+          ? Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Text(
+                widget.person.bio!,
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+            )
+          : const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Column(
+        children: [
+          if (_isEditing)
+            TextField(
+              controller: _bioController,
+              maxLength: 140,
+              maxLines: null,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: "Write a short bio...",
+                hintStyle: TextStyle(color: Colors.grey[600]),
+                enabledBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: const UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+                counterStyle: TextStyle(color: Colors.grey[600]),
+              ),
+            )
+          else
+            Text(
+              _bioController.text.isEmpty ? "No bio yet." : _bioController.text,
+              style: TextStyle(
+                color: _bioController.text.isEmpty ? Colors.grey[600] : Colors.white,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (_isEditing)
+                TextButton(
+                  onPressed: _saveBio,
+                  child: const Text("Save", style: TextStyle(color: Colors.green)),
+                ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isEditing = !_isEditing;
+                  });
+                },
+                child: Text(
+                  _isEditing ? "Cancel" : "Edit Bio",
+                  style: TextStyle(color: _isEditing ? Colors.redAccent : Colors.blue),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );

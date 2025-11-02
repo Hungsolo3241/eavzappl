@@ -142,6 +142,9 @@ class Person {
   @JsonKey(name: 'urlImage5')
   final String? urlImage5;
 
+  @JsonKey(name: 'bio')
+  final String? bio;
+
   const Person({
     this.uid,
     this.profilePhoto,
@@ -183,6 +186,7 @@ class Person {
     this.urlImage3,
     this.urlImage4,
     this.urlImage5,
+    this.bio,
   });
 
   // --- START OF CHANGE ---
@@ -246,6 +250,7 @@ class Person {
     String? urlImage3,
     String? urlImage4,
     String? urlImage5,
+    String? bio,
   }) {
     return Person(
       uid: uid ?? this.uid,
@@ -288,6 +293,7 @@ class Person {
       urlImage3: urlImage3 ?? this.urlImage3,
       urlImage4: urlImage4 ?? this.urlImage4,
       urlImage5: urlImage5 ?? this.urlImage5,
+      bio: bio ?? this.bio,
     );
   }
 }

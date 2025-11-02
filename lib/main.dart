@@ -27,6 +27,10 @@ Future<void> main() async { // 1. Ensure your main function is marked 'async'
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
+    await FirebaseAppCheck.instance.activate(
+      androidProvider: AndroidProvider.debug,
+    );
+
     // 4. Now that Firebase is guaranteed to be ready, initialize your controllers.
     Get.put(AuthenticationController());
     Get.put(ProfileController());

@@ -153,21 +153,19 @@ class AuthenticationController extends GetxController {
             .get();
 
         if (userQuery.docs.isEmpty) {
-          // New user, create a document
-          personModel.Person personInstance = personModel.Person(
-            uid: user.uid,
-            phoneNumber: user.phoneNumber,
-            publishedDateTime: DateTime.now().millisecondsSinceEpoch,
-            // Initialize other fields with default or empty values
-            email: '', name: '', username: '', orientation: 'adam', profilePhoto: null, gender: '',
-            age: null, country: '', province: '', city: '', lookingForBreakfast: false, lookingForLunch: false,
-            lookingForDinner: false, lookingForLongTerm: false, height: '', bodyType: '', drinkSelection: false,
-            smokeSelection: false, meatSelection: false, greekSelection: false, hostSelection: false, travelSelection: false,
-            profession: '', income: '', professionalVenues: [], otherProfessionalVenue: '',
-            ethnicity: '', nationality: '', languages: '', instagram: '', twitter: '',
+          // No user found with this phone number.
+          // This is a login screen, so we should not create a new user.
+          // We should sign out the newly created Firebase Auth user and show an error.
+          await FirebaseAuth.instance.signOut();
+          Get.snackbar(
+            "Login Failed",
+            "No account found for this phone number. Please register first.",
+            backgroundColor: Colors.redAccent,
+            colorText: Colors.white,
           );
-          await FirebaseFirestore.instance.collection('users').doc(user.uid).set(personInstance.toJson());
         }
+        // If a user is found, we do nothing. The user is already logged in,
+        // and the auth state listener will handle the navigation.
       }
     } on FirebaseAuthException catch (e) {
       Get.snackbar("Sign-in Failed", e.message ?? "An error occurred during sign-in.", backgroundColor: Colors.redAccent, colorText: Colors.white);
@@ -235,6 +233,7 @@ class AuthenticationController extends GetxController {
         otherProfessionalVenue: userData['otherProfessionalVenue'] ?? '',
         ethnicity: userData['ethnicity'] ?? '', nationality: userData['nationality'] ?? '',
         languages: userData['languages'] ?? '', instagram: userData['instagram'] ?? '', twitter: userData['twitter'] ?? '',
+        bio: '',
       );
       await FirebaseFirestore.instance.collection("users").doc(credential.user!.uid).set(personInstance.toJson());
       Get.snackbar("Success", "Account created successfully!", backgroundColor: Colors.green, colorText: Colors.white);
@@ -294,7 +293,7 @@ class AuthenticationController extends GetxController {
       return originalFile;
     }
 
-    int targetWidth = 1080;
+    int targetWidth = 720;
     img.Image resizedImage;
     if (originalImage.width > targetWidth) {
       resizedImage = img.copyResize(originalImage, width: targetWidth);
@@ -302,7 +301,7 @@ class AuthenticationController extends GetxController {
       resizedImage = originalImage;
     }
 
-    final compressedImageBytes = img.encodeJpg(resizedImage, quality: 85);
+    final compressedImageBytes = img.encodeJpg(resizedImage, quality: 90);
     final tempDir = await getTemporaryDirectory();
     File compressedFile = await File('${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.jpg').create();
     await compressedFile.writeAsBytes(compressedImageBytes);

@@ -246,13 +246,9 @@ class ProfileController extends GetxController {
 
   void _listenToSwipingProfiles(String userId, Person currentUserProfile,
       LikeController likeController) {
-    //_swipingProfilesSubscription?.cancel();
+    Query query = _firestore.collection('users').where("uid", isNotEqualTo: userId);
 
-    // 1. BUILD A BROAD, EFFICIENT QUERY
-    Query query = _firestore.collection('users').where(
-        "uid", isNotEqualTo: userId);
-    final String? currentUserOrientation = currentUserProfile.orientation
-        ?.toLowerCase().trim();
+    final String? currentUserOrientation = currentUserProfile.orientation?.toLowerCase().trim();
     String? targetOrientation;
 
     if (currentUserOrientation == 'adam') {
@@ -264,80 +260,66 @@ class ProfileController extends GetxController {
     if (targetOrientation != null) {
       query = query.where("orientation", isEqualTo: targetOrientation);
     } else {
-      log('No target orientation found for $userId',
-          name: 'ProfileController');
+      log('No target orientation found for $userId', name: 'ProfileController');
       return;
     }
 
     final filters = activeFilters.value;
 
-    // Use Firestore ONLY for the age range filter, as it's a range.
     if (filters.ageRange != null) {
-      query = query.where(
-          'age', isGreaterThanOrEqualTo: filters.ageRange!.start.round());
-      query = query.where(
-          'age', isLessThanOrEqualTo: filters.ageRange!.end.round());
+      query = query.where('age', isGreaterThanOrEqualTo: filters.ageRange!.start.round());
+      query = query.where('age', isLessThanOrEqualTo: filters.ageRange!.end.round());
     }
 
-    // 2. LISTEN TO THE BROAD QUERY
+    if (filters.gender != null && filters.gender != 'Any') {
+      query = query.where('gender', isEqualTo: filters.gender);
+    }
+    if (filters.ethnicity != null && filters.ethnicity != 'Any') {
+      query = query.where('ethnicity', isEqualTo: filters.ethnicity);
+    }
+    if (filters.relationshipStatus != null && filters.relationshipStatus != 'Any') {
+      query = query.where('relationshipStatus', isEqualTo: filters.relationshipStatus);
+    }
+    if (filters.country != null && filters.country!.isNotEmpty) {
+      query = query.where('country', isEqualTo: filters.country);
+    }
+    if (filters.province != null && filters.province!.isNotEmpty) {
+      query = query.where('province', isEqualTo: filters.province);
+    }
+    if (filters.city != null && filters.city!.isNotEmpty) {
+      query = query.where('city', isEqualTo: filters.city);
+    }
+    if (filters.wantsHost == true) {
+      query = query.where('hostSelection', isEqualTo: true);
+    }
+    if (filters.wantsTravel == true) {
+      query = query.where('travelSelection', isEqualTo: true);
+    }
+    if (filters.profession != null && filters.profession != 'Any') {
+      if (filters.profession != 'Professional') {
+        query = query.where('profession', isEqualTo: filters.profession);
+      }
+    }
+
     final swipingProfilesSubscription = query.snapshots().listen((snapshot) async {
       if (_swipingProfilesCompleter != null &&
           !_swipingProfilesCompleter!.isCompleted) {
         _swipingProfilesCompleter!.complete();
-        _swipingProfilesCompleter = null; // <-- ADD THIS LINE
+        _swipingProfilesCompleter = null;
       }
 
-      // This gives us all users of the target orientation within the age range.
       var profiles = snapshot.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;
         data['uid'] = doc.id;
         return Person.fromJson(data);
       }).toList();
 
-      // 3. --- FILTER LOCALLY (IN DART) ---
-      // Now, we apply all the other simple filters here.
-      if (filters.gender != null && filters.gender != 'Any') {
-        profiles = profiles.where((p) => p.gender == filters.gender).toList();
-      }
-      if (filters.ethnicity != null && filters.ethnicity != 'Any') {
-        profiles =
-            profiles.where((p) => p.ethnicity == filters.ethnicity).toList();
-      }
-      if (filters.relationshipStatus != null &&
-          filters.relationshipStatus != 'Any') {
+      // Local filtering for profession 'Professional'
+      if (filters.profession != null && filters.profession == 'Professional') {
         profiles = profiles.where((p) =>
-        p.relationshipStatus == filters.relationshipStatus).toList();
-      }
-      if (filters.country != null && filters.country!.isNotEmpty) {
-        profiles = profiles.where((p) => p.country == filters.country).toList();
-      }
-      if (filters.province != null && filters.province!.isNotEmpty) {
-        profiles =
-            profiles.where((p) => p.province == filters.province).toList();
-      }
-      if (filters.city != null && filters.city!.isNotEmpty) {
-        profiles = profiles.where((p) => p.city == filters.city).toList();
-      }
-      if (filters.wantsHost == true) {
-        profiles = profiles.where((p) => p.hostSelection == true).toList();
-      }
-      if (filters.wantsTravel == true) {
-        profiles = profiles.where((p) => p.travelSelection == true).toList();
-      }
-      // Special 'Professional' logic
-      if (filters.profession != null && filters.profession != 'Any') {
-        if (filters.profession == 'Professional') {
-          profiles = profiles.where((p) =>
           p.profession != 'Student' && p.profession != 'Freelancer').toList();
-        } else {
-          profiles = profiles
-              .where((p) => p.profession == filters.profession)
-              .toList();
-        }
       }
 
-
-      // 4. Update the UI with the final, filtered list.
       final userIds = profiles.map((p) => p.uid!).toList();
       if (userIds.isNotEmpty) {
         await likeController.preloadLikeStatuses(userIds);

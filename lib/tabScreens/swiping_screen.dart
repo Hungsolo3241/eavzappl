@@ -85,8 +85,8 @@ class _SwipingScreenState extends State<SwipingScreen> {
                 ),
                 backgroundColor: Colors.black.withOpacity(0.8), // Black background with 80% opacity
                 behavior: SnackBarBehavior.floating, // Makes the SnackBar float above the content
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24), // Add rounded corners
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(24)), // Add rounded corners
                 ),
                 margin: const EdgeInsets.only(
                     bottom: 40,
