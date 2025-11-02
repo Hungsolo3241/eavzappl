@@ -14,11 +14,15 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:eavzappl/controllers/location_controller.dart';
 import 'package:eavzappl/firebase_options.dart'; // <-- THIS IS THE FIX
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'dart:async';
+import 'dart:ui';
 
 // The background handler must be a top-level function (outside a class).
 @pragma('vm:entry-point')
 Future<void> main() async { // 1. Ensure your main function is marked 'async'
-  try {
+  await runZonedGuarded(() async {
     // 2. This line is CRITICAL. It ensures Flutter is ready.
     WidgetsFlutterBinding.ensureInitialized();
 
@@ -35,19 +39,40 @@ Future<void> main() async { // 1. Ensure your main function is marked 'async'
       androidProvider: AndroidProvider.debug,
     );
 
-    // 4. Now that Firebase is guaranteed to be ready, initialize your controllers.
-    Get.put(AuthenticationController());
-    Get.put(ProfileController());
-    Get.put(LikeController());
-    Get.put(LocationController());
-    Get.put(PushNotifications());
+    // ✅ Setup Crashlytics
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
 
-  } catch (e) {
-    print("!!! FATAL ERROR DURING INITIALIZATION: $e");
-  }
+    // ✅ Setup Analytics
+    FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+    await analytics.logAppOpen();
 
-  // 5. Finally, run the app.
-  runApp(const MyApp());
+    // 5. Finally, run the app.
+    runApp(const MyApp());
+  }, (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    print("!!! FATAL ERROR DURING INITIALIZATION: $error");
+  });
+}
+
+// Function to initialize controllers and other services that can be deferred
+Future<void> _initializeControllersAndServices() async {
+  // ← LOAD ENVIRONMENT VARIABLES FIRST
+  await dotenv.load(fileName: ".env");
+
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.debug,
+  );
+
+  // Initialize your controllers.
+  Get.put(AuthenticationController());
+  Get.put(ProfileController());
+  Get.put(LikeController());
+  Get.put(LocationController());
+  Get.put(PushNotifications());
 }
 
 class MyApp extends StatelessWidget {
@@ -59,10 +84,17 @@ class MyApp extends StatelessWidget {
       title: 'Eavz',
       theme: ThemeData.dark().copyWith(scaffoldBackgroundColor: Colors.black),
       debugShowCheckedModeBanner: false,
-      // The AuthenticationController's logic will handle showing the
-      // correct screen (Login vs. Splash/Home).
-      home: const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      // Use a FutureBuilder to show a loading screen while initializations are in progress
+      home: FutureBuilder(
+        future: _initializeControllersAndServices(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            // Once initializations are complete, let AuthenticationController handle navigation
+            return const WaitingScreen(); // AuthenticationController will redirect from here
+          }
+          // Show a loading indicator while waiting
+          return const WaitingScreen();
+        },
       ),
     );
   }
