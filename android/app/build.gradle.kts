@@ -1,8 +1,8 @@
-val kotlin_version = "1.9.22" // Or your desired Kotlin version
+val kotlin_version = "2.2.0"
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
 }
@@ -10,43 +10,42 @@ plugins {
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version")
     implementation("com.google.android.material:material:1.13.0")
-    coreLibraryDesugaring ("com.android.tools:desugar_jdk_libs:2.0.4") // Or the latest version
-    // Add other dependencies here
+    implementation("androidx.multidex:multidex:2.0.1")  // ← ADD THIS
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }
-
 
 android {
     namespace = "com.blerdguild.eavzappl"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 35  // ← CHANGE to latest stable
     ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
-
     }
 
-    // Corrected Kotlin options
     kotlin {
-        jvmToolchain(17) // This sets the JVM target for Kotlin to 17
+        jvmToolchain(17)
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.blerdguild.eavzappl"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdkVersion(flutter.minSdkVersion)
-        targetSdk = flutter.targetSdkVersion
+        minSdk = 21  // ← CRITICAL: Change from 30 to 21
+        targetSdk = 35  // ← CHANGE to latest
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        multiDexEnabled = true  // ← ADD THIS
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            minifyEnabled = true
+            shrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             signingConfig = signingConfigs.getByName("debug")
         }
     }
