@@ -377,14 +377,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final bool isEve = _currentUserData?.orientation?.toLowerCase() == 'eve';
       final IconData placeholderIcon = isEve ? Icons.female : Icons.male;
 
-      imageWidget = Container(
+      imageWidget = CachedNetworkImage(
+        imageUrl: isEve ? evePlaceholderUrl : adamPlaceholderUrl,
+        fit: BoxFit.cover,
+        width: 100,
+        height: 100,
+        placeholder: (context, url) => Container(
           width: 100, height: 100,
-          decoration: BoxDecoration(
+          color: Colors.grey.shade800,
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2.0, color: Colors.blueGrey)),
+        ),
+        errorWidget: (context, url, error) => Container(
+            width: 100, height: 100,
             color: Colors.grey.shade800,
-            borderRadius: BorderRadius.circular(12.0),
-            border: Border.all(color: Colors.blueGrey, width: 1),
-          ),
-          child: Icon(placeholderIcon, color: Colors.blueGrey, size: 50)
+            child: const Icon(Icons.broken_image, size: 50, color: Colors.redAccent)
+        ),
       );
     }
 
@@ -448,9 +455,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               ? FileImage(_pickedMainProfileImageFile!) as ImageProvider
                               : (_currentMainProfileImageUrl != null && _currentMainProfileImageUrl!.isNotEmpty)
                               ? CachedNetworkImageProvider(_currentMainProfileImageUrl!)
-                              : null,
+                              : CachedNetworkImageProvider(isEveOrientation ? evePlaceholderUrl : adamPlaceholderUrl),
                           child: (_pickedMainProfileImageFile == null && (_currentMainProfileImageUrl == null || _currentMainProfileImageUrl!.isEmpty))
-                              ? Icon(Icons.person, size: 60, color: Colors.grey.shade400)
+                              ? null
                               : null,
                         ),
                       ),
@@ -464,7 +471,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 20),
                 const Divider(color: Colors.blueGrey, thickness: 2),
                 const SizedBox(height: 20),
-                Text("Profile Gallery Images", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
+                Center(
+                  child: Text("Profile Gallery Images", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
+                ),
                 const SizedBox(height: 10),
                 Center(
                   child: Wrap(
@@ -604,6 +613,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                 const SizedBox(height: 24),
 
+                // Add a Save Changes button here
+                Center(
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _saveProfileChanges,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryYellow,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(22.0),
+                      ),
+                    ),
+                    child: Text(
+                      "Save Changes",
+                      style: AppTextStyles.heading2.copyWith(color: Colors.black),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
                 // --- START: TEMPORARY NOTIFICATION TEST PANEL ---
 // This panel simulates the three key notification types.
 // It should be removed before production.
@@ -706,10 +736,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           labelText: label,
           prefixIcon: icon != null ? Icon(icon, color: Colors.blueGrey) : null,
           labelStyle: AppTextStyles.body1.copyWith(color: AppTheme.textGrey),
-          enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.blueGrey), borderRadius: BorderRadius.circular(12)),
-          focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.primaryYellow), borderRadius: BorderRadius.circular(12)),
-          errorBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.red), borderRadius: BorderRadius.circular(12)),
-          focusedErrorBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.red, width: 2), borderRadius: BorderRadius.circular(12)),
+          enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.blueGrey), borderRadius: BorderRadius.circular(22.0)),
+          focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.primaryYellow), borderRadius: BorderRadius.circular(22.0)),
+          errorBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.red), borderRadius: BorderRadius.circular(22.0)),
+          focusedErrorBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.red, width: 2), borderRadius: BorderRadius.circular(22.0)),
         ),
         keyboardType: keyboardType,
         validator: validator,
@@ -738,9 +768,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           labelText: label,
           prefixIcon: Icon(icon, color: enabled ? Colors.blueGrey : Colors.grey),
           labelStyle: AppTextStyles.body1.copyWith(color: enabled ? AppTheme.textGrey : Colors.grey),
-          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: enabled ? Colors.blueGrey : Colors.grey), borderRadius: BorderRadius.circular(12)),
-          focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.primaryYellow), borderRadius: BorderRadius.circular(12)),
-          disabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.grey), borderRadius: BorderRadius.circular(12)),
+          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: enabled ? Colors.blueGrey : Colors.grey), borderRadius: BorderRadius.circular(22.0)),
+          focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.primaryYellow), borderRadius: BorderRadius.circular(22.0)),
+          disabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.grey), borderRadius: BorderRadius.circular(22.0)),
         ),
       ),
     );

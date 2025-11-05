@@ -142,6 +142,10 @@ class _FilterSheetWidgetState extends State<FilterSheetWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final orientation = widget.profileController.currentUserOrientation;
+    final bool isEveProfile = orientation?.toLowerCase() == 'eve';
+    final bool isUserDataLoaded = orientation != null;
+
     return SingleChildScrollView(
       controller: widget.scrollController,
       child: Padding(
@@ -155,7 +159,7 @@ class _FilterSheetWidgetState extends State<FilterSheetWidget> {
             ),
             const SizedBox(height: 20),
 
-            // Age Range Slider
+            // Age Range Slider - Always visible
             Text('Age Range: ${_currentAgeRange.start.round()} - ${_currentAgeRange.end.round()}', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)),
             RangeSlider(
               values: _currentAgeRange,
@@ -169,49 +173,88 @@ class _FilterSheetWidgetState extends State<FilterSheetWidget> {
             ),
             const SizedBox(height: 16),
 
-            // Dropdowns
+            // Gender - Always visible
             _buildDropdown("Gender", _selectedGender, AppConstants.genders, (val) => setState(() => _selectedGender = val)),
             const SizedBox(height: 16),
-            _buildDropdown("Profession", _selectedProfession, AppConstants.professions, (val) => setState(() => _selectedProfession = val)),
-            const SizedBox(height: 16),
-            _buildDropdown("Ethnicity", _selectedEthnicity, AppConstants.ethnicities, (val) => setState(() => _selectedEthnicity = val)),
-            const SizedBox(height: 16),
-            _buildDropdown("Relationship Status", _selectedRelationshipStatus, AppConstants.relationshipStatuses, (val) => setState(() => _selectedRelationshipStatus = val)),
-            const SizedBox(height: 16),
-            _buildDropdown("Height", _selectedHeight, AppConstants.heights, (val) => setState(() => _selectedHeight = val)),
-            const SizedBox(height: 16),
-            _buildDropdown("Body Type", _selectedBodyType, AppConstants.bodyTypes, (val) => setState(() => _selectedBodyType = val)),
-            const SizedBox(height: 16),
-            _buildDropdown("Income", _selectedIncome, AppConstants.incomeBrackets, (val) => setState(() => _selectedIncome = val)),
-            const SizedBox(height: 16),
 
-            // Location Dropdowns
-            _buildDropdown("Country", _selectedCountry, _countries, (val) => _updateProvinces(val)),
-            const SizedBox(height: 16),
-            _buildDropdown("State/Province", _selectedProvince, _provinces, (val) => _updateCities(val)),
-            const SizedBox(height: 16),
-            _buildDropdown("City", _selectedCity, _cities, (val) => setState(() => _selectedCity = val)),
-            const SizedBox(height: 16),
+            // Filters to show for Eve profiles (and Adam profiles if user data is not loaded yet)
+            if (isEveProfile || !isUserDataLoaded) ...[
+              // Show only required filters for Eve
+              _buildDropdown("Ethnicity", AppConstants.ethnicities.contains(_selectedEthnicity) ? _selectedEthnicity : null, AppConstants.ethnicities, (val) => setState(() => _selectedEthnicity = val)),
+              const SizedBox(height: 16),
+              _buildDropdown("Relationship Status", AppConstants.relationshipStatuses.contains(_selectedRelationshipStatus) ? _selectedRelationshipStatus : null, AppConstants.relationshipStatuses, (val) => setState(() => _selectedRelationshipStatus = val)),
+              const SizedBox(height: 16),
 
-            // Switches
-            SwitchListTile(
-              title: Text('Wants to Host', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)),
-              value: _wantsHost ?? false,
-              onChanged: (bool value) => setState(() => _wantsHost = value),
-              activeColor: AppTheme.primaryYellow,
-              tileColor: Colors.grey[850],
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-            ),
-            const SizedBox(height: 8),
-            SwitchListTile(
-              title: Text('Wants to Travel', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)),
-              value: _wantsTravel ?? false,
-              onChanged: (bool value) => setState(() => _wantsTravel = value),
-              activeColor: AppTheme.primaryYellow,
-              tileColor: Colors.grey[850],
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-            ),
-            const SizedBox(height: 24),
+              // Location Dropdowns - Always visible for Eve
+              _buildDropdown("Country", _selectedCountry, _countries, (val) => _updateProvinces(val)),
+              const SizedBox(height: 16),
+              _buildDropdown("State/Province", _selectedProvince, _provinces, (val) => _updateCities(val)),
+              const SizedBox(height: 16),
+              _buildDropdown("City", _selectedCity, _cities, (val) => setState(() => _selectedCity = val)),
+              const SizedBox(height: 16),
+
+              // Host and Travel Toggles - Always visible for Eve
+              SwitchListTile(
+                title: Text('Wants to Host', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)),
+                value: _wantsHost ?? false,
+                onChanged: (bool value) => setState(() => _wantsHost = value),
+                activeColor: AppTheme.primaryYellow,
+                tileColor: Colors.grey[850],
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+              ),
+              const SizedBox(height: 8),
+              SwitchListTile(
+                title: Text('Wants to Travel', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)),
+                value: _wantsTravel ?? false,
+                onChanged: (bool value) => setState(() => _wantsTravel = value),
+                activeColor: AppTheme.primaryYellow,
+                tileColor: Colors.grey[850],
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+              ),
+              const SizedBox(height: 24),
+            ] else ...[
+              // Show all filters for Adam
+              _buildDropdown("Profession", AppConstants.professions.contains(_selectedProfession) ? _selectedProfession : null, AppConstants.professions, (val) => setState(() => _selectedProfession = val)),
+              const SizedBox(height: 16),
+              _buildDropdown("Ethnicity", AppConstants.ethnicities.contains(_selectedEthnicity) ? _selectedEthnicity : null, AppConstants.ethnicities, (val) => setState(() => _selectedEthnicity = val)),
+              const SizedBox(height: 16),
+              _buildDropdown("Relationship Status", AppConstants.relationshipStatuses.contains(_selectedRelationshipStatus) ? _selectedRelationshipStatus : null, AppConstants.relationshipStatuses, (val) => setState(() => _selectedRelationshipStatus = val)),
+              const SizedBox(height: 16),
+              _buildDropdown("Height", AppConstants.heights.contains(_selectedHeight) ? _selectedHeight : null, AppConstants.heights, (val) => setState(() => _selectedHeight = val)),
+              const SizedBox(height: 16),
+              _buildDropdown("Body Type", AppConstants.bodyTypes.contains(_selectedBodyType) ? _selectedBodyType : null, AppConstants.bodyTypes, (val) => setState(() => _selectedBodyType = val)),
+              const SizedBox(height: 16),
+              _buildDropdown("Income", AppConstants.incomeBrackets.contains(_selectedIncome) ? _selectedIncome : null, AppConstants.incomeBrackets, (val) => setState(() => _selectedIncome = val)),
+              const SizedBox(height: 16),
+
+              // Location Dropdowns
+              _buildDropdown("Country", _selectedCountry, _countries, (val) => _updateProvinces(val)),
+              const SizedBox(height: 16),
+              _buildDropdown("State/Province", _selectedProvince, _provinces, (val) => _updateCities(val)),
+              const SizedBox(height: 16),
+              _buildDropdown("City", _selectedCity, _cities, (val) => setState(() => _selectedCity = val)),
+              const SizedBox(height: 16),
+
+              // Switches
+              SwitchListTile(
+                title: Text('Wants to Host', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)),
+                value: _wantsHost ?? false,
+                onChanged: (bool value) => setState(() => _wantsHost = value),
+                activeColor: AppTheme.primaryYellow,
+                tileColor: Colors.grey[850],
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+              ),
+              const SizedBox(height: 8),
+              SwitchListTile(
+                title: Text('Wants to Travel', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)),
+                value: _wantsTravel ?? false,
+                onChanged: (bool value) => setState(() => _wantsTravel = value),
+                activeColor: AppTheme.primaryYellow,
+                tileColor: Colors.grey[850],
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+              ),
+              const SizedBox(height: 24),
+            ],
 
             // Buttons
             Row(
@@ -249,7 +292,7 @@ class _FilterSheetWidgetState extends State<FilterSheetWidget> {
         focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.primaryYellow), borderRadius: BorderRadius.circular(8.0)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
       ),
-      value: (currentValue != null && items.contains(currentValue)) ? currentValue : null,
+      value: currentValue,
       hint: Text("Any", style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), // Shows "Any" when value is null
       isExpanded: true,
       dropdownColor: Colors.grey[900],

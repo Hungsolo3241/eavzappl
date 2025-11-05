@@ -31,6 +31,7 @@ class PushNotifications {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
+          backgroundColor: Colors.black.withOpacity(0.5),
           title: const Text('Notification Permission'),
           content: const Text('Please enable notifications to receive updates.'),
           actions: [
@@ -164,6 +165,7 @@ class PushNotifications {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
+          backgroundColor: Colors.black.withOpacity(0.5),
           title: Text(notification?.title ?? "Notification"),
           content: SingleChildScrollView(child: Text(notification?.body ?? "")),
           actions: [
@@ -237,7 +239,7 @@ class NotificationDialogBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: Colors.grey[900],
+      backgroundColor: Colors.black.withOpacity(0.5),
       title: Text(
         'New from $name',
         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),

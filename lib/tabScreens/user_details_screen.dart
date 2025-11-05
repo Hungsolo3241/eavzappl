@@ -14,6 +14,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:eavzappl/controllers/authentication_controller.dart';
 import 'package:flutter/services.dart';
 import 'package:eavzappl/controllers/like_controller.dart';
+import 'package:eavzappl/utils/app_theme.dart';
 
 
 class UserDetailsScreen extends StatefulWidget {
@@ -75,6 +76,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
 
           return Scaffold(
             appBar: AppBar(
+              backgroundColor: Colors.black.withOpacity(0.5),
+              foregroundColor: AppTheme.primaryYellow,
               title: Text(isCurrentUserProfile ? "My Profile" : (person.name ?? "User Profile")),
               centerTitle: true,
               actions: isCurrentUserProfile
@@ -95,7 +98,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
-                          backgroundColor: Colors.grey[850],
+                          backgroundColor: Colors.black.withOpacity(0.5),
                           title: const Text('Log Out', style: TextStyle(color: Colors.blueGrey)),
                           content: const Text('Are you sure you want to log out?', style: TextStyle(color: Colors.white70)),
                           actions: <Widget>[

@@ -47,6 +47,7 @@ class ProfileController extends GetxController {
   final RxBool isTogglingFavorite = false.obs;
 
   // --- PUBLIC GETTERS ---
+  String? get currentUserOrientation => _currentUserProfile.value?.orientation;
   bool isFavorite(String uid) => _favoriteUids.contains(uid);
 
   @override

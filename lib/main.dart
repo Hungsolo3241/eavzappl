@@ -4,10 +4,8 @@ import 'package:get/get.dart';
 import 'package:eavzappl/controllers/authentication_controller.dart';
 import 'package:eavzappl/controllers/profile_controller.dart';
 import 'package:eavzappl/controllers/like_controller.dart';
-// Note: We can simplify the SplashScreen import now, it doesn't need to be the home
 import 'package:eavzappl/authenticationScreen/login_screen.dart'; // Or WaitingScreen
 import 'package:flutter/services.dart';
-// This can also be simplified as you don't use the prefix elsewhere in this file for Get.put
 import 'package:eavzappl/pushNotifications/push_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
@@ -18,8 +16,6 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'dart:async';
 import 'dart:ui';
-
-import 'package:eavzappl/utils/app_theme.dart';
 
 // The background handler must be a top-level function (outside a class).
 @pragma('vm:entry-point')
@@ -72,9 +68,9 @@ Future<void> _initializeControllersAndServices() async {
   // Initialize your controllers.
   Get.put(AuthenticationController()); // Essential
   Get.lazyPut(() => ProfileController()); // Lazy load
-  Get.lazyPut(() => LikeController());
-  Get.lazyPut(() => LocationController());
-  Get.lazyPut(() => PushNotifications());
+  Get.lazyPut(() => LikeController()); // Lazy load
+  Get.lazyPut(() => LocationController()); // Lazy load
+  Get.lazyPut(() => PushNotifications()); // Lazy load
 }
 
 class MyApp extends StatelessWidget {
@@ -84,7 +80,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: 'Eavz',
-      theme: AppTheme.darkTheme,
+      theme: ThemeData.dark().copyWith(scaffoldBackgroundColor: Colors.black),
       debugShowCheckedModeBanner: false,
       // Use a FutureBuilder to show a loading screen while initializations are in progress
       home: FutureBuilder(
