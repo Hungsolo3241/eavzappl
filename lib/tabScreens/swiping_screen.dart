@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:eavzappl/controllers/like_controller.dart';
 import 'package:eavzappl/widgets/filter_sheet_widget.dart';
 import 'package:eavzappl/utils/image_constants.dart';
+import 'package:eavzappl/utils/app_theme.dart';
 
 
 class SwipingScreen extends StatefulWidget {
@@ -116,16 +117,16 @@ class _SwipingScreenState extends State<SwipingScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       "No profiles match your criteria.",
-                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                      style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey),
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       // This re-uses the exact same method as the filter icon!
                       onPressed: _showFilterModalBottomSheet,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.yellow[700],
+                        backgroundColor: AppTheme.primaryYellow,
                         foregroundColor: Colors.black,
                       ),
                       child: const Text("Adjust Filters"),
@@ -140,21 +141,21 @@ class _SwipingScreenState extends State<SwipingScreen> {
               // Call the new method in your ProfileController
                 onRefresh: () => profileController.refreshSwipingProfiles(),
                 // Optional: Style the loading spinner to match your app's theme
-                color: Colors.yellow[700],
+                color: AppTheme.primaryYellow,
                 child: PageView.builder(
                   itemCount: profileController.swipingProfileList.length,
                   scrollDirection: Axis.horizontal,
                   itemBuilder: (context, index) {
-                // Check if there is a next profile and if it has a photo
-                if ((index + 1) < profileController.swipingProfileList.length) {
-                  final nextPerson = profileController.swipingProfileList[index + 1];
-                  if (nextPerson.profilePhoto != null && nextPerson.profilePhoto!.isNotEmpty) {
-                    // Pre-cache the next image. This runs in the background.
-                    precacheImage(
-                      CachedNetworkImageProvider(nextPerson.profilePhoto!),
-                      context,
-                    );
-
+                // Pre-cache the next 2-3 images for a smoother swiping experience
+                for (int i = 1; i <= 3; i++) {
+                  if ((index + i) < profileController.swipingProfileList.length) {
+                    final nextPerson = profileController.swipingProfileList[index + i];
+                    if (nextPerson.profilePhoto != null && nextPerson.profilePhoto!.isNotEmpty) {
+                      precacheImage(
+                        CachedNetworkImageProvider(nextPerson.profilePhoto!),
+                        context,
+                      );
+                    }
                   }
                 }
                 final Person person = profileController.swipingProfileList[index];
@@ -210,7 +211,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: Icon(Icons.filter_list, color: Colors.yellow[700]),
+                icon: const Icon(Icons.filter_list, color: AppTheme.primaryYellow),
                 onPressed: _showFilterModalBottomSheet,
               ),
             ),
@@ -266,22 +267,13 @@ class _ProfileDetails extends StatelessWidget {
           },
           child: Text(
             person.name ?? 'N/A',
-            style: const TextStyle(
-              color: Colors.blueGrey,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              shadows: [Shadow(color: Colors.black87, blurRadius: 1.0)],
-            ),
+            style: AppTextStyles.heading1.copyWith(color: AppTheme.textGrey, shadows: const [Shadow(color: Colors.black87, blurRadius: 1.0)]),
           ),
         ),
         const SizedBox(height: 4.0),
         Text(
           '${person.age ?? ''}${person.age != null && person.city?.isNotEmpty == true ? ' • ' : ''}${person.city ?? ''}',
-          style: TextStyle(
-            color: Colors.yellow[700],
-            fontSize: 18,
-            shadows: const [Shadow(color: Colors.black87, blurRadius: 1.0)],
-          ),
+          style: AppTextStyles.body1.copyWith(color: AppTheme.primaryYellow, shadows: const [Shadow(color: Colors.black87, blurRadius: 1.0)]),
         ),
         const SizedBox(height: 16.0),
         Wrap(
@@ -311,7 +303,7 @@ class _ProfileDetails extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(color: Colors.blueGrey, fontSize: 12.0),
+        style: AppTextStyles.caption.copyWith(color: AppTheme.textGrey),
       ),
     );
   }
@@ -366,7 +358,7 @@ class _ActionButtons extends StatelessWidget {
             isActive: canMessage,
             tooltip: canMessage ? 'Message' : 'Message (Requires Mutual Like)',
             iconSize: 75,
-            activeColor: Colors.yellow[700],
+            activeColor: AppTheme.primaryYellow,
             inactiveColor: Colors.blueGrey.withOpacity(0.5),
           );
         }),
@@ -419,7 +411,7 @@ class _ActionButtons extends StatelessWidget {
           break;
         case LikeStatus.mutualLike:
           iconAsset = ImageConstants.likeFull;
-          iconColor = Colors.yellow[700];
+          iconColor = AppTheme.primaryYellow;
           break;
         case LikeStatus.none:
         default:
@@ -429,7 +421,7 @@ class _ActionButtons extends StatelessWidget {
       }
     } else {
       iconAsset = isActive ? (activeIconAsset ?? inactiveIconAsset!) : inactiveIconAsset!;
-      iconColor = isActive ? (activeColor ?? Colors.yellow[700]) : inactiveColor;
+      iconColor = isActive ? (activeColor ?? AppTheme.primaryYellow) : inactiveColor;
     }
     return IconButton(
       icon: Image.asset(iconAsset, width: iconSize, height: iconSize, color: iconColor),

@@ -17,6 +17,7 @@ import 'package:eavzappl/utils/app_constants.dart';
 // lib/screens/edit_profile_screen.dart
 import 'package:eavzappl/pushNotifications/push_notifications.dart';
 import 'package:eavzappl/models/push_notification_payload.dart';
+import 'package:eavzappl/utils/app_theme.dart';
 
 
 class EditProfileScreen extends StatefulWidget {
@@ -409,12 +410,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: AppBar(
         title: const Text("Edit Profile"),
         centerTitle: true,
-        titleTextStyle: const TextStyle(color: Colors.blueGrey, fontSize: 20, fontWeight: FontWeight.bold),
+        titleTextStyle: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey),
         iconTheme: const IconThemeData(color: Colors.blueGrey),
         backgroundColor: Colors.black54,
         actions: [
           IconButton(
-            icon: Icon(Icons.save, color: Colors.yellow[700]),
+            icon: const Icon(Icons.save, color: AppTheme.primaryYellow),
             onPressed: _isLoading ? null : _saveProfileChanges,
             tooltip: "Save Changes",
           ),
@@ -423,7 +424,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       body: _isLoading && _currentUserData == null
           ? const Center(child: CircularProgressIndicator(color: Colors.blueGrey))
           : _currentUserData == null
-          ? const Center(child: Text("Could not load user profile.", style: TextStyle(color: Colors.red, fontSize: 16)))
+          ? Center(child: Text("Could not load user profile.", style: AppTextStyles.body1.copyWith(color: Colors.red)))
           : SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -455,7 +456,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                       TextButton(
                         onPressed: _pickMainProfileImage,
-                        child: const Text("Change Main Photo", style: TextStyle(color: Colors.blueGrey)),
+                        child: Text("Change Main Photo", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
                       ),
                     ],
                   ),
@@ -538,19 +539,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     const SizedBox(height: 16),
                     _buildTextFormField(controller: _professionController, label: "Specific Profession (e.g., Doctor)", icon: Icons.business_center),
                     const SizedBox(height: 16),
-                    Text("Professional Venues (Optional)", style: const TextStyle(color: Colors.blueGrey, fontSize: 16)),
+                    Text("Professional Venues (Optional)", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
                     ..._professionalVenueOptions.map((venue) => CheckboxListTile(
-                      title: Text(venue, style: const TextStyle(color: Colors.white70)),
+                      title: Text(venue, style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)),
                       value: _selectedProfessionalVenues[venue],
                       onChanged: (bool? value) => setState(() => _selectedProfessionalVenues[venue] = value!),
-                      activeColor: Colors.yellow[700],
+                      activeColor: AppTheme.primaryYellow,
                       checkColor: Colors.black,
                     )),
                     CheckboxListTile(
-                      title: const Text("Other Venue", style: TextStyle(color: Colors.white70)),
+                      title: Text("Other Venue", style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)),
                       value: _professionalVenueOtherSelected,
                       onChanged: (bool? value) => setState(() => _professionalVenueOtherSelected = value!),
-                      activeColor: Colors.yellow[700],
+                      activeColor: AppTheme.primaryYellow,
                       checkColor: Colors.black,
                     ),
                     if (_professionalVenueOtherSelected) _buildTextFormField(controller: _professionalVenueOtherNameController, label: "Other Venue Name"),
@@ -594,12 +595,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 24),
 
                 Text("Lifestyle Preferences", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
-                SwitchListTile(title: const Text('Do you drink?', style: TextStyle(color: Colors.white70)), value: _drinkSelection, onChanged: (val) => setState(() => _drinkSelection = val), activeColor: Colors.yellow[700]),
-                SwitchListTile(title: const Text('Do you smoke?', style: TextStyle(color: Colors.white70)), value: _smokeSelection, onChanged: (val) => setState(() => _smokeSelection = val), activeColor: Colors.yellow[700]),
-                SwitchListTile(title: const Text('Do you eat meat?', style: TextStyle(color: Colors.white70)), value: _meatSelection, onChanged: (val) => setState(() => _meatSelection = val), activeColor: Colors.yellow[700]),
-                SwitchListTile(title: const Text('Are you open to Greek?', style: TextStyle(color: Colors.white70)), value: _greekSelection, onChanged: (val) => setState(() => _greekSelection = val), activeColor: Colors.yellow[700]),
-                SwitchListTile(title: const Text('Are you able to host?', style: TextStyle(color: Colors.white70)), value: _hostSelection, onChanged: (val) => setState(() => _hostSelection = val), activeColor: Colors.yellow[700]),
-                SwitchListTile(title: const Text('Are you able to travel?', style: TextStyle(color: Colors.white70)), value: _travelSelection, onChanged: (val) => setState(() => _travelSelection = val), activeColor: Colors.yellow[700]),
+                SwitchListTile(title: Text('Do you drink?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), value: _drinkSelection, onChanged: (val) => setState(() => _drinkSelection = val), activeColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Do you smoke?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), value: _smokeSelection, onChanged: (val) => setState(() => _smokeSelection = val), activeColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Do you eat meat?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), value: _meatSelection, onChanged: (val) => setState(() => _meatSelection = val), activeColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Are you open to Greek?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), value: _greekSelection, onChanged: (val) => setState(() => _greekSelection = val), activeColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Are you able to host?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), value: _hostSelection, onChanged: (val) => setState(() => _hostSelection = val), activeColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Are you able to travel?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), value: _travelSelection, onChanged: (val) => setState(() => _travelSelection = val), activeColor: AppTheme.primaryYellow),
 
                 const SizedBox(height: 24),
 
@@ -608,9 +609,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 // It should be removed before production.
 
                 const Divider(height: 40, thickness: 1, color: Colors.blueGrey),
-                const Text(
+                Text(
                   'Developer: Notification Test Panel',
-                  style: TextStyle(fontSize: 16, color: Colors.yellow, fontWeight: FontWeight.bold),
+                  style: AppTextStyles.body1.copyWith(color: AppTheme.primaryYellow, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 15),
@@ -700,13 +701,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
         controller: controller,
-        style: const TextStyle(color: Colors.white),
+        style: AppTextStyles.body1.copyWith(color: Colors.white),
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: icon != null ? Icon(icon, color: Colors.blueGrey) : null,
-          labelStyle: const TextStyle(color: Colors.blueGrey),
+          labelStyle: AppTextStyles.body1.copyWith(color: AppTheme.textGrey),
           enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.blueGrey), borderRadius: BorderRadius.circular(12)),
-          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.yellow[700]!), borderRadius: BorderRadius.circular(12)),
+          focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.primaryYellow), borderRadius: BorderRadius.circular(12)),
           errorBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.red), borderRadius: BorderRadius.circular(12)),
           focusedErrorBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.red, width: 2), borderRadius: BorderRadius.circular(12)),
         ),
@@ -732,13 +733,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         items: enabled ? items : null,
         onChanged: enabled ? onChanged : null,
         dropdownColor: Colors.grey[900],
-        style: TextStyle(color: enabled ? Colors.white : Colors.grey),
+        style: AppTextStyles.body1.copyWith(color: enabled ? Colors.white : Colors.grey),
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: enabled ? Colors.blueGrey : Colors.grey),
-          labelStyle: TextStyle(color: enabled ? Colors.blueGrey : Colors.grey),
+          labelStyle: AppTextStyles.body1.copyWith(color: enabled ? AppTheme.textGrey : Colors.grey),
           enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: enabled ? Colors.blueGrey : Colors.grey), borderRadius: BorderRadius.circular(12)),
-          focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.yellow[700]!), borderRadius: BorderRadius.circular(12)),
+          focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.primaryYellow), borderRadius: BorderRadius.circular(12)),
           disabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.grey), borderRadius: BorderRadius.circular(12)),
         ),
       ),

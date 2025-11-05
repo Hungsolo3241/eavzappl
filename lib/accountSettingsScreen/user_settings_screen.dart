@@ -8,6 +8,7 @@ import 'package:intl/intl.dart'; // For date formatting
 import 'package:eavzappl/accountSettingsScreen/notifications_screen.dart';
 import 'package:eavzappl/controllers/authentication_controller.dart';
 import 'package:eavzappl/controllers/profile_controller.dart';
+import 'package:eavzappl/utils/app_theme.dart';
 
 class UserSettingsScreen extends StatefulWidget {
   const UserSettingsScreen({super.key});
@@ -37,7 +38,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
           builder: (context, setStateDialog) {
             return AlertDialog(
               backgroundColor: Colors.grey[850],
-              title: Text(title, style: TextStyle(color: Colors.blueGrey)),
+              title: Text(title, style: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey)),
               content: Form(
                 key: formKey,
                 child: Column(
@@ -45,19 +46,19 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                   children: <Widget>[
                     Text(
                       "For your security, please enter your current password to continue.",
-                      style: TextStyle(color: Colors.white70),
+                      style: AppTextStyles.body1.copyWith(color: AppTheme.textLight),
                     ),
                     const SizedBox(height: 15),
                     TextFormField(
                       controller: passwordController,
                       obscureText: true,
-                      style: TextStyle(color: Colors.white),
+                      style: AppTextStyles.body1.copyWith(color: Colors.white),
                       decoration: InputDecoration(
                         labelText: "Current Password",
-                        labelStyle: TextStyle(color: Colors.blueGrey),
-                        prefixIcon: Icon(Icons.lock, color: Colors.blueGrey),
+                        labelStyle: AppTextStyles.body1.copyWith(color: AppTheme.textGrey),
+                        prefixIcon: const Icon(Icons.lock, color: Colors.blueGrey),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.blueGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
+                        focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.blueGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
                         enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(8.0)),
                       ),
                       validator: (value) {
@@ -77,7 +78,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
               actions: <Widget>[
                 TextButton(
                   onPressed: isLoading ? null : () => Navigator.of(dialogContext).pop(),
-                  child: Text("Cancel", style: TextStyle(color: Colors.grey)),
+                  child: Text("Cancel", style: AppTextStyles.body1.copyWith(color: Colors.grey)),
                 ),
                 TextButton(
                   onPressed: isLoading ? null : () async {
@@ -121,7 +122,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                       }
                     }
                   },
-                  child: Text("Confirm", style: TextStyle(color: Colors.blueGrey)),
+                  child: Text("Confirm", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
                 ),
               ],
             );
@@ -144,7 +145,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
           builder: (context, setStateDialog) {
             return AlertDialog(
               backgroundColor: Colors.grey[850],
-              title: const Text("Change Email Address", style: TextStyle(color: Colors.blueGrey)),
+              title: Text("Change Email Address", style: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey)),
               content: Form(
                 key: formKey,
                 child: Column(
@@ -153,13 +154,13 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                     TextFormField(
                       controller: newEmailController,
                       keyboardType: TextInputType.emailAddress,
-                      style: TextStyle(color: Colors.white),
+                      style: AppTextStyles.body1.copyWith(color: Colors.white),
                       decoration: InputDecoration(
                         labelText: "New Email Address",
-                        labelStyle: TextStyle(color: Colors.blueGrey),
-                        prefixIcon: Icon(Icons.email_outlined, color: Colors.blueGrey),
+                        labelStyle: AppTextStyles.body1.copyWith(color: AppTheme.textGrey),
+                        prefixIcon: const Icon(Icons.email_outlined, color: Colors.blueGrey),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.blueGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
+                        focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.blueGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
                         enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(8.0)),
                       ),
                       validator: (value) {
@@ -181,11 +182,11 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
               ),
               actions: <Widget>[
                 TextButton(
-                  child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+                  child: Text("Cancel", style: AppTextStyles.body1.copyWith(color: Colors.grey)),
                   onPressed: isLoading ? null : () => Navigator.of(dialogContext).pop(),
                 ),
                 TextButton(
-                  child: const Text("Update Email", style: TextStyle(color: Colors.blueGrey)),
+                  child: Text("Update Email", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
                   onPressed: isLoading ? null : () async {
                     if (formKey.currentState!.validate()) {
                       setStateDialog(() {
@@ -288,7 +289,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
           builder: (context, setStateDialog) {
             return AlertDialog(
               backgroundColor: Colors.grey[850],
-              title: const Text("Change Password", style: TextStyle(color: Colors.blueGrey)),
+              title: Text("Change Password", style: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey)),
               content: Form(
                 key: formKey,
                 child: Column(
@@ -297,13 +298,13 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                     TextFormField(
                       controller: newPasswordController,
                       obscureText: true,
-                      style: TextStyle(color: Colors.white),
+                      style: AppTextStyles.body1.copyWith(color: Colors.white),
                       decoration: InputDecoration(
                         labelText: "New Password",
-                        labelStyle: TextStyle(color: Colors.blueGrey),
-                        prefixIcon: Icon(Icons.lock_outline, color: Colors.blueGrey),
+                        labelStyle: AppTextStyles.body1.copyWith(color: AppTheme.textGrey),
+                        prefixIcon: const Icon(Icons.lock_outline, color: Colors.blueGrey),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.blueGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
+                        focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.blueGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
                       ),
                       onChanged: (value) {
                         setStateDialog(() {
@@ -333,13 +334,13 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                     TextFormField(
                       controller: confirmPasswordController,
                       obscureText: true,
-                      style: TextStyle(color: Colors.white),
+                      style: AppTextStyles.body1.copyWith(color: Colors.white),
                       decoration: InputDecoration(
                         labelText: "Confirm New Password",
-                        labelStyle: TextStyle(color: Colors.blueGrey),
-                        prefixIcon: Icon(Icons.lock_outline, color: Colors.blueGrey),
+                        labelStyle: AppTextStyles.body1.copyWith(color: AppTheme.textGrey),
+                        prefixIcon: const Icon(Icons.lock_outline, color: Colors.blueGrey),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.blueGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
+                        focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.blueGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -360,11 +361,11 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
               ),
               actions: <Widget>[
                 TextButton(
-                  child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+                  child: Text("Cancel", style: AppTextStyles.body1.copyWith(color: Colors.grey)),
                   onPressed: isLoading ? null : () => Navigator.of(dialogContext).pop(),
                 ),
                 TextButton(
-                  child: const Text("Update Password", style: TextStyle(color: Colors.blueGrey)),
+                  child: Text("Update Password", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
                   onPressed: isLoading ? null : () async {
                     if (formKey.currentState!.validate()) {
                       setStateDialog(() { isLoading = true; });
@@ -450,7 +451,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           backgroundColor: Colors.grey[850],
-          title: const Text("Account Security", style: TextStyle(color: Colors.blueGrey)),
+          title: Text("Account Security", style: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey)),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
@@ -462,7 +463,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text("OK", style: TextStyle(color: Colors.blueGrey)),
+              child: Text("OK", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
               },
@@ -479,9 +480,9 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+          Text(label, style: AppTextStyles.body1.copyWith(color: AppTheme.textLight, fontWeight: FontWeight.bold)),
           const SizedBox(width: 8),
-          Expanded(child: Text(value, style: TextStyle(color: Colors.white70))),
+          Expanded(child: Text(value, style: AppTextStyles.body1.copyWith(color: AppTheme.textLight))),
         ],
       ),
     );
@@ -498,17 +499,17 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
             builder: (context, setStateDialog) {
               return AlertDialog(
                 backgroundColor: Colors.grey[850],
-                title: const Text("Delete Account?", style: TextStyle(color: Colors.redAccent)),
+                title: Text("Delete Account?", style: AppTextStyles.heading2.copyWith(color: Colors.redAccent)),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       "This action is permanent and cannot be undone. All your data associated with this account will be deleted.",
-                      style: TextStyle(color: Colors.white70),
+                      style: AppTextStyles.body1.copyWith(color: AppTheme.textLight),
                     ),
                     Text(
                       "Are you sure you want to proceed?",
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: AppTextStyles.body1.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                     if (isLoading) ...[
                       const SizedBox(height: 15),
@@ -518,11 +519,11 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                 ),
                 actions: <Widget>[
                   TextButton(
-                    child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+                    child: Text("Cancel", style: AppTextStyles.body1.copyWith(color: Colors.grey)),
                     onPressed: isLoading ? null : () => Navigator.of(dialogContext).pop(),
                   ),
                   TextButton(
-                    child: const Text("Delete My Account", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                    child: Text("Delete My Account", style: AppTextStyles.body1.copyWith(color: Colors.redAccent, fontWeight: FontWeight.bold)),
                     onPressed: isLoading ? null : () async {
                       setStateDialog(() { isLoading = true; });
                       try {
@@ -582,7 +583,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("User Settings"),
-        titleTextStyle: const TextStyle(color: Colors.blueGrey, fontSize: 20, fontWeight: FontWeight.bold),
+        titleTextStyle: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey),
         iconTheme: const IconThemeData(color: Colors.blueGrey),
         backgroundColor: Colors.black54,
         centerTitle: true,
@@ -597,12 +598,12 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                 builder: (BuildContext context) {
                   return AlertDialog(
                     backgroundColor: Colors.grey[850],
-                    title: const Text('Log Out', style: TextStyle(color: Colors.blueGrey)),
-                    content: const Text('Are you sure you want to log out?', style: TextStyle(color: Colors.white70)),
+                    title: Text('Log Out', style: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey)),
+                    content: Text('Are you sure you want to log out?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)),
                     actions: <Widget>[
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                        child: Text('Cancel', style: AppTextStyles.body1.copyWith(color: Colors.grey)),
                       ),
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(true),
@@ -624,8 +625,8 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
       body: ListView(
         children: <Widget>[
           ListTile(
-            leading: Icon(Icons.edit, color: Colors.yellow[700]),
-            title: const Text("Edit Profile", style: TextStyle(color: Colors.blueGrey)),
+            leading: const Icon(Icons.edit, color: AppTheme.primaryYellow),
+            title: Text("Edit Profile", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
             onTap: () async { // Make the function async
 
               // Await the result from EditProfileScreen
@@ -645,8 +646,8 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
             },
           ),
           ListTile(
-            leading: Icon(Icons.email_outlined, color: Colors.yellow[700]),
-            title: const Text("Change Email", style: TextStyle(color: Colors.blueGrey)),
+            leading: const Icon(Icons.email_outlined, color: AppTheme.primaryYellow),
+            title: Text("Change Email", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
             onTap: () {
               _showReauthenticationDialog(
                 context: context,
@@ -658,8 +659,8 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
             },
           ),
           ListTile(
-            leading: Icon(Icons.password, color: Colors.yellow[700]),
-            title: const Text("Change Password", style: TextStyle(color: Colors.blueGrey)),
+            leading: const Icon(Icons.password, color: AppTheme.primaryYellow),
+            title: Text("Change Password", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
             onTap: () {
               _showReauthenticationDialog(
                 context: context,
@@ -671,22 +672,22 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
             },
           ),
           ListTile(
-            leading: Icon(Icons.shield_outlined, color: Colors.yellow[700]),
-            title: const Text("Account Security", style: TextStyle(color: Colors.blueGrey)),
+            leading: const Icon(Icons.shield_outlined, color: AppTheme.primaryYellow),
+            title: Text("Account Security", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
             onTap: () {
               _showAccountSecurityInfoDialog(context);
             },
           ),
           ListTile(
-            leading: Icon(Icons.notifications, color: Colors.yellow[700]),
-            title: const Text("Notifications", style: TextStyle(color: Colors.blueGrey)),
+            leading: const Icon(Icons.notifications, color: AppTheme.primaryYellow),
+            title: Text("Notifications", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
             onTap: () {
               Get.to(() => const NotificationsScreen());
             },
           ),
           ListTile(
-            leading: Icon(Icons.info_outline, color: Colors.yellow[700]),
-            title: const Text("About", style: TextStyle(color: Colors.blueGrey)),
+            leading: const Icon(Icons.info_outline, color: AppTheme.primaryYellow),
+            title: Text("About", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
             onTap: () {
               Get.snackbar("App Info", "EAVZ App v1.0.0", colorText: Colors.white);
             },
@@ -694,7 +695,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
           const Divider(color: Colors.grey),
           ListTile(
             leading: const Icon(Icons.delete_forever, color: Colors.redAccent),
-            title: const Text("Delete Account", style: TextStyle(color: Colors.redAccent)),
+            title: Text("Delete Account", style: AppTextStyles.body1.copyWith(color: Colors.redAccent)),
             onTap: () {
               _showReauthenticationDialog(
                 context: context,
@@ -707,19 +708,19 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.blueGrey),
-            title: const Text('Log Out', style: TextStyle(color: Colors.white)),
+            title: Text('Log Out', style: AppTextStyles.body1.copyWith(color: Colors.white)),
             onTap: () async {
               bool? confirmLogout = await showDialog<bool>(
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
                     backgroundColor: Colors.grey[850],
-                    title: const Text('Log Out', style: TextStyle(color: Colors.blueGrey)),
-                    content: const Text('Are you sure you want to log out?', style: TextStyle(color: Colors.white70)),
+                    title: Text('Log Out', style: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey)),
+                    content: Text('Are you sure you want to log out?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)),
                     actions: <Widget>[
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                        child: Text('Cancel', style: AppTextStyles.body1.copyWith(color: Colors.grey)),
                       ),
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(true),

@@ -19,6 +19,8 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:eavzappl/utils/app_theme.dart';
+
 // The background handler must be a top-level function (outside a class).
 @pragma('vm:entry-point')
 Future<void> main() async { // 1. Ensure your main function is marked 'async'
@@ -68,11 +70,11 @@ Future<void> _initializeControllersAndServices() async {
   );
 
   // Initialize your controllers.
-  Get.put(AuthenticationController());
-  Get.put(ProfileController());
-  Get.put(LikeController());
-  Get.put(LocationController());
-  Get.put(PushNotifications());
+  Get.put(AuthenticationController()); // Essential
+  Get.lazyPut(() => ProfileController()); // Lazy load
+  Get.lazyPut(() => LikeController());
+  Get.lazyPut(() => LocationController());
+  Get.lazyPut(() => PushNotifications());
 }
 
 class MyApp extends StatelessWidget {
@@ -82,7 +84,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: 'Eavz',
-      theme: ThemeData.dark().copyWith(scaffoldBackgroundColor: Colors.black),
+      theme: AppTheme.darkTheme,
       debugShowCheckedModeBanner: false,
       // Use a FutureBuilder to show a loading screen while initializations are in progress
       home: FutureBuilder(

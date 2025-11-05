@@ -252,7 +252,9 @@ class ProfileController extends GetxController {
       query = query.where('travelSelection', isEqualTo: true);
     }
     if (filters.profession != null && filters.profession != 'Any') {
-      if (filters.profession != 'Professional') {
+      if (filters.profession == 'Professional') {
+        query = query.where('profession', whereNotIn: ['Student', 'Freelancer']);
+      } else {
         query = query.where('profession', isEqualTo: filters.profession);
       }
     }
@@ -272,12 +274,6 @@ class ProfileController extends GetxController {
             return Person.fromJson(data);
           }).toList();
 
-          // Client-side filtering for 'Professional'
-          if (filters.profession == 'Professional') {
-            profiles = profiles
-                .where((p) => p.profession != 'Student' && p.profession != 'Freelancer')
-                .toList();
-          }
 
           final userIds = profiles.map((p) => p.uid!).toList();
           if (userIds.isNotEmpty) {

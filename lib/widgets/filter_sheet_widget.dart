@@ -8,6 +8,7 @@ import '../controllers/profile_controller.dart';
 import '../models/filter_preferences.dart';
 import 'package:eavzappl/utils/app_constants.dart';
 import 'package:eavzappl/controllers/location_controller.dart';
+import 'package:eavzappl/utils/app_theme.dart';
 
 class FilterSheetWidget extends StatefulWidget {
   final ProfileController profileController;
@@ -149,13 +150,13 @@ class _FilterSheetWidgetState extends State<FilterSheetWidget> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const Center(
-              child: Text('Filter Profiles', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+            Center(
+              child: Text('Filter Profiles', style: AppTextStyles.heading2.copyWith(color: Colors.white)),
             ),
             const SizedBox(height: 20),
 
             // Age Range Slider
-            Text('Age Range: ${_currentAgeRange.start.round()} - ${_currentAgeRange.end.round()}', style: const TextStyle(fontSize: 16, color: Colors.white70)),
+            Text('Age Range: ${_currentAgeRange.start.round()} - ${_currentAgeRange.end.round()}', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)),
             RangeSlider(
               values: _currentAgeRange,
               min: 18,
@@ -163,7 +164,7 @@ class _FilterSheetWidgetState extends State<FilterSheetWidget> {
               divisions: 82,
               labels: RangeLabels(_currentAgeRange.start.round().toString(), _currentAgeRange.end.round().toString()),
               onChanged: (RangeValues values) => setState(() => _currentAgeRange = values),
-              activeColor: Colors.yellow[700],
+              activeColor: AppTheme.primaryYellow,
               inactiveColor: Colors.grey[700],
             ),
             const SizedBox(height: 16),
@@ -194,19 +195,19 @@ class _FilterSheetWidgetState extends State<FilterSheetWidget> {
 
             // Switches
             SwitchListTile(
-              title: const Text('Wants to Host', style: TextStyle(fontSize: 16, color: Colors.white70)),
+              title: Text('Wants to Host', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)),
               value: _wantsHost ?? false,
               onChanged: (bool value) => setState(() => _wantsHost = value),
-              activeColor: Colors.yellow[700],
+              activeColor: AppTheme.primaryYellow,
               tileColor: Colors.grey[850],
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
             ),
             const SizedBox(height: 8),
             SwitchListTile(
-              title: const Text('Wants to Travel', style: TextStyle(fontSize: 16, color: Colors.white70)),
+              title: Text('Wants to Travel', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)),
               value: _wantsTravel ?? false,
               onChanged: (bool value) => setState(() => _wantsTravel = value),
-              activeColor: Colors.yellow[700],
+              activeColor: AppTheme.primaryYellow,
               tileColor: Colors.grey[850],
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
             ),
@@ -219,12 +220,12 @@ class _FilterSheetWidgetState extends State<FilterSheetWidget> {
                 ElevatedButton(
                   onPressed: _resetFilters,
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[300]),
-                  child: const Text('Reset', style: TextStyle(color: Colors.black87)),
+                  child: Text('Reset', style: AppTextStyles.body1.copyWith(color: Colors.black87)),
                 ),
                 ElevatedButton(
                   onPressed: _applyFilters,
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow[700]),
-                  child: const Text('Apply Filters', style: TextStyle(color: Colors.black)),
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryYellow),
+                  child: Text('Apply Filters', style: AppTextStyles.body1.copyWith(color: Colors.black)),
                 ),
               ],
             ),
@@ -241,18 +242,18 @@ class _FilterSheetWidgetState extends State<FilterSheetWidget> {
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.white70),
+        labelStyle: AppTextStyles.body1.copyWith(color: AppTheme.textLight),
         filled: true,
         fillColor: Colors.grey[850],
         enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.white54), borderRadius: BorderRadius.circular(8.0)),
-        focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.yellow[700]!), borderRadius: BorderRadius.circular(8.0)),
+        focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.primaryYellow), borderRadius: BorderRadius.circular(8.0)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
       ),
       value: (currentValue != null && items.contains(currentValue)) ? currentValue : null,
-      hint: const Text("Any", style: TextStyle(color: Colors.white70)), // Shows "Any" when value is null
+      hint: Text("Any", style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), // Shows "Any" when value is null
       isExpanded: true,
       dropdownColor: Colors.grey[900],
-      style: const TextStyle(color: Colors.white),
+      style: AppTextStyles.body1.copyWith(color: Colors.white),
       items: items.map<DropdownMenuItem<String>>((String value) {
         return DropdownMenuItem<String>(value: value, child: Text(value, overflow: TextOverflow.ellipsis));
       }).toList(),

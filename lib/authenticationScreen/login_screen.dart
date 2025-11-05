@@ -6,6 +6,7 @@ import 'package:eavzappl/widgets/custom_text_field_widget.dart';
 import 'package:get/get.dart';
 import 'package:eavzappl/controllers/authentication_controller.dart';
 import 'package:eavzappl/splashScreen/splash_screen.dart';
+import 'package:eavzappl/utils/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -83,11 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 Text(
                   "come inside",
-                  style: TextStyle(
-                    fontSize: 30,
-                    color: Colors.yellow[700],
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTextStyles.heading1.copyWith(color: AppTheme.primaryYellow),
                 ),
                 const SizedBox(height: 30),
                 CustomTextFieldWidget(
@@ -107,35 +104,31 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   width: double.infinity,
                   height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.yellow[700],
-                    borderRadius: const BorderRadius.all(
+                  decoration: const BoxDecoration(
+                    color: AppTheme.primaryYellow,
+                    borderRadius: BorderRadius.all(
                       Radius.circular(25),
                     ),
                   ),
                   child: InkWell(
                     onTap: isLoading ? null : _performLogin,
-                    child: const Center(
+                    child: Center(
                       child: Text(
                         "Login",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: AppTextStyles.heading2.copyWith(color: Colors.black),
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Row(
+                Row(
                   children: [
-                    Expanded(child: Divider(color: Colors.grey)),
+                    const Expanded(child: Divider(color: Colors.grey)),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Text("OR", style: TextStyle(color: Colors.grey)),
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Text("OR", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
                     ),
-                    Expanded(child: Divider(color: Colors.grey)),
+                    const Expanded(child: Divider(color: Colors.grey)),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -143,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   height: 50,
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.yellow[700]!, width: 2),
+                    border: Border.all(color: AppTheme.primaryYellow, width: 2),
                     borderRadius: const BorderRadius.all(
                       Radius.circular(25),
                     ),
@@ -155,11 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Center(
                       child: Text(
                         "Sign in with Phone Number",
-                        style: TextStyle(
-                          color: Colors.yellow[700],
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: AppTextStyles.body1.copyWith(color: AppTheme.primaryYellow, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -168,12 +157,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       "Don't have an account?",
-                      style: TextStyle(
-                        color: Colors.blueGrey,
-                        fontSize: 18,
-                      ),
+                      style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey, fontSize: 18),
                     ),
                     InkWell(
                       onTap: () {
@@ -181,11 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                       child: Text(
                         " Register",
-                        style: TextStyle(
-                          color: Colors.yellow[700],
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: AppTextStyles.body1.copyWith(color: AppTheme.primaryYellow, fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
