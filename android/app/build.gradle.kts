@@ -1,4 +1,4 @@
-val kotlin_version = "2.2.0"
+val kotlin_version = "2.1.0"
 
 plugins {
     id("com.android.application")
@@ -10,13 +10,13 @@ plugins {
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version")
     implementation("com.google.android.material:material:1.13.0")
-    implementation("androidx.multidex:multidex:2.0.1")  // ← ADD THIS
+    implementation("androidx.multidex:multidex:2.0.1")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
 }
 
 android {
     namespace = "com.blerdguild.eavzappl"
-    compileSdk = 35  // ← CHANGE to latest stable
+    compileSdk = 36
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -30,18 +30,38 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.blerdguild.eavzappl"
-        minSdk = 21  // ← CRITICAL: Change from 30 to 21
-        targetSdk = 35  // ← CHANGE to latest
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
-        multiDexEnabled = true  // ← ADD THIS
+    applicationId = "com.blerdguild.eavzappl"
+
+    // Resolve flutter.minSdkVersion safely from project properties (string or int).
+    // Fallback to 21 if not found or not parseable.
+    val flutterMinSdk: Int = run {
+        val prop = project.findProperty("flutter.minSdkVersion")
+        when (prop) {
+            is String -> prop.toIntOrNull()
+            is Int -> prop
+            else -> null
+        } ?: 24
     }
+    minSdk = flutterMinSdk
+
+    targetSdk = 34
+
+    // Resolve versionCode/versionName safely too
+    val flutterVersionCode: Int = (project.findProperty("flutter.versionCode") as? String)?.toIntOrNull()
+        ?: (project.findProperty("flutter.versionCode") as? Int)
+        ?: 1
+    versionCode = flutterVersionCode
+
+    versionName = project.findProperty("flutter.versionName") as? String ?: "1.0"
+
+    multiDexEnabled = true
+}
+
 
     buildTypes {
         release {
-            minifyEnabled = true
-            shrinkResources = true
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

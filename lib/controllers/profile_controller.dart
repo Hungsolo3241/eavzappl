@@ -205,6 +205,9 @@ class ProfileController extends GetxController {
       targetOrientation = 'adam';
     }
 
+
+
+
     if (targetOrientation != null) {
       query = query.where("orientation", isEqualTo: targetOrientation);
     } else {
