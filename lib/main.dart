@@ -1,3 +1,4 @@
+import 'package:eavzappl/bindings/initial_bindings.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -10,7 +11,7 @@ import 'package:eavzappl/pushNotifications/push_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:eavzappl/controllers/location_controller.dart';
-import 'package:eavzappl/firebase_options.dart'; // <-- THIS IS THE FIX
+import 'package:eavzappl/firebase_options.dart'; 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
@@ -57,22 +58,6 @@ Future<void> main() async { // 1. Ensure your main function is marked 'async'
 }
 
 // Function to initialize controllers and other services that can be deferred
-Future<void> _initializeControllersAndServices() async {
-  // ← LOAD ENVIRONMENT VARIABLES FIRST
-  await dotenv.load(fileName: ".env");
-
-  await FirebaseAppCheck.instance.activate(
-    androidProvider: AndroidProvider.debug,
-  );
-
-  // Initialize your controllers.
-  Get.put(AuthenticationController()); // Essential
-  Get.lazyPut(() => ProfileController()); // Lazy load
-  Get.lazyPut(() => LikeController()); // Lazy load
-  Get.lazyPut(() => LocationController()); // Lazy load
-  Get.lazyPut(() => PushNotifications()); // Lazy load
-}
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -82,18 +67,8 @@ class MyApp extends StatelessWidget {
       title: 'Eavz',
       theme: ThemeData.dark().copyWith(scaffoldBackgroundColor: Colors.black),
       debugShowCheckedModeBanner: false,
-      // Use a FutureBuilder to show a loading screen while initializations are in progress
-      home: FutureBuilder(
-        future: _initializeControllersAndServices(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            // Once initializations are complete, let AuthenticationController handle navigation
-            return const WaitingScreen(); // AuthenticationController will redirect from here
-          }
-          // Show a loading indicator while waiting
-          return const WaitingScreen();
-        },
-      ),
+      initialBinding: InitialBindings(),
+      home: const WaitingScreen(),
     );
   }
 }

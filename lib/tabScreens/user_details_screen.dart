@@ -17,6 +17,7 @@ import 'package:eavzappl/controllers/like_controller.dart';
 import 'package:eavzappl/utils/app_theme.dart';
 
 
+
 class UserDetailsScreen extends StatefulWidget {
   final String userID;
 
@@ -99,8 +100,8 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       builder: (BuildContext context) {
                         return AlertDialog(
                           backgroundColor: Colors.black.withOpacity(0.5),
-                          title: const Text('Log Out', style: TextStyle(color: Colors.blueGrey)),
-                          content: const Text('Are you sure you want to log out?', style: TextStyle(color: Colors.white70)),
+    
+                          content: const Text('Are you sure you want to log out?', style: TextStyle(color: AppTheme.textLight)),
                           actions: <Widget>[
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(false),
@@ -272,7 +273,7 @@ class _ProfileHeader extends StatelessWidget {
         const SizedBox(height: 16),
         CircleAvatar(
           radius: 70,
-          backgroundColor: Colors.grey.shade800, // Dark background for the loader
+          backgroundColor: Colors.transparent, // Dark background for the loader
           // Check if the URL from the database is valid
           child: (profilePhotoUrl != null && profilePhotoUrl.isNotEmpty)
               ? ClipOval(
@@ -311,7 +312,7 @@ class _ProfileHeader extends StatelessWidget {
             person.age != null ? '${person.name} • ${person.age}' : person.name!,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.yellow[700],
+              color: AppTheme.primaryYellow,
               shadows: [
                 const Shadow(
                     blurRadius: 2.0,
@@ -348,7 +349,6 @@ class _ImageCarouselState extends State<_ImageCarousel> {
       }
     }
 
-    addIfValid(person.profilePhoto);
     addIfValid(person.urlImage1);
     addIfValid(person.urlImage2);
     addIfValid(person.urlImage3);
@@ -532,17 +532,17 @@ class _ActionButtons extends StatelessWidget {
           break;
         case LikeStatus.mutualLike:
           iconAsset = 'images/full_like.png';
-          iconColor = Colors.yellow[700];
+          iconColor = AppTheme.primaryYellow;
           break;
         case LikeStatus.none:
         default:
           iconAsset = 'images/default_like.png';
-          iconColor = Colors.blueGrey;
+          iconColor = AppTheme.textGrey;
           break;
       }
     } else {
       iconAsset = isActive ? (activeIconAsset ?? inactiveIconAsset!) : inactiveIconAsset!;
-      iconColor = isActive ? Colors.yellow[700] : Colors.blueGrey;
+      iconColor = isActive ? AppTheme.primaryYellow : AppTheme.textGrey;
     }
 
     return IconButton(
@@ -627,7 +627,7 @@ class _DetailSection extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold, color: Colors.yellow[700]),
+                  fontWeight: FontWeight.bold, color: AppTheme.primaryYellow),
             ),
           if (title.isNotEmpty) const SizedBox(height: 12),
           ...filteredDetails.entries.map((entry) {
@@ -643,7 +643,7 @@ class _DetailSection extends StatelessWidget {
                   child: Text(
                     key,
                     style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.blueGrey[200]),
+                        fontWeight: FontWeight.bold, color: AppTheme.textGrey),
                   ),
                 ),
                 Expanded(

@@ -263,7 +263,7 @@ class _FilterSheetWidgetState extends State<FilterSheetWidget> {
                 ElevatedButton(
                   onPressed: _resetFilters,
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[300]),
-                  child: Text('Reset', style: AppTextStyles.body1.copyWith(color: Colors.black87)),
+                  child: Text('Reset', style: AppTextStyles.body1.copyWith(color: AppTheme.backgroundDark)),
                 ),
                 ElevatedButton(
                   onPressed: _applyFilters,

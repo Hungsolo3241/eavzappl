@@ -4,6 +4,7 @@ import 'package:eavzappl/models/person.dart';
 import 'package:eavzappl/widgets/profile_grid_item.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:eavzappl/utils/app_theme.dart';
 
 /// A screen that displays a grid of users who have viewed the current user's profile.
 class ViewReceivedScreen extends StatelessWidget {
@@ -16,19 +17,19 @@ class ViewReceivedScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Viewed Your Profile', style: TextStyle(color: Colors.yellow[700])),
-        backgroundColor: Colors.black87,
+        title: Text('Viewed Your Profile', style: TextStyle(color: AppTheme.primaryYellow)),
+        backgroundColor: AppTheme.backgroundDark,
         automaticallyImplyLeading: false,
         centerTitle: true,
       ),
       body: Obx(() {
         if (profileController.usersWhoViewedMe.isEmpty) {
-          return const Center(
+          return Center(
             child: Padding(
-              padding: EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16.0),
               child: Text(
                 'No one has viewed your profile yet.',
-                style: TextStyle(fontSize: 18, color: Colors.blueGrey),
+                style: TextStyle(fontSize: 18, color: AppTheme.textGrey),
                 textAlign: TextAlign.center,
               ),
             ),

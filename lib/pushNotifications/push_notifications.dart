@@ -12,6 +12,7 @@ import 'dart:developer';
 import 'package:eavzappl/models/push_notification_payload.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:eavzappl/utils/app_theme.dart';
 
 
 @pragma('vm:entry-point')
@@ -274,7 +275,7 @@ class NotificationDialogBox extends StatelessWidget {
       ),
       actions: [
         TextButton(
-          child: Text("View Profile", style: TextStyle(color: Colors.yellow[700])),
+          child: Text("View Profile", style: TextStyle(color: AppTheme.primaryYellow)),
           onPressed: () {
             Navigator.of(context).pop(); // Close the dialog
             Get.to(() => UserDetailsScreen(userID: navigateToUserId));

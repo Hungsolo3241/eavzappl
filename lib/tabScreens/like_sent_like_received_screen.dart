@@ -5,6 +5,7 @@ import 'package:eavzappl/models/person.dart';
 import 'package:eavzappl/widgets/profile_grid_item.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:eavzappl/utils/app_theme.dart';
 
 class LikeSentLikeReceivedScreen extends StatelessWidget {
   const LikeSentLikeReceivedScreen({super.key});
@@ -18,13 +19,13 @@ class LikeSentLikeReceivedScreen extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Likes', style: TextStyle(color: Colors.yellow[700])),
-          backgroundColor: Colors.black87,
+          title: Text('Likes', style: TextStyle(color: AppTheme.primaryYellow)),
+          backgroundColor: AppTheme.backgroundDark,
           automaticallyImplyLeading: false,
           centerTitle: true,
           bottom: TabBar(
-            indicatorColor: Colors.yellow[700],
-            labelColor: Colors.yellow[700],
+            indicatorColor: AppTheme.primaryYellow,
+            labelColor: AppTheme.primaryYellow,
             unselectedLabelColor: Colors.white70,
             tabs: const [
               Tab(text: 'Likes Sent'),
@@ -68,7 +69,7 @@ class _LikesGridView extends StatelessWidget {
       if (userList.isEmpty) {
         // --- START OF CHANGE ---
         // Make the "empty" widget a const for better performance.
-        return const Center(
+        return Center(
           // --- END OF CHANGE ---
           child: Text(
             // NOTE: The `emptyMessage` variable prevents the Text widget
@@ -77,7 +78,7 @@ class _LikesGridView extends StatelessWidget {
             // `const Center(child: Text(...))` which is also correct.
             // Forcing it on the parent is a good practice.
             'No one has liked you yet.', // Using a static message for const
-            style: TextStyle(fontSize: 18, color: Colors.blueGrey),
+            style: TextStyle(fontSize: 18, color: AppTheme.textGrey),
             textAlign: TextAlign.center,
           ),
         );

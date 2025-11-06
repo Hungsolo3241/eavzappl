@@ -16,6 +16,7 @@ import 'package:get/get.dart';
 import 'package:image/image.dart' as img; // <-- FIX: For image processing (img.decodeImage)
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart'; // <-- FIX: For getTemporaryDirectory
+import 'package:eavzappl/utils/app_theme.dart';
 
 // Import the controllers you need to reference
 import 'profile_controller.dart'; // <-- FIX: To recognize ProfileController
@@ -210,10 +211,10 @@ class AuthenticationController extends GetxController {
       String errorMessage = "Invalid credentials. Please try again.";
       if (e.code == 'invalid-email') { errorMessage = 'The email address is not valid.'; }
       else if (e.code == 'user-disabled') { errorMessage = 'This user account has been disabled.'; }
-      Get.snackbar("Login Failed", errorMessage, backgroundColor: Colors.blueGrey, colorText: Colors.white);
+      Get.snackbar("Login Failed", errorMessage, backgroundColor: AppTheme.textGrey, colorText: Colors.white);
       return false;
     } catch (error) {
-      Get.snackbar("Login Failed", "An unexpected error occurred.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+      Get.snackbar("Login Failed", "An unexpected error occurred.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
       return false;
     }
   }
@@ -273,10 +274,10 @@ class AuthenticationController extends GetxController {
       String errorMessage = "An error occurred. Please try again.";
       if (e.code == 'weak-password') { errorMessage = 'The password provided is too weak.'; }
       else if (e.code == 'email-already-in-use') { errorMessage = 'The account already exists for that email.'; }
-      Get.snackbar("Account Creation Failed", errorMessage, backgroundColor: Colors.blueGrey, colorText: Colors.white);
+      Get.snackbar("Account Creation Failed", errorMessage, backgroundColor: AppTheme.textGrey, colorText: Colors.white);
       return false;
     } catch (error) {
-      Get.snackbar("Account Creation Failed", "An unexpected error occurred: ${error.toString()}", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+      Get.snackbar("Account Creation Failed", "An unexpected error occurred: ${error.toString()}", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
       if (credential?.user != null) {
         await credential!.user!.delete();
       }

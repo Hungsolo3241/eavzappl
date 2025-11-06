@@ -56,9 +56,9 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                       decoration: InputDecoration(
                         labelText: "Current Password",
                         labelStyle: AppTextStyles.body1.copyWith(color: AppTheme.textGrey),
-                        prefixIcon: const Icon(Icons.lock, color: Colors.blueGrey),
+                        prefixIcon: const Icon(Icons.lock, color: AppTheme.textGrey),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                        focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.blueGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
+                        focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.textGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
                         enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(8.0)),
                       ),
                       validator: (value) {
@@ -70,7 +70,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                     ),
                     if (isLoading) ...[
                       const SizedBox(height: 15),
-                      const CircularProgressIndicator(color: Colors.blueGrey),
+                      const CircularProgressIndicator(color: AppTheme.textGrey),
                     ]
                   ],
                 ),
@@ -158,9 +158,9 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                       decoration: InputDecoration(
                         labelText: "New Email Address",
                         labelStyle: AppTextStyles.body1.copyWith(color: AppTheme.textGrey),
-                        prefixIcon: const Icon(Icons.email_outlined, color: Colors.blueGrey),
+                        prefixIcon: const Icon(Icons.email_outlined, color: AppTheme.textGrey),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                        focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.blueGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
+                        focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.textGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
                         enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(8.0)),
                       ),
                       validator: (value) {
@@ -175,7 +175,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                     ),
                     if (isLoading) ...[
                       const SizedBox(height: 15),
-                      const CircularProgressIndicator(color: Colors.blueGrey),
+                      const CircularProgressIndicator(color: AppTheme.textGrey),
                     ]
                   ],
                 ),
@@ -202,7 +202,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                         Get.snackbar(
                           "Verification Sent",
                           "A verification email has been sent to $newEmail. Please verify to complete the email change.",
-                          backgroundColor: Colors.blueGrey,
+                          backgroundColor: AppTheme.textGrey,
                           colorText: Colors.white,
                           duration: const Duration(seconds: 5),
                         );
@@ -302,9 +302,9 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                       decoration: InputDecoration(
                         labelText: "New Password",
                         labelStyle: AppTextStyles.body1.copyWith(color: AppTheme.textGrey),
-                        prefixIcon: const Icon(Icons.lock_outline, color: Colors.blueGrey),
+                        prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.textGrey),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                        focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.blueGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
+                        focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.textGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
                       ),
                       onChanged: (value) {
                         setStateDialog(() {
@@ -338,9 +338,9 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                       decoration: InputDecoration(
                         labelText: "Confirm New Password",
                         labelStyle: AppTextStyles.body1.copyWith(color: AppTheme.textGrey),
-                        prefixIcon: const Icon(Icons.lock_outline, color: Colors.blueGrey),
+                        prefixIcon: const Icon(Icons.lock_outline, color: AppTheme.textGrey),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                        focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.blueGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
+                        focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.textGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -354,7 +354,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                     ),
                     if (isLoading) ...[
                       const SizedBox(height: 15),
-                      const CircularProgressIndicator(color: Colors.blueGrey),
+                      const CircularProgressIndicator(color: AppTheme.textGrey),
                     ]
                   ],
                 ),
@@ -385,7 +385,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                         Get.snackbar(
                           "Success",
                           "Password updated successfully.",
-                          backgroundColor: Colors.blueGrey,
+                          backgroundColor: AppTheme.textGrey,
                           colorText: Colors.white,
                         );
                       } on FirebaseAuthException catch (e) {
@@ -540,7 +540,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                         Get.snackbar(
                           "Account Deleted",
                           "Your account has been permanently deleted.",
-                          backgroundColor: Colors.blueGrey,
+                          backgroundColor: AppTheme.textGrey,
                           colorText: Colors.white,
                         );
                       } on FirebaseAuthException catch (e) {
@@ -584,12 +584,12 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
       appBar: AppBar(
         title: const Text("User Settings"),
         titleTextStyle: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey),
-        iconTheme: const IconThemeData(color: Colors.blueGrey),
+        iconTheme: const IconThemeData(color: AppTheme.textGrey),
         backgroundColor: Colors.black54,
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.blueGrey),
+            icon: const Icon(Icons.logout, color: AppTheme.textGrey),
             tooltip: 'Log Out',
             onPressed: () async {
               // Re-using the same confirmation dialog logic
@@ -707,7 +707,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.logout, color: Colors.blueGrey),
+            leading: const Icon(Icons.logout, color: AppTheme.textGrey),
             title: Text('Log Out', style: AppTextStyles.body1.copyWith(color: Colors.white)),
             onTap: () async {
               bool? confirmLogout = await showDialog<bool>(

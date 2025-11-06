@@ -7,6 +7,7 @@ import 'package:eavzappl/authenticationScreen/login_screen.dart';
 import 'package:intl_phone_field/intl_phone_field.dart'; // Added for IntlPhoneField
 import 'package:eavzappl/controllers/location_controller.dart';
 import 'package:eavzappl/utils/app_constants.dart';
+import 'package:eavzappl/utils/app_theme.dart';
 
 import '../controllers/authentication_controller.dart';
 
@@ -157,11 +158,11 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                     const SizedBox(height: 100,),
 
-                    const Text(
+                    Text(
                       "Create Account",
                       style: TextStyle(
                         fontSize: 30,
-                        color: Colors.blueGrey,
+                        color: AppTheme.textGrey,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -193,7 +194,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.photo_library, color: Colors.blueGrey, size: 25),
+                            icon: Icon(Icons.photo_library, color: AppTheme.textGrey, size: 25),
                             onPressed: () {
                               authenticationController.pickImageFromGallery();
                             },
@@ -201,7 +202,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           ),
                           const SizedBox(width: 40), // Increased spacing
                           IconButton(
-                            icon: const Icon(Icons.camera_alt, color: Colors.blueGrey, size: 25),
+                            icon: Icon(Icons.camera_alt, color: AppTheme.textGrey, size: 25),
                             onPressed: () {
                               authenticationController.captureImageFromPhoneCamera();
                             },
@@ -215,8 +216,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                     // Personal Info Title
                     const SizedBox(height: 30),
-                    const Text("Personal Info", style: TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                    Text("Personal Info", style: TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
                     const SizedBox(height: 10),
 
                     // email
@@ -428,7 +429,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           hintText: "Orientation",
                           hintStyle: TextStyle(color: _isOrientationFinalized ? Colors.grey[700] : Colors.grey, fontSize: 16),
                           helperText: _isOrientationFinalized ? "Orientation selected and locked." : "Select carefully, this will be locked and cannot be changed later.",
-                          helperStyle: TextStyle(color: _isOrientationFinalized ? Colors.green : Colors.blueGrey, fontSize: 12),
+                          helperStyle: TextStyle(color: _isOrientationFinalized ? Colors.green : AppTheme.textGrey, fontSize: 12),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(22.0)),
                             borderSide: BorderSide(
@@ -501,8 +502,8 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                     // --- START: UNIFIED, STYLED, AND CONTROLLER-DRIVEN LOCATION DROPDOWNS ---
                     const SizedBox(height: 30),
-                    const Text("Location", style: TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                    Text("Location", style: TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
                     const SizedBox(height: 10),
 
                     // Country Dropdown
@@ -640,7 +641,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                 : "Looking For:", // <<< MODIFIED LINE
                             style: TextStyle(fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.blueGrey)
+                                color: AppTheme.textGrey)
                         ),
                       ),
                     ),Padding(
@@ -740,7 +741,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                     if (selectedOrientation == 'Eve') ...[
                       // Appearance Title
                       const SizedBox(height: 30),
-                      const Text("Appearance", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                      Text("Appearance", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
                       const SizedBox(height: 10),
 
                       const SizedBox(
@@ -835,7 +836,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                       // Lifestyle Title
                       const SizedBox(height: 30),
-                      const Text("Lifestyle", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                      Text("Lifestyle", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
                       const SizedBox(height: 10),
 
                       const SizedBox(
@@ -1129,7 +1130,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                       // Background Title
                       const SizedBox(height: 30),
-                      const Text("Background", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                      Text("Background", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
                       const SizedBox(height: 10),
 
                       const SizedBox(
@@ -1213,7 +1214,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                       // Social Media Title
                       const SizedBox(height: 30),
-                      const Text("Social Media", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+                      Text("Social Media", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
                       const SizedBox(height: 10),
 
                       // Instagram
@@ -1264,27 +1265,27 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                           // 1. Validation
                           if (authenticationController.profilePhoto == null) {
-                            Get.snackbar("Missing Field", "Please select a profile photo.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field", "Please select a profile photo.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (emailController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field", "Please enter your email.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field", "Please enter your email.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (passwordController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field", "Please enter your password.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field", "Please enter your password.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (nameController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field", "Please enter your name.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field", "Please enter your name.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (ageController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field", "Please enter your age.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field", "Please enter your age.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
@@ -1293,7 +1294,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                             Get.snackbar(
                                 "Validation Error",
                                 "Please enter a valid number for age.",
-                                backgroundColor: Colors.blueGrey,
+                                backgroundColor: AppTheme.textGrey,
                                 colorText: Colors.white);
                             setState(() {
                               showProgressBar = false;
@@ -1312,43 +1313,43 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                             return;
                           }
                           if (selectedGender == null) {
-                            Get.snackbar("Missing Field", "Please select your gender.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field", "Please select your gender.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (selectedRelationshipStatus == null) {
-                            Get.snackbar("Missing Field", "Please select your relationship status.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field", "Please select your relationship status.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (selectedOrientation == null) {
-                            Get.snackbar("Missing Field", "Please select your orientation.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field", "Please select your orientation.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (usernameController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field", "Please enter your username.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field", "Please enter your username.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           // UPDATED phone number validation
                           if (normalizedPhoneNumber == null || normalizedPhoneNumber!.isEmpty) {
-                            Get.snackbar("Missing Field", "Please enter your phone number.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field", "Please enter your phone number.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (selectedCountry == null) {
-                            Get.snackbar("Missing Field", "Please select your country.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field", "Please select your country.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (selectedProvince == null) {
-                            Get.snackbar("Missing Field", "Please select your province/state.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field", "Please select your province/state.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (selectedCity == null) {
-                            Get.snackbar("Missing Field", "Please select your city/town.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Missing Field", "Please select your city/town.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                             setState(() { showProgressBar = false; });
                             return;
                           }
@@ -1356,37 +1357,37 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           // Eve-specific field validation
                           if (selectedOrientation == 'Eve') {
                             if (selectedHeight == null) {
-                              Get.snackbar("Missing Field (Eve Profile)", "Please select your height.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                              Get.snackbar("Missing Field (Eve Profile)", "Please select your height.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                               setState(() { showProgressBar = false; });
                               return;
                             }
                             if (selectedBodyType == null) {
-                              Get.snackbar("Missing Field (Eve Profile)", "Please select your body type.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                              Get.snackbar("Missing Field (Eve Profile)", "Please select your body type.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                               setState(() { showProgressBar = false; });
                               return;
                             }
                             if (selectedProfession == null) {
-                              Get.snackbar("Missing Field (Eve Profile)", "Please select your profession.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                              Get.snackbar("Missing Field (Eve Profile)", "Please select your profession.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                               setState(() { showProgressBar = false; });
                               return;
                             }
                             if (selectedIncome == null) {
-                              Get.snackbar("Missing Field (Eve Profile)", "Please select your income bracket.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                              Get.snackbar("Missing Field (Eve Profile)", "Please select your income bracket.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                               setState(() { showProgressBar = false; });
                               return;
                             }
                             if (nationalityController.text.trim().isEmpty) {
-                              Get.snackbar("Missing Field (Eve Profile)", "Please enter your nationality.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                              Get.snackbar("Missing Field (Eve Profile)", "Please enter your nationality.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                               setState(() { showProgressBar = false; });
                               return;
                             }
                             if (languagesController.text.trim().isEmpty) {
-                              Get.snackbar("Missing Field (Eve Profile)", "Please enter languages spoken.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                              Get.snackbar("Missing Field (Eve Profile)", "Please enter languages spoken.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                               setState(() { showProgressBar = false; });
                               return;
                             }
                             if (selectedEthnicity == null) {
-                              Get.snackbar("Missing Field (Eve Profile)", "Please select your ethnicity.", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                              Get.snackbar("Missing Field (Eve Profile)", "Please select your ethnicity.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                               setState(() { showProgressBar = false; });
                               return;
                             }
@@ -1474,7 +1475,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           } catch (error) {
                             // This catch block is for unexpected errors not caught by the controller,
                             // or if createAccountAndSaveData itself threw something despite its own catches.
-                            Get.snackbar("Registration Failed", "An unexpected error occurred: ${error.toString()}", backgroundColor: Colors.blueGrey, colorText: Colors.white);
+                            Get.snackbar("Registration Failed", "An unexpected error occurred: ${error.toString()}", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
                             if (mounted) { // Check if the widget is still in the tree
                               setState(() {
                                 showProgressBar = false;
@@ -1517,11 +1518,11 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           onPressed: () {
                             Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
                           },
-                          child: const Text(
+                          child: Text(
                             "Login",
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.blueGrey,
+                              color: AppTheme.textGrey,
                               fontWeight: FontWeight.bold,
                             ),
                           ),

@@ -329,7 +329,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           aspectRatio: const CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
           compressQuality: 70, maxWidth: 600, maxHeight: 600,
           uiSettings: [
-            AndroidUiSettings(toolbarTitle: 'Crop Image', toolbarColor: Colors.black54, toolbarWidgetColor: Colors.blueGrey, initAspectRatio: CropAspectRatioPreset.square, lockAspectRatio: true),
+            AndroidUiSettings(toolbarTitle: 'Crop Image', toolbarColor: Colors.black54, toolbarWidgetColor: AppTheme.textGrey, initAspectRatio: CropAspectRatioPreset.square, lockAspectRatio: true),
             IOSUiSettings(title: 'Crop Image', aspectRatioLockEnabled: true, resetAspectRatioEnabled: false, aspectRatioPickerButtonHidden: true, doneButtonTitle: "Crop", cancelButtonTitle: "Cancel"),
           ],);
         if (croppedFile != null) {
@@ -344,8 +344,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _showGalleryImageSourceActionSheet(int slotIndex) {
     showModalBottomSheet(context: context, builder: (BuildContext context) {
       return SafeArea(child: Wrap(children: <Widget>[
-        ListTile(leading: const Icon(Icons.photo_library, color: Colors.blueGrey), title: const Text('Photo Library', style: TextStyle(color: Colors.green)), onTap: () { _pickGalleryImage(slotIndex, ImageSource.gallery); Navigator.of(context).pop(); }),
-        ListTile(leading: const Icon(Icons.photo_camera, color: Colors.blueGrey), title: const Text('Camera', style: TextStyle(color: Colors.green)), onTap: () { _pickGalleryImage(slotIndex, ImageSource.camera); Navigator.of(context).pop(); }),
+        ListTile(leading: const Icon(Icons.photo_library, color: AppTheme.textGrey), title: const Text('Photo Library', style: TextStyle(color: Colors.green)), onTap: () { _pickGalleryImage(slotIndex, ImageSource.gallery); Navigator.of(context).pop(); }),
+        ListTile(leading: const Icon(Icons.photo_camera, color: AppTheme.textGrey), title: const Text('Camera', style: TextStyle(color: Colors.green)), onTap: () { _pickGalleryImage(slotIndex, ImageSource.camera); Navigator.of(context).pop(); }),
       ]));
     });
   }
@@ -364,12 +364,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         height: 100,
         placeholder: (context, url) => Container(
           width: 100, height: 100,
-          color: Colors.grey.shade800,
-          child: const Center(child: CircularProgressIndicator(strokeWidth: 2.0, color: Colors.blueGrey)),
+          color: Colors.transparent,
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2.0, color: AppTheme.textGrey)),
         ),
         errorWidget: (context, url, error) => Container(
             width: 100, height: 100,
-            color: Colors.grey.shade800,
+            color: Colors.transparent,
             child: const Icon(Icons.broken_image, size: 50, color: Colors.redAccent)
         ),
       );
@@ -384,12 +384,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         height: 100,
         placeholder: (context, url) => Container(
           width: 100, height: 100,
-          color: Colors.grey.shade800,
-          child: const Center(child: CircularProgressIndicator(strokeWidth: 2.0, color: Colors.blueGrey)),
+          color: Colors.transparent,
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2.0, color: AppTheme.textGrey)),
         ),
         errorWidget: (context, url, error) => Container(
             width: 100, height: 100,
-            color: Colors.grey.shade800,
+            color: Colors.transparent,
             child: const Icon(Icons.broken_image, size: 50, color: Colors.redAccent)
         ),
       );
@@ -418,7 +418,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         title: const Text("Edit Profile"),
         centerTitle: true,
         titleTextStyle: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey),
-        iconTheme: const IconThemeData(color: Colors.blueGrey),
+        iconTheme: const IconThemeData(color: AppTheme.textGrey),
         backgroundColor: Colors.black54,
         actions: [
           IconButton(
@@ -429,7 +429,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ],
       ),
       body: _isLoading && _currentUserData == null
-          ? const Center(child: CircularProgressIndicator(color: Colors.blueGrey))
+          ? const Center(child: CircularProgressIndicator(color: AppTheme.textGrey))
           : _currentUserData == null
           ? Center(child: Text("Could not load user profile.", style: AppTextStyles.body1.copyWith(color: Colors.red)))
           : SafeArea(
@@ -444,13 +444,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 Center(
                   child: Column(
                     children: [
-                      Text("Main Profile Picture", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
+                      Text("Main Profile Picture", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.textGrey)),
                       const SizedBox(height: 10),
                       GestureDetector(
                         onTap: _pickMainProfileImage,
                         child: CircleAvatar(
                           radius: 60,
-                          backgroundColor: Colors.grey.shade700,
+                          backgroundColor: Colors.transparent,
                           backgroundImage: _pickedMainProfileImageFile != null
                               ? FileImage(_pickedMainProfileImageFile!) as ImageProvider
                               : (_currentMainProfileImageUrl != null && _currentMainProfileImageUrl!.isNotEmpty)
@@ -469,10 +469,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Divider(color: Colors.blueGrey, thickness: 2),
+                const Divider(color: AppTheme.textGrey, thickness: 2),
                 const SizedBox(height: 20),
                 Center(
-                  child: Text("Profile Gallery Images", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
+                  child: Text("Profile Gallery Images", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.textGrey)),
                 ),
                 const SizedBox(height: 10),
                 Center(
@@ -484,7 +484,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                Text("Profile Details", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
+                Text("Profile Details", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.textGrey)),
                 const SizedBox(height: 16),
 
                 // --- Basic Info TextFields (No Change) ---
@@ -535,7 +535,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 // --- PRESERVED PROFESSION LOGIC ---
                 if (isEveOrientation) ...[
                   const SizedBox(height: 20),
-                  Text("Profession & Financials", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
+                  Text("Profession & Financials", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.textGrey)),
                   const SizedBox(height: 16),
                   _buildDropdownFormField<String>(
                     label: "Main Profession Category",
@@ -603,7 +603,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                 const SizedBox(height: 24),
 
-                Text("Lifestyle Preferences", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.blueGrey)),
+                Text("Lifestyle Preferences", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.textGrey)),
                 SwitchListTile(title: Text('Do you drink?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), value: _drinkSelection, onChanged: (val) => setState(() => _drinkSelection = val), activeColor: AppTheme.primaryYellow),
                 SwitchListTile(title: Text('Do you smoke?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), value: _smokeSelection, onChanged: (val) => setState(() => _smokeSelection = val), activeColor: AppTheme.primaryYellow),
                 SwitchListTile(title: Text('Do you eat meat?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), value: _meatSelection, onChanged: (val) => setState(() => _meatSelection = val), activeColor: AppTheme.primaryYellow),
@@ -619,7 +619,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     onPressed: _isLoading ? null : _saveProfileChanges,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryYellow,
-                      foregroundColor: Colors.black,
+                      foregroundColor: Colors.blueGrey,
                       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(22.0),
@@ -627,7 +627,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     child: Text(
                       "Save Changes",
-                      style: AppTextStyles.heading2.copyWith(color: Colors.black),
+                      style: AppTextStyles.heading2.copyWith(color: Colors.blueGrey),
                     ),
                   ),
                 ),
@@ -638,7 +638,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 // This panel simulates the three key notification types.
 // It should be removed before production.
 
-                const Divider(height: 40, thickness: 1, color: Colors.blueGrey),
+                const Divider(height: 40, thickness: 1, color: AppTheme.textGrey),
                 Text(
                   'Developer: Notification Test Panel',
                   style: AppTextStyles.body1.copyWith(color: AppTheme.primaryYellow, fontWeight: FontWeight.bold),
@@ -708,7 +708,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     PushNotifications.showTestForegroundNotification(context, testPayload);
                   },
                 ),
-                const Divider(height: 40, thickness: 1, color: Colors.blueGrey),
+                const Divider(height: 40, thickness: 1, color: AppTheme.textGrey),
 // --- END: TEMPORARY NOTIFICATION TEST PANEL ---
 
               ],
@@ -734,9 +734,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         style: AppTextStyles.body1.copyWith(color: Colors.white),
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: icon != null ? Icon(icon, color: Colors.blueGrey) : null,
+          prefixIcon: icon != null ? Icon(icon, color: AppTheme.textGrey) : null,
           labelStyle: AppTextStyles.body1.copyWith(color: AppTheme.textGrey),
-          enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.blueGrey), borderRadius: BorderRadius.circular(22.0)),
+          enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.textGrey), borderRadius: BorderRadius.circular(22.0)),
           focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.primaryYellow), borderRadius: BorderRadius.circular(22.0)),
           errorBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.red), borderRadius: BorderRadius.circular(22.0)),
           focusedErrorBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.red, width: 2), borderRadius: BorderRadius.circular(22.0)),
@@ -766,9 +766,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         style: AppTextStyles.body1.copyWith(color: enabled ? Colors.white : Colors.grey),
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: enabled ? Colors.blueGrey : Colors.grey),
+          prefixIcon: Icon(icon, color: enabled ? AppTheme.textGrey : Colors.grey),
           labelStyle: AppTextStyles.body1.copyWith(color: enabled ? AppTheme.textGrey : Colors.grey),
-          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: enabled ? Colors.blueGrey : Colors.grey), borderRadius: BorderRadius.circular(22.0)),
+          enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: enabled ? AppTheme.textGrey : Colors.grey), borderRadius: BorderRadius.circular(22.0)),
           focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.primaryYellow), borderRadius: BorderRadius.circular(22.0)),
           disabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: Colors.grey), borderRadius: BorderRadius.circular(22.0)),
         ),

@@ -8,6 +8,7 @@ import 'package:eavzappl/widgets/profile_grid_item.dart';
 // --- END: STEP 1 ---
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:eavzappl/utils/app_theme.dart';
 
 class FavouriteSentScreen extends StatelessWidget {
   const FavouriteSentScreen({super.key});
@@ -19,8 +20,8 @@ class FavouriteSentScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Favourites', style: TextStyle(color: Colors.yellow[700])),
-        backgroundColor: Colors.black87,
+        title: Text('My Favourites', style: TextStyle(color: AppTheme.primaryYellow)),
+        backgroundColor: AppTheme.backgroundDark,
         automaticallyImplyLeading: false,
         centerTitle: true,
       ),
@@ -29,10 +30,10 @@ class FavouriteSentScreen extends StatelessWidget {
         final List<Person> favouriteProfiles = profileController.usersIHaveFavourited;
 
         if (favouriteProfiles.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
               "You haven't favorited anyone yet.",
-              style: TextStyle(fontSize: 18, color: Colors.blueGrey),
+              style: TextStyle(fontSize: 18, color: AppTheme.textGrey),
             ),
           );
         }

@@ -3,6 +3,7 @@ import 'package:eavzappl/widgets/custom_text_field_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:eavzappl/utils/app_theme.dart';
 
 class PhoneAuthScreen extends StatefulWidget {
   const PhoneAuthScreen({super.key});
@@ -83,10 +84,10 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         const SizedBox(height: 30),
         ElevatedButton(
           onPressed: _isLoading ? null : _sendCode,
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow[700]),
+          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryYellow),
           child: _isLoading
               ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.black))
-              : const Text("Send Code", style: TextStyle(color: Colors.black, fontSize: 18)),
+              : Text("Send Code", style: TextStyle(color: Colors.black, fontSize: 18)),
         ),
       ],
     );
@@ -111,10 +112,10 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         const SizedBox(height: 30),
         ElevatedButton(
           onPressed: _isLoading ? null : _verifyCode,
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow[700]),
+          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryYellow),
           child: _isLoading
               ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.black))
-              : const Text("Verify & Sign In", style: TextStyle(color: Colors.black, fontSize: 18)),
+              : Text("Verify & Sign In", style: TextStyle(color: Colors.black, fontSize: 18)),
         ),
         TextButton(
           onPressed: () {
@@ -122,7 +123,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
               _isCodeSent = false;
             });
           },
-          child: Text("Use a different number?", style: TextStyle(color: Colors.yellow[700])),
+          child: Text("Use a different number?", style: TextStyle(color: AppTheme.primaryYellow)),
         )
       ],
     );

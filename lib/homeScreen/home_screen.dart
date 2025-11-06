@@ -8,6 +8,7 @@ import '../tabScreens/like_sent_like_received_screen.dart';
 import '../tabScreens/swiping_screen.dart';
 import '../tabScreens/user_details_screen.dart';
 import '../tabScreens/view_received.dart';
+import 'package:eavzappl/utils/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -59,8 +60,8 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.black,
-        selectedItemColor: Colors.yellow[700],
-        unselectedItemColor: Colors.blueGrey,
+        selectedItemColor: AppTheme.primaryYellow,
+        unselectedItemColor: AppTheme.textGrey,
         currentIndex: _screenIndex,
         items: const [
           BottomNavigationBarItem(

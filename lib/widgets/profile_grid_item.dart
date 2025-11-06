@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eavzappl/tabScreens/user_details_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:eavzappl/utils/app_theme.dart';
 
 import '../models/person.dart';
 
@@ -47,19 +48,19 @@ class ProfileGridItem extends StatelessWidget {
                 fit: BoxFit.cover,
                 memCacheWidth: 400,
                 placeholder: (context, url) => Container(
-                  color: Colors.grey[800],
+                  color: Colors.transparent,
                   child: const Center(
                     child: CircularProgressIndicator(
-                      color: Colors.blueGrey,
+                      color: AppTheme.textGrey,
                       strokeWidth: 2.0,
                     ),
                   ),
                 ),
                 errorWidget: (context, url, error) => Container(
-                  color: Colors.grey[800],
+                  color: Colors.transparent,
                   child: const Icon(
                     Icons.broken_image,
-                    color: Colors.blueGrey,
+                    color: AppTheme.textGrey,
                     size: 40,
                   ),
                 ),
@@ -86,7 +87,7 @@ class ProfileGridItem extends StatelessWidget {
                     person.name ?? 'Unnamed',
                     // --- END OF FIX 3 ---
                     style: const TextStyle(
-                      color: Colors.blueGrey,
+                      color: AppTheme.textGrey,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),

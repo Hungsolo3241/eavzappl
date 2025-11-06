@@ -267,13 +267,13 @@ class _ProfileDetails extends StatelessWidget {
           },
           child: Text(
             person.name ?? 'N/A',
-            style: AppTextStyles.heading1.copyWith(color: AppTheme.textGrey, shadows: const [Shadow(color: Colors.black87, blurRadius: 1.0)]),
+            style: AppTextStyles.heading1.copyWith(color: AppTheme.textGrey, shadows: const [Shadow(color: AppTheme.backgroundDark, blurRadius: 1.0)]),
           ),
         ),
         const SizedBox(height: 4.0),
         Text(
           '${person.age ?? ''}${person.age != null && person.city?.isNotEmpty == true ? ' • ' : ''}${person.city ?? ''}',
-          style: AppTextStyles.body1.copyWith(color: AppTheme.primaryYellow, shadows: const [Shadow(color: Colors.black87, blurRadius: 1.0)]),
+          style: AppTextStyles.body1.copyWith(color: AppTheme.primaryYellow, shadows: const [Shadow(color: AppTheme.backgroundDark, blurRadius: 1.0)]),
         ),
         const SizedBox(height: 16.0),
         Wrap(
@@ -359,7 +359,7 @@ class _ActionButtons extends StatelessWidget {
             tooltip: canMessage ? 'Message' : 'Message (Requires Mutual Like)',
             iconSize: 75,
             activeColor: AppTheme.primaryYellow,
-            inactiveColor: Colors.blueGrey.withOpacity(0.5),
+            inactiveColor: AppTheme.textGrey.withOpacity(0.5),
           );
         }),
         Obx(() {
@@ -389,7 +389,7 @@ class _ActionButtons extends StatelessWidget {
         String tooltip = '',
         double iconSize = 40,
         Color? activeColor,
-        Color? inactiveColor = Colors.blueGrey,
+        Color? inactiveColor = AppTheme.textGrey,
         LikeStatus? likeStatus}) {
     if (isLoading) {
       return SizedBox(
@@ -416,7 +416,7 @@ class _ActionButtons extends StatelessWidget {
         case LikeStatus.none:
         default:
           iconAsset = ImageConstants.likeDefault;
-          iconColor = Colors.blueGrey;
+          iconColor = AppTheme.textGrey;
           break;
       }
     } else {
