@@ -220,6 +220,69 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
                     const SizedBox(height: 10),
 
+                    //Orientation Dropdown
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width - 40,
+                      child: DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          prefixIcon: Icon(Icons.swap_horiz_outlined, color: _isOrientationFinalized ? Colors.grey[700] : Colors.grey),
+                          hintText: "Orientation",
+                          hintStyle: TextStyle(color: _isOrientationFinalized ? Colors.grey[700] : Colors.grey, fontSize: 16),
+                          helperText: _isOrientationFinalized ? "Orientation selected and locked." : "Select carefully, this will be locked and cannot be changed later.",
+                          helperStyle: TextStyle(color: _isOrientationFinalized ? Colors.green : AppTheme.textGrey, fontSize: 12),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(22.0)),
+                            borderSide: BorderSide(
+                              color: _isOrientationFinalized ? Colors.grey[700]! : Colors.grey,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(22.0)),
+                            borderSide: BorderSide(
+                              color: _isOrientationFinalized ? Colors.grey[700]! : Colors.grey,
+                            ),
+                          ),
+                          disabledBorder: OutlineInputBorder( // Added for disabled state
+                            borderRadius: BorderRadius.all(Radius.circular(22.0)),
+                            borderSide: BorderSide(
+                              color: Colors.grey[700]!,
+                            ),
+                          ),
+                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                        ),
+                        value: selectedOrientation,
+                        isExpanded: true,
+                        icon: Icon(Icons.arrow_drop_down, color: _isOrientationFinalized ? Colors.grey[700] : Colors.grey),
+                        dropdownColor: Colors.black,
+                        style: TextStyle(color: _isOrientationFinalized ? Colors.grey[700] : Colors.white, fontSize: 16),
+                        items: orientationOptions.map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        onChanged: _isOrientationFinalized
+                            ? null
+                            : (String? newValue) {
+                          setState(() {
+                            selectedOrientation = newValue;
+                            if (newValue != null) { // usernameController is always non-null
+                              String prefix = "$newValue ○ ";
+                              String currentUsername = usernameController.text;
+                              if (currentUsername.startsWith("Adam ○") || currentUsername.startsWith("Eve ○")) {
+                                currentUsername = currentUsername.substring(currentUsername.indexOf("○") + 1);
+                              }
+                              usernameController.text = prefix + currentUsername;
+                            }
+                          });
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(
+                      height: 20,
+                    ),
+
                     // email
                     SizedBox(
                       width: MediaQuery.of(context).size.width - 40,
@@ -411,69 +474,6 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         onChanged: (String? newValue) {
                           setState(() {
                             selectedRelationshipStatus = newValue;
-                          });
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(
-                      height: 20,
-                    ),
-
-                    //Orientation Dropdown
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width - 40,
-                      child: DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.swap_horiz_outlined, color: _isOrientationFinalized ? Colors.grey[700] : Colors.grey),
-                          hintText: "Orientation",
-                          hintStyle: TextStyle(color: _isOrientationFinalized ? Colors.grey[700] : Colors.grey, fontSize: 16),
-                          helperText: _isOrientationFinalized ? "Orientation selected and locked." : "Select carefully, this will be locked and cannot be changed later.",
-                          helperStyle: TextStyle(color: _isOrientationFinalized ? Colors.green : AppTheme.textGrey, fontSize: 12),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                            borderSide: BorderSide(
-                              color: _isOrientationFinalized ? Colors.grey[700]! : Colors.grey,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                            borderSide: BorderSide(
-                              color: _isOrientationFinalized ? Colors.grey[700]! : Colors.grey,
-                            ),
-                          ),
-                          disabledBorder: OutlineInputBorder( // Added for disabled state
-                            borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                            borderSide: BorderSide(
-                              color: Colors.grey[700]!,
-                            ),
-                          ),
-                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-                        ),
-                        value: selectedOrientation,
-                        isExpanded: true,
-                        icon: Icon(Icons.arrow_drop_down, color: _isOrientationFinalized ? Colors.grey[700] : Colors.grey),
-                        dropdownColor: Colors.black,
-                        style: TextStyle(color: _isOrientationFinalized ? Colors.grey[700] : Colors.white, fontSize: 16),
-                        items: orientationOptions.map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
-                        onChanged: _isOrientationFinalized
-                            ? null
-                            : (String? newValue) {
-                          setState(() {
-                            selectedOrientation = newValue;
-                            if (newValue != null) { // usernameController is always non-null
-                              String prefix = "$newValue ○ ";
-                              String currentUsername = usernameController.text;
-                              if (currentUsername.startsWith("Adam ○") || currentUsername.startsWith("Eve ○")) {
-                                currentUsername = currentUsername.substring(currentUsername.indexOf("○") + 1);
-                              }
-                              usernameController.text = prefix + currentUsername;
-                            }
                           });
                         },
                       ),
