@@ -18,6 +18,7 @@ import 'package:eavzappl/utils/app_constants.dart';
 import 'package:eavzappl/pushNotifications/push_notifications.dart';
 import 'package:eavzappl/models/push_notification_payload.dart';
 import 'package:eavzappl/utils/app_theme.dart';
+import 'package:eavzappl/services/image_compression_service.dart';
 
 
 class EditProfileScreen extends StatefulWidget {
@@ -76,6 +77,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   File? _pickedMainProfileImageFile;
   String? _currentMainProfileImageUrl;
 
+  // ✅ Upload progress tracking
+  final Map<int, double> _uploadProgress = {};
+  bool _isUploadingImages = false;
+  int _uploadedCount = 0;
+  int _totalToUpload = 0;
+
+  // ✅ Compression service and progress tracking
+  final ImageCompressionService _compressionService = ImageCompressionService();
+  final Map<int, double> _compressionProgress = {};
+  bool _isCompressing = false;
+
   // --- Placeholders ---
   final String evePlaceholderUrl = 'https://firebasestorage.googleapis.com/v0/b/eavzappl-32891.firebasestorage.app/o/placeholder%2Feves_avatar.jpeg?alt=media&token=75b9c3f5-72c1-42db-be5c-471cc0d88c05';
   final String adamPlaceholderUrl = 'https://firebasestorage.googleapis.com/v0/b/eavzappl-32891.firebasestorage.app/o/placeholder%2Fadam_avatar.jpeg?alt=media&token=997423ec-96a4-42d6-aea8-c8cb80640ca0';
@@ -100,6 +112,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   void dispose() {
+    // Clean up temporary compressed files
+    _compressionService.cleanupTempFiles();
+    
     _nameController.dispose();
     _ageController.dispose();
     _phoneController.dispose();
@@ -185,133 +200,385 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
 
-  // --- REFACTORED AND CLEANED _saveProfileChanges ---
+  // ============================================================================
+  // ✅ IMPROVED: Save with Progress Tracking
+  // ============================================================================
   Future<void> _saveProfileChanges() async {
     if (!_formKey.currentState!.validate()) {
-      Get.snackbar("Input Error", "Please correct the errors in the form.", colorText: Colors.white, backgroundColor: Colors.orange);
+      Get.snackbar("Input Error", "Please correct the errors in the form.", 
+        colorText: Colors.white, backgroundColor: Colors.orange);
       return;
     }
     if (_currentUserData?.uid == null) {
-      Get.snackbar("Error", "User data not loaded.", colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar("Error", "User data not loaded.", 
+        colorText: Colors.white, backgroundColor: Colors.red);
       return;
     }
-    setState(() { _isLoading = true; });
+
+    setState(() { 
+      _isLoading = true;
+      _isUploadingImages = true;
+      _uploadedCount = 0;
+      _uploadProgress.clear();
+    });
 
     try {
-      // 1. Handle Image Uploads
+      // 1. Upload main profile photo (if changed)
       String? finalMainProfilePicUrl = _currentMainProfileImageUrl;
       if (_pickedMainProfileImageFile != null) {
-        finalMainProfilePicUrl = await _uploadMainProfileFileToFirebaseStorage(_pickedMainProfileImageFile!, _currentUserData!.uid!);
+        finalMainProfilePicUrl = await _uploadMainProfileFileToFirebaseStorage(
+          _pickedMainProfileImageFile!, 
+          _currentUserData!.uid!
+        );
       }
 
-      List<String?> finalImageUrls = List.from(_imageUrls);
-      for (int i = 0; i < _pickedImages.length; i++) {
-        if (_pickedImages[i] != null) {
-          String? url = await _uploadGalleryFileToFirebaseStorage(_pickedImages[i]!, _currentUserData!.uid!, i);
-          if (url != null) { finalImageUrls[i] = url; }
-        }
-      }
+      // 2. Count how many gallery images need uploading
+      _totalToUpload = _pickedImages.where((img) => img != null).length;
+      
+      // 3. Upload gallery images with progress tracking
+      List<String?> finalImageUrls = await _uploadGalleryImagesWithProgress(
+        _currentUserData!.uid!
+      );
 
-      // 2. Prepare Data for Firestore
-      String finalProfession;
-      final isEve = _currentUserData?.orientation?.toLowerCase() == 'eve';
+      // 4. Build update data
+      String finalProfession = _buildProfessionString();
+      Map<String, dynamic> dataToUpdate = _buildUpdateData(
+        finalMainProfilePicUrl, 
+        finalImageUrls, 
+        finalProfession
+      );
 
-      if (isEve) {
-        if (_mainProfessionCategory == "Professional") {
-          finalProfession = _professionController.text.trim();
-        } else {
-          finalProfession = _mainProfessionCategory ?? ""; // Saves "Student" or "Freelancer"
-        }
-      } else {
-        finalProfession = _professionController.text.trim();
-      }
+      // 5. Save to Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_currentUserData!.uid)
+          .update(dataToUpdate);
 
-
-      // 3. Build the Data Map
-      Map<String, dynamic> dataToUpdate = {
-        'name': _nameController.text.trim(),
-        'age': int.tryParse(_ageController.text.trim()),
-        'phoneNumber': _phoneController.text.trim(),
-        'country': _selectedCountry,
-        'province': _selectedProvince,
-        'city': _selectedCity,
-        'relationshipStatus': _selectedRelationshipStatus,
-        'ethnicity': _selectedEthnicity,
-        'profession': finalProfession,
-        'profilePhoto': finalMainProfilePicUrl,
-
-        // Lifestyle
-        'drinkSelection': _drinkSelection,
-        'smokeSelection': _smokeSelection,
-        'meatSelection': _meatSelection,
-        'greekSelection': _greekSelection,
-        'hostSelection': _hostSelection,
-        'travelSelection': _travelSelection,
-        'income': _selectedIncome,
-
-        // Eve-Specific
-        'professionalVenues': isEve && _mainProfessionCategory == "Professional"
-            ? _selectedProfessionalVenues.entries.where((e) => e.value).map((e) => e.key).toList()
-            : [],
-        'otherProfessionalVenue': isEve && _mainProfessionCategory == "Professional" && _professionalVenueOtherSelected
-            ? _professionalVenueOtherNameController.text.trim()
-            : null,
-
-        // Gallery Images
-        'urlImage1': finalImageUrls.length > 0 ? finalImageUrls[0] : null,
-        'urlImage2': finalImageUrls.length > 1 ? finalImageUrls[1] : null,
-        'urlImage3': finalImageUrls.length > 2 ? finalImageUrls[2] : null,
-        'urlImage4': finalImageUrls.length > 3 ? finalImageUrls[3] : null,
-        'urlImage5': finalImageUrls.length > 4 ? finalImageUrls[4] : null,
-      };
-
-      // 4. Update Firestore and State
-      await FirebaseFirestore.instance.collection('users').doc(_currentUserData!.uid).update(dataToUpdate);
-
+      // 6. Update local state
       setState(() {
         _currentMainProfileImageUrl = finalMainProfilePicUrl;
         _pickedMainProfileImageFile = null;
         _imageUrls = List.from(finalImageUrls);
         _pickedImages = List.filled(5, null);
+        _uploadProgress.clear();
       });
 
-      Get.snackbar("Success", "Profile updated successfully!", colorText: Colors.white, backgroundColor: Colors.green);
+      Get.snackbar("Success", "Profile updated successfully!", 
+        colorText: Colors.white, backgroundColor: Colors.green);
+      
       if (mounted) Get.back(result: true);
 
     } catch (e) {
-      Get.snackbar("Save Error", "Failed to update profile: ${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar("Save Error", "Failed to update profile: ${e.toString()}", 
+        colorText: Colors.white, backgroundColor: Colors.red);
     } finally {
-      if (mounted) setState(() { _isLoading = false; });
+      if (mounted) {
+        setState(() { 
+          _isLoading = false;
+          _isUploadingImages = false;
+          _uploadProgress.clear();
+        });
+      }
     }
   }
 
-  Future<String?> _uploadMainProfileFileToFirebaseStorage(File file, String userId) async {
+  // ============================================================================
+  // ✅ IMPROVED: Main Profile Upload with Compression
+  // ============================================================================
+  Future<String?> _uploadMainProfileFileToFirebaseStorage(
+    File file, 
+    String userId
+  ) async {
     try {
-      String fileName = 'main_profile_pic_${DateTime.now().millisecondsSinceEpoch}${path.extension(file.path)}';
-      Reference ref = FirebaseStorage.instance.ref().child('main_profile_pictures/$userId/$fileName');
-      TaskSnapshot task = await ref.putFile(file);
+      // ✅ Compress before upload
+      final compressedFile = await _compressionService.compressImage(
+        file,
+        ImageType.profilePhoto,
+      );
+      
+      String fileName = 'main_profile_pic_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      Reference ref = FirebaseStorage.instance
+          .ref()
+          .child('main_profile_pictures/$userId/$fileName');
+      
+      TaskSnapshot task = await ref.putFile(compressedFile);
       return await task.ref.getDownloadURL();
     } catch (e) {
-      Get.snackbar("Upload Error", "Failed to upload main profile picture: ${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar(
+        "Upload Error", 
+        "Failed to upload main profile picture: ${e.toString()}", 
+        colorText: Colors.white, 
+        backgroundColor: Colors.red
+      );
       return null;
     }
   }
 
+  // ============================================================================
+  // ✅ NEW: Upload Gallery Images with Progress Tracking
+  // ============================================================================
+  Future<List<String?>> _uploadGalleryImagesWithProgress(String userId) async {
+    List<String?> finalImageUrls = List.from(_imageUrls);
+    
+    // Create list of upload futures
+    List<Future<void>> uploadFutures = [];
+    
+    for (int i = 0; i < _pickedImages.length; i++) {
+      if (_pickedImages[i] != null) {
+        // Create individual upload task with progress tracking
+        uploadFutures.add(
+          _uploadSingleGalleryImage(i, userId, finalImageUrls)
+        );
+      }
+    }
+    
+    // ✅ PARALLEL UPLOADS: Wait for all uploads to complete
+    // This is MUCH faster than sequential uploads
+    await Future.wait(uploadFutures, eagerError: false);
+    
+    return finalImageUrls;
+  }
+
+  // ============================================================================
+  // ✅ IMPROVED: Upload Single Image with Retry Logic and Auto-Save
+  // Note: Images are already compressed in _pickGalleryImage()
+  // ============================================================================
+  Future<void> _uploadSingleGalleryImage(
+    int slotIndex, 
+    String userId, 
+    List<String?> finalImageUrls, {
+    int retries = 3,
+  }) async {
+    int attempt = 0;
+    
+    while (attempt < retries) {
+      try {
+        // Clear previous progress on retry
+        if (attempt > 0 && mounted) {
+          setState(() {
+            _uploadProgress[slotIndex] = 0.0;
+          });
+        }
+        
+        // ✅ VERIFY FILE EXISTS before attempting upload
+        final fileToUpload = _pickedImages[slotIndex];
+        if (fileToUpload == null) {
+          throw Exception('Image file not found. Please select the image again.');
+        }
+        
+        // ✅ Ensure we have an absolute path and file exists
+        final absolutePath = fileToUpload.absolute.path;
+        final file = File(absolutePath);
+        
+        if (!file.existsSync()) {
+          throw Exception('Image file was deleted. Please select the image again.');
+        }
+        
+        // ✅ Verify file is readable and has content
+        if (file.lengthSync() == 0) {
+          throw Exception('Image file is empty. Please select the image again.');
+        }
+        
+        String fileName = 'gallery_image_${slotIndex}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        Reference ref = FirebaseStorage.instance
+            .ref()
+            .child('gallery_images/$userId/$fileName');
+        
+        // ✅ CREATE UPLOAD TASK with progress monitoring (use absolute path file)
+        UploadTask uploadTask = ref.putFile(file);
+        
+        // ✅ MONITOR UPLOAD PROGRESS
+        uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+          double progress = snapshot.bytesTransferred / snapshot.totalBytes;
+          if (mounted) {
+            setState(() {
+              _uploadProgress[slotIndex] = progress;
+            });
+          }
+        });
+        
+        // ✅ WAIT FOR COMPLETION
+        TaskSnapshot taskSnapshot = await uploadTask;
+        String downloadUrl = await taskSnapshot.ref.getDownloadURL();
+        
+        // ✅ UPDATE URL immediately (don't wait for all to finish)
+        finalImageUrls[slotIndex] = downloadUrl;
+        
+        // ✅ AUTO-SAVE: Save to Firestore immediately after successful upload
+        try {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(userId)
+              .update({'urlImage${slotIndex + 1}': downloadUrl});
+        } catch (firestoreError) {
+          // Log Firestore error but don't fail the upload
+          print('Warning: Failed to save image URL to Firestore: $firestoreError');
+        }
+        
+        // ✅ INCREMENT COUNTER
+        if (mounted) {
+          setState(() {
+            _uploadedCount++;
+          });
+        }
+        
+        // ✅ SUCCESS - Exit retry loop
+        return;
+        
+      } catch (e) {
+        attempt++;
+        
+        // ✅ Check if error is due to missing file - don't retry in this case
+        final errorMessage = e.toString().toLowerCase();
+        if (errorMessage.contains('file') && 
+            (errorMessage.contains('not found') || 
+             errorMessage.contains('does not exist') ||
+             errorMessage.contains('existsSync'))) {
+          // File doesn't exist - don't retry, just fail immediately
+          if (mounted) {
+            setState(() {
+              _uploadProgress.remove(slotIndex);
+            });
+          }
+          
+          Get.snackbar(
+            "Upload Failed", 
+            "Image ${slotIndex + 1} file was deleted. Please select the image again.",
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 5),
+          );
+          
+          print('Error: Image file $slotIndex does not exist: $e');
+          return;
+        }
+        
+        if (attempt >= retries) {
+          // ✅ Final failure after all retries
+          if (mounted) {
+            setState(() {
+              _uploadProgress.remove(slotIndex);
+            });
+          }
+          
+          Get.snackbar(
+            "Upload Failed", 
+            "Image ${slotIndex + 1} failed after $retries attempts: ${e.toString()}",
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 5),
+          );
+          
+          // Don't rethrow - let other uploads continue
+          print('Error uploading image $slotIndex after $retries attempts: $e');
+          return;
+        }
+        
+        // ✅ Wait before retry (exponential backoff)
+        print('Retrying upload for image $slotIndex (attempt $attempt/$retries)...');
+        await Future.delayed(Duration(seconds: attempt * 2));
+      }
+    }
+  }
+
+  // ============================================================================
+  // ✅ DEPRECATED: Old method - keeping for reference
+  // ============================================================================
   Future<String?> _uploadGalleryFileToFirebaseStorage(File file, String userId, int slotIndex) async {
+    // This method is now replaced by _uploadSingleGalleryImage
+    // Keeping it here in case you need to revert
     try {
       String fileName = 'gallery_image_${slotIndex}_${DateTime.now().millisecondsSinceEpoch}${path.extension(file.path)}';
-      Reference ref = FirebaseStorage.instance.ref().child('gallery_images/$userId/$fileName');
+      Reference ref = FirebaseStorage.instance
+          .ref()
+          .child('gallery_images/$userId/$fileName');
+      
       TaskSnapshot task = await ref.putFile(file);
       return await task.ref.getDownloadURL();
     } catch (e) {
-      Get.snackbar("Upload Error", "Failed to upload gallery image $slotIndex: ${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar(
+        "Upload Error", 
+        "Failed to upload gallery image $slotIndex: ${e.toString()}", 
+        colorText: Colors.white, 
+        backgroundColor: Colors.red
+      );
       return null;
     }
   }
 
+  // ============================================================================
+  // ✅ NEW: Build profession string (extracted for clarity)
+  // ============================================================================
+  String _buildProfessionString() {
+    final isEve = _currentUserData?.orientation?.toLowerCase() == 'eve';
+    
+    if (isEve) {
+      if (_mainProfessionCategory == "Professional") {
+        return _professionController.text.trim();
+      } else {
+        return _mainProfessionCategory ?? "";
+      }
+    } else {
+      return _professionController.text.trim();
+    }
+  }
+
+  // ============================================================================
+  // ✅ NEW: Build update data map (extracted for clarity)
+  // ============================================================================
+  Map<String, dynamic> _buildUpdateData(
+    String? mainProfileUrl,
+    List<String?> imageUrls,
+    String profession,
+  ) {
+    final isEve = _currentUserData?.orientation?.toLowerCase() == 'eve';
+    
+    return {
+      'name': _nameController.text.trim(),
+      'age': int.tryParse(_ageController.text.trim()),
+      'phoneNumber': _phoneController.text.trim(),
+      'country': _selectedCountry,
+      'province': _selectedProvince,
+      'city': _selectedCity,
+      'relationshipStatus': _selectedRelationshipStatus,
+      'ethnicity': _selectedEthnicity,
+      'profession': profession,
+      'profilePhoto': mainProfileUrl,
+      'drinkSelection': _drinkSelection,
+      'smokeSelection': _smokeSelection,
+      'meatSelection': _meatSelection,
+      'greekSelection': _greekSelection,
+      'hostSelection': _hostSelection,
+      'travelSelection': _travelSelection,
+      'income': _selectedIncome,
+      'professionalVenues': isEve && _mainProfessionCategory == "Professional"
+          ? _selectedProfessionalVenues.entries
+              .where((e) => e.value)
+              .map((e) => e.key)
+              .toList()
+          : [],
+      'otherProfessionalVenue': isEve && 
+          _mainProfessionCategory == "Professional" && 
+          _professionalVenueOtherSelected
+          ? _professionalVenueOtherNameController.text.trim()
+          : null,
+      'urlImage1': imageUrls.length > 0 ? imageUrls[0] : null,
+      'urlImage2': imageUrls.length > 1 ? imageUrls[1] : null,
+      'urlImage3': imageUrls.length > 2 ? imageUrls[2] : null,
+      'urlImage4': imageUrls.length > 3 ? imageUrls[3] : null,
+      'urlImage5': imageUrls.length > 4 ? imageUrls[4] : null,
+    };
+  }
+
+  // ============================================================================
+  // ✅ IMPROVED: Pick Main Profile Image (compression happens on upload)
+  // ============================================================================
   Future<void> _pickMainProfileImage() async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery, 
+        imageQuality: 100, // ✅ Pick at full quality, compress on upload
+      );
       if (pickedFile != null) {
         setState(() { _pickedMainProfileImageFile = File(pickedFile.path); });
       }
@@ -320,24 +587,97 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  // ============================================================================
+  // ✅ IMPROVED: Pick Gallery Image with Compression Service
+  // ============================================================================
   Future<void> _pickGalleryImage(int slotIndex, ImageSource source) async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(source: source, imageQuality: 80);
-      if (pickedFile != null) {
-        CroppedFile? croppedFile = await ImageCropper().cropImage(
-          sourcePath: pickedFile.path,
-          aspectRatio: const CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
-          compressQuality: 70, maxWidth: 600, maxHeight: 600,
-          uiSettings: [
-            AndroidUiSettings(toolbarTitle: 'Crop Image', toolbarColor: Colors.black54, toolbarWidgetColor: AppTheme.textGrey, initAspectRatio: CropAspectRatioPreset.square, lockAspectRatio: true),
-            IOSUiSettings(title: 'Crop Image', aspectRatioLockEnabled: true, resetAspectRatioEnabled: false, aspectRatioPickerButtonHidden: true, doneButtonTitle: "Crop", cancelButtonTitle: "Cancel"),
-          ],);
-        if (croppedFile != null) {
-          setState(() { _pickedImages[slotIndex] = File(croppedFile.path); });
-        }
+      // 1. Pick image at full quality (compression happens later)
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source, 
+        imageQuality: 100, // ✅ Pick at full quality, compress later
+      );
+      
+      if (pickedFile == null) return;
+      
+      // 2. Crop the image first (at full quality)
+      CroppedFile? croppedFile = await ImageCropper().cropImage(
+        sourcePath: pickedFile.path,
+        aspectRatio: const CropAspectRatio(ratioX: 1.0, ratioY: 1.0),
+        compressQuality: 100, // ✅ Don't compress during crop
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Crop Image', 
+            toolbarColor: Colors.black54, 
+            toolbarWidgetColor: AppTheme.textGrey, 
+            initAspectRatio: CropAspectRatioPreset.square, 
+            lockAspectRatio: true
+          ),
+          IOSUiSettings(
+            title: 'Crop Image', 
+            aspectRatioLockEnabled: true, 
+            resetAspectRatioEnabled: false, 
+            aspectRatioPickerButtonHidden: true, 
+            doneButtonTitle: "Crop", 
+            cancelButtonTitle: "Cancel"
+          ),
+        ],
+      );
+      
+      if (croppedFile == null) return;
+      
+      // 3. Show compression in progress
+      setState(() {
+        _isCompressing = true;
+        _compressionProgress[slotIndex] = 0.0;
+      });
+      
+      // 4. Compress the cropped image using compression service
+      final File compressedFile = await _compressionService.compressImage(
+        File(croppedFile.path),
+        ImageType.galleryImage,
+        onProgress: (progress) {
+          if (mounted) {
+            setState(() {
+              _compressionProgress[slotIndex] = progress;
+            });
+          }
+        },
+      );
+      
+      // ✅ Verify compressed file exists and is valid
+      if (!compressedFile.existsSync() || compressedFile.lengthSync() == 0) {
+        throw Exception('Compressed image file is invalid or was deleted.');
       }
+      
+      // 5. Update state with compressed image (ensure absolute path)
+      setState(() {
+        _pickedImages[slotIndex] = File(compressedFile.absolute.path);
+        _isCompressing = false;
+        _compressionProgress.remove(slotIndex);
+      });
+      
+      // 6. Show success message
+      Get.snackbar(
+        "Image Ready",
+        "Image ${slotIndex + 1} optimized and ready to upload",
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+      
     } catch (e) {
-      Get.snackbar("Image Error", "Failed to pick or crop image: ${e.toString()}", colorText: Colors.white, backgroundColor: Colors.red);
+      Get.snackbar(
+        "Image Error", 
+        "Failed to process image: ${e.toString()}", 
+        colorText: Colors.white, 
+        backgroundColor: Colors.red
+      );
+      
+      setState(() {
+        _isCompressing = false;
+        _compressionProgress.remove(slotIndex);
+      });
     }
   }
 
@@ -351,53 +691,217 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
 
+  // ============================================================================
+  // ✅ IMPROVED: Gallery Image Slot with Compression and Upload Progress
+  // ============================================================================
   Widget _buildGalleryImageSlot(int index) {
+    final bool hasPickedImage = _pickedImages[index] != null;
+    final bool hasExistingUrl = _imageUrls.length > index && 
+                                 _imageUrls[index] != null && 
+                                 _imageUrls[index]!.isNotEmpty;
+    final bool isCompressing = _compressionProgress.containsKey(index);
+    final bool isUploading = _uploadProgress.containsKey(index);
+    final double compressionProgress = _compressionProgress[index] ?? 0.0;
+    final double uploadProgress = _uploadProgress[index] ?? 0.0;
+
     Widget imageWidget;
-    // This logic correctly displays either a picked file, a network URL, or a placeholder.
-    if (_pickedImages[index] != null) {
-      imageWidget = Image.file(_pickedImages[index]!, fit: BoxFit.cover, width: 100, height: 100);
-    } else if (_imageUrls.length > index && _imageUrls[index] != null && _imageUrls[index]!.isNotEmpty) {
+
+    if (hasPickedImage) {
+      // Show picked image from file
+      imageWidget = Image.file(
+        _pickedImages[index]!, 
+        fit: BoxFit.cover, 
+        width: 100, 
+        height: 100
+      );
+    } else if (hasExistingUrl) {
+      // Show existing network image
       imageWidget = CachedNetworkImage(
         imageUrl: _imageUrls[index]!,
         fit: BoxFit.cover,
         width: 100,
         height: 100,
         placeholder: (context, url) => Container(
-          width: 100, height: 100,
+          width: 100,
+          height: 100,
           color: Colors.transparent,
-          child: const Center(child: CircularProgressIndicator(strokeWidth: 2.0, color: AppTheme.textGrey)),
+          child: const Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 2.0, 
+              color: AppTheme.textGrey
+            )
+          ),
         ),
         errorWidget: (context, url, error) => Container(
-            width: 100, height: 100,
-            color: Colors.transparent,
-            child: const Icon(Icons.broken_image, size: 50, color: Colors.redAccent)
+          width: 100,
+          height: 100,
+          color: Colors.transparent,
+          child: const Icon(Icons.broken_image, size: 50, color: Colors.redAccent),
         ),
       );
     } else {
+      // Show placeholder
       final bool isEve = _currentUserData?.orientation?.toLowerCase() == 'eve';
-      final IconData placeholderIcon = isEve ? Icons.female : Icons.male;
+      final String placeholderUrl = isEve 
+          ? evePlaceholderUrl
+          : adamPlaceholderUrl;
 
       imageWidget = CachedNetworkImage(
-        imageUrl: isEve ? evePlaceholderUrl : adamPlaceholderUrl,
+        imageUrl: placeholderUrl,
         fit: BoxFit.cover,
         width: 100,
         height: 100,
         placeholder: (context, url) => Container(
-          width: 100, height: 100,
+          width: 100,
+          height: 100,
           color: Colors.transparent,
-          child: const Center(child: CircularProgressIndicator(strokeWidth: 2.0, color: AppTheme.textGrey)),
+          child: const Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 2.0, 
+              color: AppTheme.textGrey
+            )
+          ),
         ),
         errorWidget: (context, url, error) => Container(
-            width: 100, height: 100,
-            color: Colors.transparent,
-            child: const Icon(Icons.broken_image, size: 50, color: Colors.redAccent)
+          width: 100,
+          height: 100,
+          color: Colors.transparent,
+          child: const Icon(Icons.broken_image, size: 50, color: Colors.redAccent),
         ),
       );
     }
 
     return GestureDetector(
-      onTap: () => _showGalleryImageSourceActionSheet(index),
-      child: ClipRRect(borderRadius: BorderRadius.circular(12.0), child: imageWidget),
+      onTap: (_isCompressing || _isUploadingImages) 
+          ? null 
+          : () => _showGalleryImageSourceActionSheet(index),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12.0),
+            child: imageWidget,
+          ),
+          
+          // ✅ SHOW COMPRESSION PROGRESS OVERLAY
+          if (isCompressing)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.compress,
+                          color: AppTheme.primaryYellow,
+                          size: 20,
+                        ),
+                        const SizedBox(height: 4),
+                        SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: CircularProgressIndicator(
+                            value: compressionProgress,
+                            strokeWidth: 2.5,
+                            valueColor: const AlwaysStoppedAnimation(AppTheme.primaryYellow),
+                            backgroundColor: Colors.white24,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Optimizing\n${(compressionProgress * 100).toInt()}%',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            height: 1.1,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          
+          // ✅ SHOW UPLOAD PROGRESS OVERLAY
+          if (isUploading && !isCompressing)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.cloud_upload,
+                          color: AppTheme.primaryYellow,
+                          size: 20,
+                        ),
+                        const SizedBox(height: 4),
+                        SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: CircularProgressIndicator(
+                            value: uploadProgress,
+                            strokeWidth: 2.5,
+                            valueColor: const AlwaysStoppedAnimation(AppTheme.primaryYellow),
+                            backgroundColor: Colors.white24,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Uploading\n${(uploadProgress * 100).toInt()}%',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            height: 1.1,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          
+          // ✅ SHOW SUCCESS CHECKMARK
+          if (_uploadedCount > 0 && !isUploading && !isCompressing && hasPickedImage)
+            Positioned(
+              top: 4,
+              right: 4,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
