@@ -246,7 +246,7 @@ class AuthenticationController extends GetxController {
       credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: email.trim(), password: password.trim());
       String? downloadUrl;
       if (profileImageFile != null) {
-        downloadUrl = await uploadProfilePhoto(profileImageFile);
+        downloadUrl = await uploadProfilePhoto(profileImageFile, credential.user!.uid);
       }
       personModel.Person personInstance = personModel.Person(
         uid: credential.user!.uid, email: email.trim(), name: userData['name'] ?? '',
@@ -307,9 +307,9 @@ class AuthenticationController extends GetxController {
     }
   }
 
-  Future<String> uploadProfilePhoto(File profilePhoto) async {
+  Future<String> uploadProfilePhoto(File profilePhoto, String uid) async {
     File compressedPhoto = await _compressImage(profilePhoto.path);
-    Reference referenceStorage = FirebaseStorage.instance.ref().child("profilePhotos/${FirebaseAuth.instance.currentUser!.uid}");
+    Reference referenceStorage = FirebaseStorage.instance.ref().child("profilePhotos/$uid");
     UploadTask uploadTask = referenceStorage.putFile(compressedPhoto);
     TaskSnapshot taskSnapshot = await uploadTask;
     String downloadUrl = await taskSnapshot.ref.getDownloadURL();
