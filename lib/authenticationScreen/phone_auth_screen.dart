@@ -5,9 +5,10 @@ import 'package:get/get.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:eavzappl/utils/app_theme.dart';
 
+
 class PhoneAuthScreen extends StatefulWidget {
   const PhoneAuthScreen({super.key});
-
+ 
   @override
   State<PhoneAuthScreen> createState() => _PhoneAuthScreenState();
 }
@@ -23,7 +24,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   void _sendCode() {
     if (_fullPhoneNumber.isEmpty) {
       Get.snackbar("Input Error", "Please enter a valid phone number.",
-          backgroundColor: Colors.redAccent, colorText: Colors.white);
+          backgroundColor: Colors.redAccent, colorText: AppTheme.textLight);
       return;
     }
     setState(() {
@@ -44,7 +45,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   void _verifyCode() async {
     if (_smsCodeController.text.trim().isEmpty) {
       Get.snackbar("Input Error", "Please enter the code you received.",
-          backgroundColor: Colors.redAccent, colorText: Colors.white);
+          backgroundColor: Colors.redAccent, colorText: AppTheme.textLight);
       return;
     }
     setState(() {
@@ -65,10 +66,11 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text("Enter Your Phone Number", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+        const Text("Enter Your Phone Number", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textLight)),
         const SizedBox(height: 30),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        SizedBox(
+          width: MediaQuery.of(context).size.width - 40,
+          height: 45,
           child: IntlPhoneField(
             decoration: const InputDecoration(
               labelText: 'Phone Number',
@@ -82,12 +84,16 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           ),
         ),
         const SizedBox(height: 30),
-        ElevatedButton(
-          onPressed: _isLoading ? null : _sendCode,
-          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryYellow),
-          child: _isLoading
-              ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.black))
-              : Text("Send Code", style: TextStyle(color: Colors.black, fontSize: 18)),
+        SizedBox(
+          width: MediaQuery.of(context).size.width - 40,
+          height: 35,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _sendCode,
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryYellow),
+            child: _isLoading
+                ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(AppTheme.backgroundDark))
+                : const Text("Send Code", style: TextStyle(color: AppTheme.backgroundDark, fontSize: 18)),
+          ),
         ),
       ],
     );
@@ -97,10 +103,11 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text("Enter Code Sent to $_fullPhoneNumber", textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, color: Colors.white)),
+        Text("Enter Code Sent to $_fullPhoneNumber", textAlign: TextAlign.center, style: const TextStyle(fontSize: 20, color: AppTheme.textLight)),
         const SizedBox(height: 30),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40.0),
+        SizedBox(
+          width: MediaQuery.of(context).size.width - 40,
+          height: 45,
           child: CustomTextFieldWidget(
             editingController: _smsCodeController,
             labelText: "6-Digit Code",
@@ -110,12 +117,16 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           ),
         ),
         const SizedBox(height: 30),
-        ElevatedButton(
-          onPressed: _isLoading ? null : _verifyCode,
-          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryYellow),
-          child: _isLoading
-              ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.black))
-              : Text("Verify & Sign In", style: TextStyle(color: Colors.black, fontSize: 18)),
+        SizedBox(
+          width: MediaQuery.of(context).size.width - 40,
+          height: 35,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _verifyCode,
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryYellow),
+            child: _isLoading
+                ? const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(AppTheme.backgroundDark))
+                : const Text("Verify & Sign In", style: TextStyle(color: AppTheme.backgroundDark, fontSize: 18)),
+          ),
         ),
         TextButton(
           onPressed: () {
@@ -134,7 +145,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Sign in with Phone"),
-        backgroundColor: Colors.black,
+        backgroundColor: AppTheme.backgroundDark,
       ),
       body: Center(
         child: SingleChildScrollView(

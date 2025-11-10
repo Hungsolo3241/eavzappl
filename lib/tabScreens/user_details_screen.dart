@@ -77,7 +77,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
 
           return Scaffold(
             appBar: AppBar(
-              backgroundColor: Colors.black.withOpacity(0.5),
+              backgroundColor: AppTheme.backgroundDark,
               foregroundColor: AppTheme.primaryYellow,
               title: Text(isCurrentUserProfile ? "My Profile" : (person.name ?? "User Profile")),
               centerTitle: true,
@@ -99,19 +99,18 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
-                          backgroundColor: Colors.black.withOpacity(0.5),
-    
-                          content: const Text('Are you sure you want to log out?', style: TextStyle(color: AppTheme.textLight)),
+                          backgroundColor: AppTheme.backgroundDark,
+                          content: const Text('Are you sure you want to log out?', style: TextStyle(color: AppTheme.textGrey)),
                           actions: <Widget>[
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(false),
-                              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                              child: const Text('Cancel', style: TextStyle(color: AppTheme.textGrey)),
                             ),
                             TextButton(
                               onPressed: () {
                                 Navigator.of(context).pop(true);
                               },
-                              child: const Text('Log Out', style: TextStyle(color: Colors.redAccent)),
+                              child: const Text('Logout', style: TextStyle(color: AppTheme.primaryYellow)),
                             ),
                           ],
                         );
@@ -273,7 +272,7 @@ class _ProfileHeader extends StatelessWidget {
         const SizedBox(height: 16),
         CircleAvatar(
           radius: 70,
-          backgroundColor: Colors.transparent, // Dark background for the loader
+          backgroundColor: AppTheme.backgroundDark, // Dark background for the loader
           // Check if the URL from the database is valid
           child: (profilePhotoUrl != null && profilePhotoUrl.isNotEmpty)
               ? ClipOval(
@@ -316,7 +315,7 @@ class _ProfileHeader extends StatelessWidget {
               shadows: [
                 const Shadow(
                     blurRadius: 2.0,
-                    color: Colors.black54,
+                    color: AppTheme.backgroundDark,
                     offset: Offset(1, 1))
               ],
             ),
@@ -407,7 +406,7 @@ class _ImageCarouselState extends State<_ImageCarousel> {
       margin: const EdgeInsets.symmetric(horizontal: 16.0),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: Colors.black12,
+        color: AppTheme.backgroundDark,
         borderRadius: BorderRadius.circular(12.0),
       ),
       child: PageView.builder(
@@ -473,6 +472,7 @@ class _ActionButtons extends StatelessWidget {
                   : () => Get.snackbar(
                 "Message Unavailable",
                 "You can only message users after a mutual like.",
+                colorText: AppTheme.textLight,
               ),
               inactiveIconAsset: 'images/default_whatsapp.png',
               isActive: canMessage,
@@ -554,17 +554,17 @@ class _ActionButtons extends StatelessWidget {
 
   Future<void> _launchWhatsApp(String? phoneNumber) async {
     if (phoneNumber?.isNotEmpty != true) {
-      Get.snackbar("Message Error", "User's phone number is not available.");
+      Get.snackbar("Message Error", "User's phone number is not available.", colorText: AppTheme.textLight);
       return;
     }
     final Uri whatsappUri = Uri.parse("https://wa.me/$phoneNumber");
     try {
       if (!await launchUrl(whatsappUri, mode: LaunchMode.externalApplication)) {
-        Get.snackbar("WhatsApp Error", "Could not open WhatsApp.");
+        Get.snackbar("WhatsApp Error", "Could not open WhatsApp.", colorText: AppTheme.textLight);
       }
     } catch (e) {
       log('WhatsApp Launch Error', name: 'UserDetailsScreen', error: e);
-      Get.snackbar("WhatsApp Error", "An error occurred trying to open WhatsApp.");
+      Get.snackbar("WhatsApp Error", "An error occurred trying to open WhatsApp.", colorText: AppTheme.textLight);
     }
   }
 }
@@ -593,7 +593,7 @@ class _SocialLinks extends StatelessWidget {
   Future<void> _launchUrlFromString(String urlString) async {
     final Uri url = Uri.parse(urlString);
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      Get.snackbar('Error', 'Could not launch $urlString');
+      Get.snackbar('Error', 'Could not launch $urlString', colorText: AppTheme.textLight);
     }
   }
 }
@@ -651,7 +651,7 @@ class _DetailSection extends StatelessWidget {
                   child: Text(
                     isBoolean ? (value == 'true' ? 'Yes' : 'No') : value,
                     style: TextStyle(
-                        color: onTap != null ? Colors.blue : Colors.white),
+                        color: onTap != null ? AppTheme.textGrey : AppTheme.textGrey),
                   ),
                 ),
               ],
@@ -705,7 +705,7 @@ class _EditableBioState extends State<_EditableBio> {
         "Error",
         "Bio cannot be more than 140 characters.",
         backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
+        colorText: AppTheme.textLight,
       );
       return;
     }
@@ -722,14 +722,14 @@ class _EditableBioState extends State<_EditableBio> {
         "Success",
         "Bio updated successfully.",
         backgroundColor: Colors.green,
-        colorText: Colors.white,
+        colorText: AppTheme.textLight,
       );
     } catch (e) {
       Get.snackbar(
         "Error",
         "Failed to update bio: ${e.toString()}",
         backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
+        colorText: AppTheme.textLight,
       );
     }
   }
@@ -742,7 +742,7 @@ class _EditableBioState extends State<_EditableBio> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Text(
                 widget.person.bio!,
-                style: const TextStyle(color: Colors.white, fontSize: 16),
+                style: const TextStyle(color: AppTheme.textGrey, fontSize: 16),
                 textAlign: TextAlign.center,
               ),
             )
@@ -758,24 +758,24 @@ class _EditableBioState extends State<_EditableBio> {
               controller: _bioController,
               maxLength: 140,
               maxLines: null,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: AppTheme.textGrey),
               decoration: InputDecoration(
                 hintText: "Write a short bio...",
-                hintStyle: TextStyle(color: Colors.grey[600]),
+                hintStyle: TextStyle(color: AppTheme.textGrey),
                 enabledBorder: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey),
+                  borderSide: BorderSide(color: AppTheme.textGrey),
                 ),
                 focusedBorder: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
+                  borderSide: BorderSide(color: AppTheme.textGrey),
                 ),
-                counterStyle: TextStyle(color: Colors.grey[600]),
+                counterStyle: TextStyle(color: AppTheme.textGrey),
               ),
             )
           else
             Text(
               _bioController.text.isEmpty ? "No bio yet." : _bioController.text,
               style: TextStyle(
-                color: _bioController.text.isEmpty ? Colors.grey[600] : Colors.white,
+                color: _bioController.text.isEmpty ? AppTheme.textGrey : AppTheme.textGrey,
                 fontSize: 16,
               ),
               textAlign: TextAlign.center,
@@ -787,7 +787,7 @@ class _EditableBioState extends State<_EditableBio> {
               if (_isEditing)
                 TextButton(
                   onPressed: _saveBio,
-                  child: const Text("Save", style: TextStyle(color: Colors.green)),
+                  child: const Text("Save", style: TextStyle(color: AppTheme.textGrey)),
                 ),
               TextButton(
                 onPressed: () {
@@ -797,7 +797,7 @@ class _EditableBioState extends State<_EditableBio> {
                 },
                 child: Text(
                   _isEditing ? "Cancel" : "Edit Bio",
-                  style: TextStyle(color: _isEditing ? Colors.redAccent : Colors.blue),
+                  style: TextStyle(color: _isEditing ? Colors.redAccent : AppTheme.primaryYellow),
                 ),
               ),
             ],

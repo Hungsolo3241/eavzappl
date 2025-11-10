@@ -10,6 +10,7 @@ import '../tabScreens/user_details_screen.dart';
 import '../tabScreens/view_received.dart';
 import 'package:eavzappl/utils/app_theme.dart';
 
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -59,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         },
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.black,
+        backgroundColor: AppTheme.backgroundDark,
         selectedItemColor: AppTheme.primaryYellow,
         unselectedItemColor: AppTheme.textGrey,
         currentIndex: _screenIndex,

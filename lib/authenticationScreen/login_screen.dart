@@ -29,14 +29,14 @@ class _LoginScreenState extends State<LoginScreen> {
         .trim()
         .isEmpty) {
       Get.snackbar("Validation Error", "Please enter your email.",
-          backgroundColor: Colors.redAccent, colorText: Colors.white);
+          backgroundColor: Colors.redAccent, colorText: AppTheme.textLight);
       return;
     }
     if (passwordController.text
         .trim()
         .isEmpty) {
       Get.snackbar("Validation Error", "Please enter your password.",
-          backgroundColor: Colors.redAccent, colorText: Colors.white);
+          backgroundColor: Colors.redAccent, colorText: AppTheme.textLight);
       return;
     }
 
@@ -87,23 +87,31 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: AppTextStyles.heading1.copyWith(color: AppTheme.primaryYellow),
                 ),
                 const SizedBox(height: 30),
-                CustomTextFieldWidget(
-                  editingController: emailController,
-                  iconData: Icons.email_outlined,
-                  labelText: "Email",
-                  isObscure: false,
+                SizedBox(
+                  width: MediaQuery.of(context).size.width - 40,
+                  height: 45,
+                  child: CustomTextFieldWidget(
+                    editingController: emailController,
+                    iconData: Icons.email_outlined,
+                    labelText: "Email",
+                    isObscure: false,
+                  ),
                 ),
                 const SizedBox(height: 20),
-                CustomTextFieldWidget(
-                  editingController: passwordController,
-                  iconData: Icons.lock_outline,
-                  labelText: "Password",
-                  isObscure: true,
+                SizedBox(
+                  width: MediaQuery.of(context).size.width - 40,
+                  height: 45,
+                  child: CustomTextFieldWidget(
+                    editingController: passwordController,
+                    iconData: Icons.lock_outline,
+                    labelText: "Password",
+                    isObscure: true,
+                  ),
                 ),
                 const SizedBox(height: 30),
                 Container(
-                  width: double.infinity,
-                  height: 50,
+                  width: MediaQuery.of(context).size.width - 40,
+                  height: 35,
                   decoration: const BoxDecoration(
                     color: AppTheme.primaryYellow,
                     borderRadius: BorderRadius.all(
@@ -133,8 +141,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
                 Container(
-                  width: double.infinity,
-                  height: 50,
+                  width: MediaQuery.of(context).size.width - 40,
+                  height: 35,
                   decoration: BoxDecoration(
                     border: Border.all(color: AppTheme.primaryYellow, width: 2),
                     borderRadius: const BorderRadius.all(

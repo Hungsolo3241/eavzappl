@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:eavzappl/utils/app_theme.dart';
 
+
 class FavouriteSentScreen extends StatelessWidget {
   const FavouriteSentScreen({super.key});
 
@@ -30,7 +31,7 @@ class FavouriteSentScreen extends StatelessWidget {
         final List<Person> favouriteProfiles = profileController.usersIHaveFavourited;
 
         if (favouriteProfiles.isEmpty) {
-          return Center(
+          return const Center(
             child: Text(
               "You haven't favorited anyone yet.",
               style: TextStyle(fontSize: 18, color: AppTheme.textGrey),

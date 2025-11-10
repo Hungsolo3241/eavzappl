@@ -583,13 +583,13 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("User Settings"),
-        titleTextStyle: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey),
-        iconTheme: const IconThemeData(color: AppTheme.textGrey),
+        titleTextStyle: AppTextStyles.heading2.copyWith(color: AppTheme.primaryYellow),
+        iconTheme: const IconThemeData(color: AppTheme.primaryYellow),
         backgroundColor: Colors.black54,
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout, color: AppTheme.textGrey),
+            icon: const Icon(Icons.logout, color: AppTheme.primaryYellow),
             tooltip: 'Log Out',
             onPressed: () async {
               // Re-using the same confirmation dialog logic
@@ -597,20 +597,21 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
-                    backgroundColor: Colors.grey[850],
-                    title: Text('Log Out', style: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey)),
-                    content: Text('Are you sure you want to log out?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)),
-                    actions: <Widget>[
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: Text('Cancel', style: AppTextStyles.body1.copyWith(color: Colors.grey)),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        child: const Text('Log Out', style: TextStyle(color: Colors.redAccent)),
-                      ),
-                    ],
-                  );
+                          backgroundColor: AppTheme.backgroundDark,
+                          content: const Text('Are you sure you want to log out?', style: TextStyle(color: AppTheme.textGrey)),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('Cancel', style: TextStyle(color: AppTheme.textGrey)),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(true);
+                              },
+                              child: const Text('Logout', style: TextStyle(color: AppTheme.primaryYellow)),
+                            ),
+                          ],
+                        );
                 },
               );
 
@@ -708,26 +709,27 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
           ),
           ListTile(
             leading: const Icon(Icons.logout, color: AppTheme.textGrey),
-            title: Text('Log Out', style: AppTextStyles.body1.copyWith(color: Colors.white)),
+            title: Text('Log Out', style: AppTextStyles.body1.copyWith(color: AppTheme.primaryYellow)),
             onTap: () async {
               bool? confirmLogout = await showDialog<bool>(
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
-                    backgroundColor: Colors.grey[850],
-                    title: Text('Log Out', style: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey)),
-                    content: Text('Are you sure you want to log out?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)),
-                    actions: <Widget>[
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: Text('Cancel', style: AppTextStyles.body1.copyWith(color: Colors.grey)),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        child: const Text('Log Out', style: TextStyle(color: Colors.redAccent)),
-                      ),
-                    ],
-                  );
+                          backgroundColor: AppTheme.backgroundDark,
+                          content: const Text('Are you sure you want to log out?', style: TextStyle(color: AppTheme.textGrey)),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('Cancel', style: TextStyle(color: AppTheme.textGrey)),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(true);
+                              },
+                              child: const Text('Logout', style: TextStyle(color: AppTheme.primaryYellow)),
+                            ),
+                          ],
+                        );
                 },
               );
 

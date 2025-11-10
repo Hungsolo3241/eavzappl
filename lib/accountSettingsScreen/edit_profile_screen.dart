@@ -921,8 +921,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: AppBar(
         title: const Text("Edit Profile"),
         centerTitle: true,
-        titleTextStyle: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey),
-        iconTheme: const IconThemeData(color: AppTheme.textGrey),
+        titleTextStyle: AppTextStyles.heading2.copyWith(color: AppTheme.primaryYellow),
+        iconTheme: const IconThemeData(color: AppTheme.primaryYellow),
         backgroundColor: Colors.black54,
         actions: [
           IconButton(
@@ -967,7 +967,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                       TextButton(
                         onPressed: _pickMainProfileImage,
-                        child: Text("Change Main Photo", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
+                        child: Text("Change Main Photo", style: AppTextStyles.body1.copyWith(color: AppTheme.primaryYellow)),
                       ),
                     ],
                   ),
@@ -978,13 +978,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 Center(
                   child: Text("Profile Gallery Images", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.textGrey)),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 20),
+                
                 Center(
                   child: Wrap(
                     spacing: 8.0,
                     runSpacing: 8.0,
                     alignment: WrapAlignment.center,
                     children: List.generate(5, (index) => _buildGalleryImageSlot(index)),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text(
+                    "Note: Upload only genuine photos of yourself. To maintain a trustworthy community, accounts found catfishing will be permanently banned.",
+                    style: AppTextStyles.caption.copyWith(color: AppTheme.textLight),
+                    textAlign: TextAlign.center,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -1108,12 +1118,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 24),
 
                 Text("Lifestyle Preferences", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.textGrey)),
-                SwitchListTile(title: Text('Do you drink?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), value: _drinkSelection, onChanged: (val) => setState(() => _drinkSelection = val), activeColor: AppTheme.primaryYellow),
-                SwitchListTile(title: Text('Do you smoke?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), value: _smokeSelection, onChanged: (val) => setState(() => _smokeSelection = val), activeColor: AppTheme.primaryYellow),
-                SwitchListTile(title: Text('Do you eat meat?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), value: _meatSelection, onChanged: (val) => setState(() => _meatSelection = val), activeColor: AppTheme.primaryYellow),
-                SwitchListTile(title: Text('Are you open to Greek?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), value: _greekSelection, onChanged: (val) => setState(() => _greekSelection = val), activeColor: AppTheme.primaryYellow),
-                SwitchListTile(title: Text('Are you able to host?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), value: _hostSelection, onChanged: (val) => setState(() => _hostSelection = val), activeColor: AppTheme.primaryYellow),
-                SwitchListTile(title: Text('Are you able to travel?', style: AppTextStyles.body1.copyWith(color: AppTheme.textLight)), value: _travelSelection, onChanged: (val) => setState(() => _travelSelection = val), activeColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Do you drink?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _drinkSelection, onChanged: (val) => setState(() => _drinkSelection = val), activeColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Do you smoke?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _smokeSelection, onChanged: (val) => setState(() => _smokeSelection = val), activeColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Do you eat meat?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _meatSelection, onChanged: (val) => setState(() => _meatSelection = val), activeColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Are you open to Greek?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _greekSelection, onChanged: (val) => setState(() => _greekSelection = val), activeColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Are you able to host?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _hostSelection, onChanged: (val) => setState(() => _hostSelection = val), activeColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Are you able to travel?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _travelSelection, onChanged: (val) => setState(() => _travelSelection = val), activeColor: AppTheme.primaryYellow),
 
                 const SizedBox(height: 24),
 
@@ -1124,14 +1134,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryYellow,
                       foregroundColor: Colors.blueGrey,
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 7),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(22.0),
                       ),
                     ),
                     child: Text(
                       "Save Changes",
-                      style: AppTextStyles.heading2.copyWith(color: Colors.blueGrey),
+                      style: AppTextStyles.heading2.copyWith(color: AppTheme.backgroundDark),
                     ),
                   ),
                 ),

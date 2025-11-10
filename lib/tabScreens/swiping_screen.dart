@@ -42,7 +42,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
           builder: (_, controller) {
             return Container(
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.9),
+                color: AppTheme.backgroundDark.withOpacity(0.5),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(20.0),
                   topRight: Radius.circular(20.0),
@@ -82,9 +82,9 @@ class _SwipingScreenState extends State<SwipingScreen> {
               SnackBar(
                 content: const Text(
                   'Press back again to exit',
-                  style: TextStyle(color: Colors.white), // Set text color to white for contrast
+                  style: TextStyle(color: AppTheme.textGrey), // Set text color to white for contrast
                 ),
-                backgroundColor: Colors.black.withOpacity(0.8), // Black background with 80% opacity
+                backgroundColor: AppTheme.backgroundDark.withOpacity(0.8), // Black background with 80% opacity
                 behavior: SnackBarBehavior.floating, // Makes the SnackBar float above the content
                 shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.all(Radius.circular(24)), // Add rounded corners
@@ -127,7 +127,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
                       onPressed: _showFilterModalBottomSheet,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryYellow,
-                        foregroundColor: Colors.black,
+                        foregroundColor: AppTheme.backgroundDark,
                       ),
                       child: const Text("Adjust Filters"),
                     ),
@@ -171,7 +171,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
                       imageUrl: imageUrl ?? '',
                       fit: BoxFit.cover,
                       memCacheWidth: 800,
-                      placeholder: (context, url) => Container(color: Colors.black),
+                      placeholder: (context, url) => Container(color: AppTheme.backgroundDark),
                       errorWidget: (context, url, error) => Image.asset(
                         placeholderAsset,
                         fit: BoxFit.cover,
@@ -207,7 +207,7 @@ class _SwipingScreenState extends State<SwipingScreen> {
             right: 8.0,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.3),
+                color: AppTheme.backgroundDark.withOpacity(0.3),
                 shape: BoxShape.circle,
               ),
               child: IconButton(
@@ -235,8 +235,8 @@ class _GradientOverlay extends StatelessWidget {
           end: Alignment.bottomCenter,
           colors: [
             Colors.transparent,
-            Colors.black.withOpacity(0.1),
-            Colors.black.withOpacity(0.7),
+            AppTheme.backgroundDark.withOpacity(0.1),
+            AppTheme.backgroundDark.withOpacity(0.7),
           ],
           stops: const [0.5, 0.7, 1.0],
         ),
@@ -298,7 +298,7 @@ class _ProfileDetails extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
       margin: const EdgeInsets.only(right: 6.0, bottom: 6.0),
       decoration: BoxDecoration(
-        color: const Color.fromRGBO(0, 0, 0, 0.6),
+        color: AppTheme.backgroundDark.withOpacity(0.6),
         borderRadius: BorderRadius.circular(15.0),
       ),
       child: Text(
@@ -351,7 +351,7 @@ class _ActionButtons extends StatelessWidget {
               if (canMessage) {
                 _launchWhatsApp(person.phoneNumber);
               } else {
-                Get.snackbar("Message Unavailable", "You can only message users after a mutual like.");
+                Get.snackbar("Message Unavailable", "You can only message users after a mutual like.", colorText: AppTheme.textLight);
               }
             },
             inactiveIconAsset: ImageConstants.messageDefault,
@@ -359,7 +359,7 @@ class _ActionButtons extends StatelessWidget {
             tooltip: canMessage ? 'Message' : 'Message (Requires Mutual Like)',
             iconSize: 75,
             activeColor: AppTheme.primaryYellow,
-            inactiveColor: AppTheme.textGrey.withOpacity(0.5),
+            inactiveColor: AppTheme.textGrey,
           );
         }),
         Obx(() {
@@ -396,7 +396,7 @@ class _ActionButtons extends StatelessWidget {
         width: iconSize,
         height: iconSize,
         child: const Center(
-          child: CircularProgressIndicator(strokeWidth: 2.0, valueColor: AlwaysStoppedAnimation(Colors.white)),
+          child: CircularProgressIndicator(strokeWidth: 2.0, valueColor: AlwaysStoppedAnimation(AppTheme.textGrey)),
         ),
       );
     }
@@ -432,7 +432,7 @@ class _ActionButtons extends StatelessWidget {
 
   Future<void> _launchWhatsApp(String? phoneNumber) async {
     if (phoneNumber?.isNotEmpty != true) {
-      Get.snackbar("Message Error", "User's phone number is not available.");
+      Get.snackbar("Message Error", "User's phone number is not available.", colorText: AppTheme.textLight);
       return;
     }
     try {
@@ -440,11 +440,11 @@ class _ActionButtons extends StatelessWidget {
       if (await canLaunchUrl(whatsappUri)) {
         await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
       } else {
-        Get.snackbar("WhatsApp Error", "Could not open WhatsApp.");
+        Get.snackbar("WhatsApp Error", "Could not open WhatsApp.", colorText: AppTheme.textLight);
       }
     } catch (e) {
       log('Could not launch WhatsApp', name: 'SwipingScreen', error: e);
-      Get.snackbar("WhatsApp Error", "An error occurred trying to open WhatsApp.");
+      Get.snackbar("WhatsApp Error", "An error occurred trying to open WhatsApp.", colorText: AppTheme.textLight);
     }
   }
 }
