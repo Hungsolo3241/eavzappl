@@ -2,6 +2,7 @@ import 'package:eavzappl/pushNotifications/push_notifications.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'dart:developer';
 
 import '../tabScreens/favourite_sent_screen.dart';
 import '../tabScreens/like_sent_like_received_screen.dart';
@@ -20,7 +21,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _screenIndex = 0;
-
   late final List<Widget> _tabScreensList;
 
   @override
@@ -32,22 +32,26 @@ class _HomeScreenState extends State<HomeScreen> {
       ViewReceivedScreen(),
       const FavouriteSentScreen(),
       const LikeSentLikeReceivedScreen(),
-      UserDetailsScreen(userID: FirebaseAuth.instance.currentUser!.uid),
+      UserDetailsScreen(
+        userID: FirebaseAuth.instance.currentUser!.uid,
+      ),
     ];
 
-    // Defer the initialization until after the first frame is rendered.
-    // This ensures that all GetX bindings from main.dart are complete.
+    // Defer notification initialization until after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) { // Check if the widget is still in the tree
+      if (mounted) {
         _initializeNotifications();
       }
     });
   }
 
   Future<void> _initializeNotifications() async {
-    // Now it's safe to call Get.find()
-    final pushNotifications = Get.find<PushNotifications>();
-    await pushNotifications.initialize(context);
+    try {
+      final pushNotifications = Get.find<PushNotifications>();
+      await pushNotifications.initialize(context);
+    } catch (e) {
+      log('Error initializing notifications: $e', name: 'HomeScreen');
+    }
   }
 
   @override
@@ -65,26 +69,11 @@ class _HomeScreenState extends State<HomeScreen> {
         unselectedItemColor: AppTheme.textGrey,
         currentIndex: _screenIndex,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.remove_red_eye),
-            label: "Views",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.star),
-            label: "Favourites",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: "Likes",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "Profile",
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.remove_red_eye), label: "Views"),
+          BottomNavigationBarItem(icon: Icon(Icons.star), label: "Favourites"),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: "Likes"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
         ],
       ),
       body: IndexedStack(
@@ -94,3 +83,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+

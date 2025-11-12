@@ -34,11 +34,18 @@ Future<void> main() async { // 1. Ensure your main function is marked 'async'
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
+    // Setup Background Message Handler
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
     await FirebaseAppCheck.instance.activate(
       androidProvider: AndroidProvider.debug,
     );
 
-    // ✅ Setup Crashlytics
+    // Get and print the App Check debug token
+    final token = await FirebaseAppCheck.instance.getToken(true);
+    print('App Check debug token: $token');
+
+    // Setup Crashlytics
     FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
     PlatformDispatcher.instance.onError = (error, stack) {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:eavzappl/utils/app_theme.dart';
 
+
 class LikeSentLikeReceivedScreen extends StatelessWidget {
   const LikeSentLikeReceivedScreen({super.key});
 
@@ -26,7 +27,7 @@ class LikeSentLikeReceivedScreen extends StatelessWidget {
           bottom: TabBar(
             indicatorColor: AppTheme.primaryYellow,
             labelColor: AppTheme.primaryYellow,
-            unselectedLabelColor: AppTheme.textGrey,
+            unselectedLabelColor: Colors.white70,
             tabs: const [
               Tab(text: 'Likes Sent'),
               Tab(text: 'Likes Received'),
@@ -69,7 +70,7 @@ class _LikesGridView extends StatelessWidget {
       if (userList.isEmpty) {
         // --- START OF CHANGE ---
         // Make the "empty" widget a const for better performance.
-        return Center(
+        return const Center(
           // --- END OF CHANGE ---
           child: Text(
             // NOTE: The `emptyMessage` variable prevents the Text widget
