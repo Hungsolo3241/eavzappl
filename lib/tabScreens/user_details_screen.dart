@@ -74,6 +74,17 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
           final person = Person.fromJson(data);
 
           final bool isAdamProfile = person.orientation?.toLowerCase() == 'adam';
+          final bool isEveProfile = person.orientation?.toLowerCase() == 'eve';
+
+          // Determine the dynamic title for "Looking/Available For" section
+          String lookingAvailableTitle;
+          if (isEveProfile) {
+            lookingAvailableTitle = "Available for";
+          } else if (isAdamProfile) {
+            lookingAvailableTitle = "Looking for";
+          } else {
+            lookingAvailableTitle = "Looking/Available For"; // Fallback
+          }
 
           return Scaffold(
             appBar: AppBar(
@@ -187,7 +198,7 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                         ),
                       ],
                       _DetailSection(
-                        title: "Looking/Available For",
+                        title: lookingAvailableTitle,
                         isBoolean: true,
                         details: {
                           "Breakfast": person.lookingForBreakfast?.toString(),

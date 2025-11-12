@@ -973,7 +973,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Divider(color: AppTheme.textGrey, thickness: 2),
+                const Divider(color: AppTheme.textGrey, thickness: 1),
                 const SizedBox(height: 20),
                 Center(
                   child: Text("Profile Gallery Images", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.textGrey)),
