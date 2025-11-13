@@ -3,6 +3,7 @@ import 'package:eavzappl/accountSettingsScreen/edit_profile_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart'; // For date formatting
 import 'package:eavzappl/accountSettingsScreen/notifications_screen.dart';
@@ -94,6 +95,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                             password: passwordController.text.trim(),
                           );
                           await user.reauthenticateWithCredential(credential);
+                          if (!dialogContext.mounted) return;
                           Navigator.of(dialogContext).pop(); 
                           await onAuthenticated(); 
                         } else {
@@ -146,40 +148,6 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
             return AlertDialog(
               backgroundColor: Colors.grey[850],
               title: Text("Change Email Address", style: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey)),
-              content: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    TextFormField(
-                      controller: newEmailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: AppTextStyles.body1.copyWith(color: Colors.white),
-                      decoration: InputDecoration(
-                        labelText: "New Email Address",
-                        labelStyle: AppTextStyles.body1.copyWith(color: AppTheme.textGrey),
-                        prefixIcon: const Icon(Icons.email_outlined, color: AppTheme.textGrey),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
-                        focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.textGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
-                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(8.0)),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return "New email cannot be empty.";
-                        }
-                        if (!GetUtils.isEmail(value.trim())) {
-                          return "Please enter a valid email address.";
-                        }
-                        return null;
-                      },
-                    ),
-                    if (isLoading) ...[
-                      const SizedBox(height: 15),
-                      const CircularProgressIndicator(color: AppTheme.textGrey),
-                    ]
-                  ],
-                ),
-              ),
               actions: <Widget>[
                 TextButton(
                   child: Text("Cancel", style: AppTextStyles.body1.copyWith(color: Colors.grey)),
@@ -197,7 +165,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                         String newEmail = newEmailController.text.trim();
                         
                         await user?.verifyBeforeUpdateEmail(newEmail); 
-                        
+                        if (!dialogContext.mounted) return;
                         Navigator.of(dialogContext).pop();
                         Get.snackbar(
                           "Verification Sent",
@@ -237,6 +205,40 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                   },
                 ),
               ],
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    TextFormField(
+                      controller: newEmailController,
+                      keyboardType: TextInputType.emailAddress,
+                      style: AppTextStyles.body1.copyWith(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: "New Email Address",
+                        labelStyle: AppTextStyles.body1.copyWith(color: AppTheme.textGrey),
+                        prefixIcon: const Icon(Icons.email_outlined, color: AppTheme.textGrey),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+                        focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.textGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(8.0)),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return "New email cannot be empty.";
+                        }
+                        if (!GetUtils.isEmail(value.trim())) {
+                          return "Please enter a valid email address.";
+                        }
+                        return null;
+                      },
+                    ),
+                    if (isLoading) ...[
+                      const SizedBox(height: 15),
+                      const CircularProgressIndicator(color: AppTheme.textGrey),
+                    ]
+                  ],
+                ),
+              ),
             );
           }
         );
@@ -290,6 +292,59 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
             return AlertDialog(
               backgroundColor: Colors.grey[850],
               title: Text("Change Password", style: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey)),
+              actions: <Widget>[
+                TextButton(
+                  child: Text("Cancel", style: AppTextStyles.body1.copyWith(color: Colors.grey)),
+                  onPressed: isLoading ? null : () => Navigator.of(dialogContext).pop(),
+                ),
+                TextButton(
+                  child: Text("Update Password", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
+                  onPressed: isLoading ? null : () async {
+                    if (formKey.currentState!.validate()) {
+                      setStateDialog(() { isLoading = true; });
+                      try {
+                        User? user = FirebaseAuth.instance.currentUser;
+                        await user?.updatePassword(newPasswordController.text.trim());
+                        
+                        // Update passwordLastChanged in Firestore
+                        if (user != null) {
+                          await FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(user.uid)
+                              .update({'passwordLastChanged': FieldValue.serverTimestamp()});
+                        }
+                        if (!dialogContext.mounted) return;
+                        Navigator.of(dialogContext).pop();
+                        Get.snackbar(
+                          "Success",
+                          "Password updated successfully.",
+                          backgroundColor: AppTheme.textGrey,
+                          colorText: Colors.white,
+                        );
+                      } on FirebaseAuthException catch (e) {
+                        Get.snackbar(
+                          "Update Failed",
+                          e.message ?? "An error occurred during password update.",
+                          backgroundColor: Colors.redAccent,
+                          colorText: Colors.white,
+                        );
+                      } catch (e) {
+                        Get.snackbar(
+                          "Error",
+                          "An unexpected error occurred: ${e.toString()}",
+                          backgroundColor: Colors.redAccent,
+                          colorText: Colors.white,
+                        );
+                      }
+                      finally {
+                        if (mounted && dialogContext.mounted) {
+                          setStateDialog(() { isLoading = false; });
+                        }
+                      }
+                    }
+                  },
+                ),
+              ],
               content: Form(
                 key: formKey,
                 child: Column(
@@ -312,7 +367,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                         });
                       },
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
+                        if (value == null || value.trim().isEmpty) {
                           return "New password cannot be empty.";
                         }
                         if (value.length < 8) {
@@ -343,7 +398,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                         focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.textGrey, width: 2.0), borderRadius: BorderRadius.circular(8.0)),
                       ),
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
+                        if (value == null || value.trim().isEmpty) {
                           return "Please confirm your new password.";
                         }
                         if (value != newPasswordController.text) {
@@ -359,58 +414,6 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                   ],
                 ),
               ),
-              actions: <Widget>[
-                TextButton(
-                  child: Text("Cancel", style: AppTextStyles.body1.copyWith(color: Colors.grey)),
-                  onPressed: isLoading ? null : () => Navigator.of(dialogContext).pop(),
-                ),
-                TextButton(
-                  child: Text("Update Password", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
-                  onPressed: isLoading ? null : () async {
-                    if (formKey.currentState!.validate()) {
-                      setStateDialog(() { isLoading = true; });
-                      try {
-                        User? user = FirebaseAuth.instance.currentUser;
-                        await user?.updatePassword(newPasswordController.text.trim());
-                        
-                        // Update passwordLastChanged in Firestore
-                        if (user != null) {
-                          await FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(user.uid)
-                              .update({'passwordLastChanged': FieldValue.serverTimestamp()});
-                        }
-
-                        Navigator.of(dialogContext).pop();
-                        Get.snackbar(
-                          "Success",
-                          "Password updated successfully.",
-                          backgroundColor: AppTheme.textGrey,
-                          colorText: Colors.white,
-                        );
-                      } on FirebaseAuthException catch (e) {
-                        Get.snackbar(
-                          "Update Failed",
-                          e.message ?? "An error occurred during password update.",
-                          backgroundColor: Colors.redAccent,
-                          colorText: Colors.white,
-                        );
-                      } catch (e) {
-                        Get.snackbar(
-                          "Error",
-                          "An unexpected error occurred: ${e.toString()}",
-                          backgroundColor: Colors.redAccent,
-                          colorText: Colors.white,
-                        );
-                      } finally {
-                        if (mounted && dialogContext.mounted) {
-                          setStateDialog(() { isLoading = false; });
-                        }
-                      }
-                    }
-                  },
-                ),
-              ],
             );
           },
         );
@@ -443,7 +446,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
       }
     } catch (e) {
       // Ignore error, default message will be shown
-      print("Error fetching passwordLastChanged: $e");
+      log("Error fetching passwordLastChanged: $e", name: 'UserSettingsScreen');
     }
 
     return showDialog<void>(
@@ -452,6 +455,14 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
         return AlertDialog(
           backgroundColor: Colors.grey[850],
           title: Text("Account Security", style: AppTextStyles.heading2.copyWith(color: AppTheme.textGrey)),
+          actions: <Widget>[
+            TextButton(
+              child: Text("OK", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+          ],
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
@@ -461,14 +472,6 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
               ],
             ),
           ),
-          actions: <Widget>[
-            TextButton(
-              child: Text("OK", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-            ),
-          ],
         );
       },
     );
@@ -500,23 +503,6 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
               return AlertDialog(
                 backgroundColor: Colors.grey[850],
                 title: Text("Delete Account?", style: AppTextStyles.heading2.copyWith(color: Colors.redAccent)),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      "This action is permanent and cannot be undone. All your data associated with this account will be deleted.",
-                      style: AppTextStyles.body1.copyWith(color: AppTheme.textLight),
-                    ),
-                    Text(
-                      "Are you sure you want to proceed?",
-                      style: AppTextStyles.body1.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                    if (isLoading) ...[
-                      const SizedBox(height: 15),
-                      const CircularProgressIndicator(color: Colors.redAccent),
-                    ]
-                  ],
-                ),
                 actions: <Widget>[
                   TextButton(
                     child: Text("Cancel", style: AppTextStyles.body1.copyWith(color: Colors.grey)),
@@ -534,7 +520,7 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                         // The most robust way is a Cloud Function triggered by Auth user deletion.
                         
                         await user?.delete();
-                        
+                        if (!dialogContext.mounted) return;
                         Navigator.of(dialogContext).pop(); // Close confirmation dialog
                         Get.offAll(() => const LoginScreen()); // Navigate to login
                         Get.snackbar(
@@ -569,6 +555,23 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
                     },
                   ),
                 ],
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "This action is permanent and cannot be undone. All your data associated with this account will be deleted.",
+                      style: AppTextStyles.body1.copyWith(color: AppTheme.textLight),
+                    ),
+                    Text(
+                      "Are you sure you want to proceed?",
+                      style: AppTextStyles.body1.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    if (isLoading) ...[
+                      const SizedBox(height: 15),
+                      const CircularProgressIndicator(color: Colors.redAccent),
+                    ]
+                  ],
+                ),
               );
             }
         );

@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'dart:developer';
 
 class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({Key? key}) : super(key: key);
+  const NotificationsScreen({super.key});
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
@@ -33,7 +34,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     String? userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
-      print("Error: User not logged in. Cannot load notification settings.");
+      log("Error: User not logged in. Cannot load notification settings.", name: 'NotificationsScreen');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -66,11 +67,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           });
         }
       } else {
-        print("Notification settings not found, initializing with defaults for user $userId.");
+        log("Notification settings not found, initializing with defaults for user $userId.", name: 'NotificationsScreen');
         await _saveAllSettings(userId); // Save initial defaults based on current state variables
       }
     } catch (e) {
-      print("Error loading notification settings: $e");
+      log("Error loading notification settings: $e", name: 'NotificationsScreen');
       // Handle error, maybe show a snackbar or use default values
     } finally {
       if (mounted) {
@@ -97,16 +98,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         'vibrate': _vibrate,
         // 'notificationTone': _notificationTone,
       });
-      print("Initial notification settings saved for user $userId");
+      log("Initial notification settings saved for user $userId", name: 'NotificationsScreen');
     } catch (e) {
-      print("Error saving initial notification settings: $e");
+      log("Error saving initial notification settings: $e", name: 'NotificationsScreen');
     }
   }
 
   Future<void> _updateSetting(String key, bool value) async {
     String? userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
-      print("Error: User not logged in. Cannot update notification settings.");
+      log("Error: User not logged in. Cannot update notification settings.", name: 'NotificationsScreen');
       return;
     }
 
@@ -117,9 +118,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           .collection('preferences')
           .doc('notification_settings')
           .set({key: value}, SetOptions(merge: true));
-      print("Notification setting '$key' updated to '$value'");
+      log("Notification setting '$key' updated to '$value'", name: 'NotificationsScreen');
     } catch (e) {
-      print("Error updating notification setting '$key': $e");
+      log("Error updating notification setting '$key': $e", name: 'NotificationsScreen');
       // Optionally, revert UI change or show an error
     }
   }

@@ -4,17 +4,16 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:developer';
 import 'package:eavzappl/models/person.dart' as model;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:path/path.dart' as path;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eavzappl/controllers/location_controller.dart';
 import 'package:eavzappl/utils/app_constants.dart';
-// lib/screens/edit_profile_screen.dart
 import 'package:eavzappl/pushNotifications/push_notifications.dart';
 import 'package:eavzappl/models/push_notification_payload.dart';
 import 'package:eavzappl/utils/app_theme.dart';
@@ -425,7 +424,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               .update({'urlImage${slotIndex + 1}': downloadUrl});
         } catch (firestoreError) {
           // Log Firestore error but don't fail the upload
-          print('Warning: Failed to save image URL to Firestore: $firestoreError');
+          log('Warning: Failed to save image URL to Firestore: $firestoreError', name: 'EditProfileScreen');
         }
         
         // ✅ INCREMENT COUNTER
@@ -462,7 +461,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             duration: const Duration(seconds: 5),
           );
           
-          print('Error: Image file $slotIndex does not exist: $e');
+          log('Error: Image file $slotIndex does not exist: $e', name: 'EditProfileScreen');
           return;
         }
         
@@ -483,12 +482,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           );
           
           // Don't rethrow - let other uploads continue
-          print('Error uploading image $slotIndex after $retries attempts: $e');
+          log('Error uploading image $slotIndex after $retries attempts: $e', name: 'EditProfileScreen');
           return;
         }
         
         // ✅ Wait before retry (exponential backoff)
-        print('Retrying upload for image $slotIndex (attempt $attempt/$retries)...');
+        log('Retrying upload for image $slotIndex (attempt $attempt/$retries)...', name: 'EditProfileScreen');
         await Future.delayed(Duration(seconds: attempt * 2));
       }
     }
@@ -575,7 +574,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _professionalVenueOtherSelected
           ? _professionalVenueOtherNameController.text.trim()
           : null,
-      'urlImage1': imageUrls.length > 0 ? imageUrls[0] : null,
+      'urlImage1': imageUrls.isNotEmpty ? imageUrls[0] : null,
       'urlImage2': imageUrls.length > 1 ? imageUrls[1] : null,
       'urlImage3': imageUrls.length > 2 ? imageUrls[2] : null,
       'urlImage4': imageUrls.length > 3 ? imageUrls[3] : null,
@@ -808,7 +807,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
+                  color: Colors.black.withAlpha((255 * 0.7).round()),
                   borderRadius: BorderRadius.circular(12.0),
                 ),
                 child: Center(
@@ -858,7 +857,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withAlpha((255 * 0.6).round()),
                   borderRadius: BorderRadius.circular(12.0),
                 ),
                 child: Center(
@@ -1145,12 +1144,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 24),
 
                 Text("Lifestyle Preferences", style: Theme.of(context).textTheme.titleLarge?.copyWith(color: AppTheme.textGrey)),
-                SwitchListTile(title: Text('Do you drink?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _drinkSelection, onChanged: (val) => setState(() => _drinkSelection = val), activeColor: AppTheme.primaryYellow),
-                SwitchListTile(title: Text('Do you smoke?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _smokeSelection, onChanged: (val) => setState(() => _smokeSelection = val), activeColor: AppTheme.primaryYellow),
-                SwitchListTile(title: Text('Do you eat meat?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _meatSelection, onChanged: (val) => setState(() => _meatSelection = val), activeColor: AppTheme.primaryYellow),
-                SwitchListTile(title: Text('Are you open to Greek?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _greekSelection, onChanged: (val) => setState(() => _greekSelection = val), activeColor: AppTheme.primaryYellow),
-                SwitchListTile(title: Text('Are you able to host?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _hostSelection, onChanged: (val) => setState(() => _hostSelection = val), activeColor: AppTheme.primaryYellow),
-                SwitchListTile(title: Text('Are you able to travel?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _travelSelection, onChanged: (val) => setState(() => _travelSelection = val), activeColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Do you drink?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _drinkSelection, onChanged: (val) => setState(() => _drinkSelection = val), activeThumbColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Do you smoke?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _smokeSelection, onChanged: (val) => setState(() => _smokeSelection = val), activeThumbColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Do you eat meat?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _meatSelection, onChanged: (val) => setState(() => _meatSelection = val), activeThumbColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Are you open to Greek?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _greekSelection, onChanged: (val) => setState(() => _greekSelection = val), activeThumbColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Are you able to host?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _hostSelection, onChanged: (val) => setState(() => _hostSelection = val), activeThumbColor: AppTheme.primaryYellow),
+                SwitchListTile(title: Text('Are you able to travel?', style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)), value: _travelSelection, onChanged: (val) => setState(() => _travelSelection = val), activeThumbColor: AppTheme.primaryYellow),
 
                 const SizedBox(height: 24),
 
@@ -1300,7 +1299,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: DropdownButtonFormField<T>(
-        value: value,
+        initialValue: value,
         items: enabled ? items : null,
         onChanged: enabled ? onChanged : null,
         dropdownColor: Colors.grey[900],

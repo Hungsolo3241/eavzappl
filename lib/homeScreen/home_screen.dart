@@ -26,20 +26,24 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-
+    
+    // ✅ SAFE: Build tab list with null-safe user ID
+    final String? userId = FirebaseAuth.instance.currentUser?.uid;
+    
     _tabScreensList = [
       const SwipingScreen(),
       ViewReceivedScreen(),
       const FavouriteSentScreen(),
       const LikeSentLikeReceivedScreen(),
+      // ✅ FIX: Use null-aware operator and provide fallback
       UserDetailsScreen(
-        userID: FirebaseAuth.instance.currentUser!.uid,
+        userID: userId ?? 'error', // Fallback will show error screen
       ),
     ];
 
     // Defer notification initialization until after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
+      if (mounted && userId != null) {
         _initializeNotifications();
       }
     });

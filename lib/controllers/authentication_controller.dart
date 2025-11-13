@@ -7,8 +7,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eavzappl/authenticationScreen/login_screen.dart';
 import 'package:eavzappl/homeScreen/home_screen.dart';
-import 'package:eavzappl/models/person.dart' as personModel;
-import 'package:eavzappl/pushNotifications/push_notifications.dart';
+import 'package:eavzappl/models/person.dart' as person_model;
 import 'package:eavzappl/splashScreen/splash_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -84,17 +83,9 @@ class AuthenticationController extends GetxController {
       bool documentExists = await _verifyUserDocument(user.uid);
       
       if (!documentExists) {
-        log("User document not found, waiting for creation", name: "AuthenticationController");
-        // Wait up to 5 seconds for document to be created
-        for (int i = 0; i < 10; i++) {
-          await Future.delayed(const Duration(milliseconds: 500));
-          documentExists = await _verifyUserDocument(user.uid);
-          if (documentExists) break;
-        }
-        
-        if (!documentExists) {
-          throw Exception("User document was not created in Firestore");
-        }
+        // After a successful login/registration, the document MUST exist.
+        // If it doesn't, this is a critical error state.
+        throw Exception("User document not found for uid: ${user.uid}. This should not happen.");
       }
 
       // Start initialization
@@ -134,12 +125,8 @@ class AuthenticationController extends GetxController {
       duration: const Duration(seconds: 5),
     );
     
-    // Fallback navigation
-    if (user != null) {
-      Get.offAll(() => const HomeScreen());
-    } else {
-      Get.offAll(() => const LoginScreen());
-    }
+    // ✅ FIX: Instead of fallback navigation, sign out and go to login
+    await signOutUser();
   } finally {
     _isAuthOperationInProgress = false;
     if (!_authCompleter.isCompleted) {
@@ -282,24 +269,37 @@ Future<bool> _verifyUserDocument(String uid) async {
   }
 
   // Registration
-  Future<bool> createAccountAndSaveData(String email, String password, File? profileImageFile, Map<String, dynamic> userData) async {
+  Future<bool> createAccountAndSaveData(
+  String email,
+  String password,
+  File? profileImageFile,
+  Map<String, dynamic> userData,
+) async {
   UserCredential? credential;
+  
   try {
+    log("🚀 Starting registration for: $email", name: 'AuthController');
+    
     // Step 1: Create Firebase Auth user
     credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-      email: email.trim(), 
-      password: password.trim()
+      email: email.trim(),
+      password: password.trim(),
     );
+    
+    final userId = credential.user!.uid;
+    log("✅ Firebase Auth user created: $userId", name: 'AuthController');
     
     // Step 2: Upload profile photo FIRST (if provided)
     String? downloadUrl;
     if (profileImageFile != null) {
-      downloadUrl = await uploadProfilePhoto(profileImageFile, credential.user!.uid);
+      log("📸 Uploading profile photo...", name: 'AuthController');
+      downloadUrl = await uploadProfilePhoto(profileImageFile, userId);
+      log("✅ Profile photo uploaded: $downloadUrl", name: 'AuthController');
     }
     
-    // Step 3: Create Person instance with ALL required fields
-    personModel.Person personInstance = personModel.Person(
-      uid: credential.user!.uid,
+    // Step 3: Create complete Person instance
+    person_model.Person personInstance = person_model.Person(
+      uid: userId,
       email: email.trim(),
       name: userData['name'] ?? '',
       username: userData['username'] ?? '',
@@ -307,7 +307,7 @@ Future<bool> _verifyUserDocument(String uid) async {
       profilePhoto: downloadUrl,
       publishedDateTime: DateTime.now().millisecondsSinceEpoch,
       gender: userData['gender'] ?? '',
-      age: userData['age'] as int?,
+      age: (userData['age'] as num?)?.toInt(),
       phoneNumber: userData['phoneNumber'] ?? '',
       country: userData['country'] ?? '',
       province: userData['province'] ?? '',
@@ -337,62 +337,137 @@ Future<bool> _verifyUserDocument(String uid) async {
       bio: '',
     );
     
-    // Step 4: Save to Firestore and WAIT for completion
-    await FirebaseFirestore.instance
-        .collection("users")
-        .doc(credential.user!.uid)
-        .set(personInstance.toJson());
+    log("💾 Saving user document to Firestore...", name: 'AuthController');
     
-    // Step 5: Wait a moment to ensure Firestore write propagates
-    await Future.delayed(const Duration(milliseconds: 500));
+    // Step 4: CRITICAL - Save to Firestore with retry logic
+    int retryCount = 0;
+    const maxRetries = 3;
+    bool documentCreated = false;
+    
+    while (retryCount < maxRetries && !documentCreated) {
+      try {
+        await FirebaseFirestore.instance
+            .collection("users")
+            .doc(userId)
+            .set(personInstance.toJson(), SetOptions(merge: false));
+        
+        documentCreated = true;
+        log("✅ User document saved to Firestore", name: 'AuthController');
+        
+      } catch (firestoreError) {
+        retryCount++;
+        log("⚠️ Firestore save attempt $retryCount failed: $firestoreError", 
+            name: 'AuthController');
+        
+        if (retryCount < maxRetries) {
+          await Future.delayed(Duration(seconds: retryCount));
+        } else {
+          throw Exception("Failed to create user document after $maxRetries attempts");
+        }
+      }
+    }
+    
+    // Step 5: CRITICAL - Verify document was actually created
+    log("🔍 Verifying document exists in Firestore...", name: 'AuthController');
+    
+    int verifyAttempts = 0;
+    bool documentExists = false;
+    
+    while (verifyAttempts < 5 && !documentExists) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      final docSnapshot = await FirebaseFirestore.instance
+          .collection("users")
+          .doc(userId)
+          .get();
+      
+      documentExists = docSnapshot.exists;
+      
+      if (documentExists) {
+        log("✅ Document verified in Firestore", name: 'AuthController');
+        break;
+      }
+      
+      verifyAttempts++;
+      log("⏳ Waiting for document to propagate (attempt $verifyAttempts)...", 
+          name: 'AuthController');
+    }
+    
+    if (!documentExists) {
+      throw Exception("Document created but failed verification");
+    }
     
     // Step 6: Show success message
     Get.snackbar(
-      "Success", 
-      "Account created successfully!", 
-      backgroundColor: Colors.green, 
-      colorText: Colors.white
+      "Success",
+      "Account created successfully!",
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.TOP,
+      duration: const Duration(seconds: 3),
     );
     
+    log("🎉 Registration completed successfully", name: 'AuthController');
     return true;
     
   } on FirebaseAuthException catch (e) {
+    log("❌ FirebaseAuth error: ${e.code} - ${e.message}", name: 'AuthController');
+    
     String errorMessage = "An error occurred. Please try again.";
     if (e.code == 'weak-password') {
-      errorMessage = 'The password provided is too weak.';
+      errorMessage = 'Password must be at least 6 characters.';
     } else if (e.code == 'email-already-in-use') {
-      errorMessage = 'The account already exists for that email.';
+      errorMessage = 'An account already exists for this email.';
+    } else if (e.code == 'invalid-email') {
+      errorMessage = 'Invalid email address.';
     }
+    
     Get.snackbar(
-      "Account Creation Failed", 
-      errorMessage, 
-      backgroundColor: AppTheme.textGrey, 
-      colorText: Colors.white
+      "Registration Failed",
+      errorMessage,
+      backgroundColor: AppTheme.textGrey,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.TOP,
+      duration: const Duration(seconds: 4),
     );
     
-    // Clean up auth user if Firestore save fails
+    // Clean up auth user if created
     if (credential?.user != null) {
-      await credential!.user!.delete();
+      try {
+        await credential!.user!.delete();
+        log("🧹 Cleaned up Firebase Auth user", name: 'AuthController');
+      } catch (deleteError) {
+        log("⚠️ Error deleting auth user: $deleteError", name: 'AuthController');
+      }
     }
+    
     return false;
     
-  } catch (error) {
-    log('Registration error: $error', name: 'AuthenticationController');
+  } catch (error, stackTrace) {
+    log("❌ Unexpected error during registration",
+        error: error,
+        stackTrace: stackTrace,
+        name: 'AuthController');
+    
     Get.snackbar(
-      "Account Creation Failed", 
-      "An unexpected error occurred: ${error.toString()}", 
-      backgroundColor: AppTheme.textGrey, 
-      colorText: Colors.white
+      "Registration Failed",
+      "An unexpected error occurred. Please try again.",
+      backgroundColor: AppTheme.textGrey,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.TOP,
+      duration: const Duration(seconds: 4),
     );
     
     // Clean up auth user
     if (credential?.user != null) {
       try {
         await credential!.user!.delete();
+        log("🧹 Cleaned up Firebase Auth user", name: 'AuthController');
       } catch (deleteError) {
-        log('Error cleaning up user: $deleteError', name: 'AuthenticationController');
+        log("⚠️ Error deleting auth user: $deleteError", name: 'AuthController');
       }
     }
+    
     return false;
   }
 }

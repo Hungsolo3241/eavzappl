@@ -1,11 +1,9 @@
-import 'dart:math' as math;
 import 'package:eavzappl/authenticationScreen/registration_screen.dart';
 import 'package:eavzappl/authenticationScreen/phone_auth_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:eavzappl/widgets/custom_text_field_widget.dart';
 import 'package:get/get.dart';
 import 'package:eavzappl/controllers/authentication_controller.dart';
-import 'package:eavzappl/splashScreen/splash_screen.dart';
 import 'package:eavzappl/utils/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -189,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // This is the correct place for it.
           if (isLoading)
             Container(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withAlpha((255 * 0.5).round()),
               child: const Center(
                 child: CircularProgressIndicator(),
               ),
