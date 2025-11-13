@@ -1,4 +1,4 @@
-import 'dart:io'; // Added for FileImage
+// Added for FileImage
 import 'package:eavzappl/homeScreen/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart'; // Added for Obx
@@ -129,7 +129,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                 _selectedProfessionalVenues[title] = value;
               });
             },
-            activeColor: Colors.blueAccent,
+            activeThumbColor: Colors.blueAccent,
             inactiveThumbColor: Colors.grey,
           ),
         ],
@@ -158,7 +158,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                     const SizedBox(height: 100,),
 
-                    Text(
+                    const Text(
                       "Create Account",
                       style: TextStyle(
                         fontSize: 30,
@@ -194,7 +194,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           IconButton(
-                            icon: Icon(Icons.photo_library, color: AppTheme.textGrey, size: 25),
+                            icon: const Icon(Icons.photo_library, color: AppTheme.textGrey, size: 25),
                             onPressed: () {
                               authenticationController.pickImageFromGallery();
                             },
@@ -202,7 +202,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           ),
                           const SizedBox(width: 40), // Increased spacing
                           IconButton(
-                            icon: Icon(Icons.camera_alt, color: AppTheme.textGrey, size: 25),
+                            icon: const Icon(Icons.camera_alt, color: AppTheme.textGrey, size: 25),
                             onPressed: () {
                               authenticationController.captureImageFromPhoneCamera();
                             },
@@ -216,7 +216,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                     // Personal Info Title
                     const SizedBox(height: 30),
-                    Text("Personal Info", style: TextStyle(
+                    const Text("Personal Info", style: TextStyle(
                         fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
                     const SizedBox(height: 10),
 
@@ -231,26 +231,26 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           helperText: _isOrientationFinalized ? "Orientation selected and locked." : "Select carefully, this will be locked and cannot be changed later.",
                           helperStyle: TextStyle(color: _isOrientationFinalized ? Colors.green : AppTheme.textGrey, fontSize: 12),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(22.0)),
+                            borderRadius: const BorderRadius.all(Radius.circular(22.0)),
                             borderSide: BorderSide(
                               color: _isOrientationFinalized ? Colors.grey[700]! : Colors.grey,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(22.0)),
+                            borderRadius: const BorderRadius.all(Radius.circular(22.0)),
                             borderSide: BorderSide(
                               color: _isOrientationFinalized ? Colors.grey[700]! : Colors.grey,
                             ),
                           ),
                           disabledBorder: OutlineInputBorder( // Added for disabled state
-                            borderRadius: BorderRadius.all(Radius.circular(22.0)),
+                            borderRadius: const BorderRadius.all(Radius.circular(22.0)),
                             borderSide: BorderSide(
                               color: Colors.grey[700]!,
                             ),
                           ),
-                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                         ),
-                        value: selectedOrientation,
+                        initialValue: selectedOrientation,
                         isExpanded: true,
                         icon: Icon(Icons.arrow_drop_down, color: _isOrientationFinalized ? Colors.grey[700] : Colors.grey),
                         dropdownColor: Colors.black,
@@ -418,7 +418,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           ),
                           contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                         ),
-                        value: selectedGender,
+                        initialValue: selectedGender,
                         isExpanded: true,
                         icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                         dropdownColor: Colors.black,
@@ -460,7 +460,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           ),
                           contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                         ),
-                        value: selectedRelationshipStatus,
+                        initialValue: selectedRelationshipStatus,
                         isExpanded: true,
                         icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                         dropdownColor: Colors.black,
@@ -502,7 +502,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                     // --- START: UNIFIED, STYLED, AND CONTROLLER-DRIVEN LOCATION DROPDOWNS ---
                     const SizedBox(height: 30),
-                    Text("Location", style: TextStyle(
+                    const Text("Location", style: TextStyle(
                         fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
                     const SizedBox(height: 10),
 
@@ -524,7 +524,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           ),
                           contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                         ),
-                        value: selectedCountry,
+                        initialValue: selectedCountry,
                         isExpanded: true,
                         icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                         dropdownColor: Colors.black,
@@ -566,7 +566,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           ),
                           contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                         ),
-                        value: selectedProvince,
+                        initialValue: selectedProvince,
                         isExpanded: true,
                         icon: Icon(Icons.arrow_drop_down, color: selectedCountry != null ? Colors.grey : Colors.grey.withOpacity(0.5)),
                         dropdownColor: Colors.black,
@@ -607,7 +607,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           ),
                           contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                         ),
-                        value: selectedCity,
+                        initialValue: selectedCity,
                         isExpanded: true,
                         icon: Icon(Icons.arrow_drop_down, color: selectedProvince != null ? Colors.grey : Colors.grey.withOpacity(0.5)),
                         dropdownColor: Colors.black,
@@ -639,7 +639,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                             selectedOrientation == 'Eve'
                                 ? "Available For:"
                                 : "Looking For:", // <<< MODIFIED LINE
-                            style: TextStyle(fontSize: 18,
+                            style: const TextStyle(fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.textGrey)
                         ),
@@ -648,9 +648,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: Row(
                         children: [
-                          Icon(Icons.free_breakfast_outlined, color: Colors.grey),
-                          SizedBox(width: 10),
-                          Expanded(child: Text("Breakfast", style: const TextStyle(color: Colors.white, fontSize: 16))),
+                          const Icon(Icons.free_breakfast_outlined, color: Colors.grey),
+                          const SizedBox(width: 10),
+                          const Expanded(child: Text("Breakfast", style: TextStyle(color: Colors.white, fontSize: 16))),
                           Switch(
                             value: lookingForBreakfast,
                             onChanged: (bool value) {
@@ -658,7 +658,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                 lookingForBreakfast = value;
                               });
                             },
-                            activeColor: Colors.blueAccent,
+                            activeThumbColor: Colors.blueAccent,
                             inactiveThumbColor: Colors.grey,
                           ),
                         ],
@@ -671,9 +671,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: Row(
                         children: [
-                          Icon(Icons.lunch_dining_outlined, color: Colors.grey),
-                          SizedBox(width: 10),
-                          Expanded(child: Text("Lunch", style: const TextStyle(color: Colors.white, fontSize: 16))),
+                          const Icon(Icons.lunch_dining_outlined, color: Colors.grey),
+                          const SizedBox(width: 10),
+                          const Expanded(child: Text("Lunch", style: TextStyle(color: Colors.white, fontSize: 16))),
                           Switch(
                             value: lookingForLunch,
                             onChanged: (bool value) {
@@ -681,7 +681,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                 lookingForLunch = value;
                               });
                             },
-                            activeColor: Colors.blueAccent,
+                            activeThumbColor: Colors.blueAccent,
                             inactiveThumbColor: Colors.grey,
                           ),
                         ],
@@ -694,9 +694,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: Row(
                         children: [
-                          Icon(Icons.dinner_dining_outlined, color: Colors.grey),
-                          SizedBox(width: 10),
-                          Expanded(child: Text("Dinner", style: const TextStyle(color: Colors.white, fontSize: 16))),
+                          const Icon(Icons.dinner_dining_outlined, color: Colors.grey),
+                          const SizedBox(width: 10),
+                          const Expanded(child: Text("Dinner", style: TextStyle(color: Colors.white, fontSize: 16))),
                           Switch(
                             value: lookingForDinner,
                             onChanged: (bool value) {
@@ -704,7 +704,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                 lookingForDinner = value;
                               });
                             },
-                            activeColor: Colors.blueAccent,
+                            activeThumbColor: Colors.blueAccent,
                             inactiveThumbColor: Colors.grey,
                           ),
                         ],
@@ -717,9 +717,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: Row(
                         children: [
-                          Icon(Icons.favorite_border, color: Colors.grey),
-                          SizedBox(width: 10),
-                          Expanded(child: Text("Long-Term", style: const TextStyle(color: Colors.white, fontSize: 16))),
+                          const Icon(Icons.favorite_border, color: Colors.grey),
+                          const SizedBox(width: 10),
+                          const Expanded(child: Text("Long-Term", style: TextStyle(color: Colors.white, fontSize: 16))),
                           Switch(
                             value: lookingForLongTerm,
                             onChanged: (bool value) {
@@ -727,7 +727,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                 lookingForLongTerm = value;
                               });
                             },
-                            activeColor: Colors.blueAccent,
+                            activeThumbColor: Colors.blueAccent,
                             inactiveThumbColor: Colors.grey,
                           ),
                         ],
@@ -741,7 +741,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                     if (selectedOrientation == 'Eve') ...[
                       // Appearance Title
                       const SizedBox(height: 30),
-                      Text("Appearance", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
+                      const Text("Appearance", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
                       const SizedBox(height: 10),
 
                       const SizedBox(
@@ -752,27 +752,27 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       SizedBox(
                         width: MediaQuery.of(context).size.width - 40,
                         child: DropdownButtonFormField<String>(
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             prefixIcon: Icon(Icons.height, color: Colors.grey),
                             hintText: "Height",
-                            hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                            hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                              borderSide: const BorderSide(
+                              borderSide: BorderSide(
                                 color: Colors.grey,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                              borderSide: const BorderSide(
+                              borderSide: BorderSide(
                                 color: Colors.grey,
                               ),
                             ),
                             contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                           ),
-                          value: selectedHeight,
+                          initialValue: selectedHeight,
                           isExpanded: true,
-                          icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                          icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                           dropdownColor: Colors.black,
                           style: const TextStyle(color: Colors.white, fontSize: 16),
                           items: AppConstants.heights.map<DropdownMenuItem<String>>((String value) {
@@ -797,27 +797,27 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       SizedBox(
                         width: MediaQuery.of(context).size.width - 40,
                         child: DropdownButtonFormField<String>(
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             prefixIcon: Icon(Icons.accessibility_new_outlined, color: Colors.grey),
                             hintText: "Body Type",
-                            hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                            hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                              borderSide: const BorderSide(
+                              borderSide: BorderSide(
                                 color: Colors.grey,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                              borderSide: const BorderSide(
+                              borderSide: BorderSide(
                                 color: Colors.grey,
                               ),
                             ),
                             contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                           ),
-                          value: selectedBodyType,
+                          initialValue: selectedBodyType,
                           isExpanded: true,
-                          icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                          icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                           dropdownColor: Colors.black,
                           style: const TextStyle(color: Colors.white, fontSize: 16),
                           items: AppConstants.bodyTypes.map((String value) {
@@ -836,7 +836,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                       // Lifestyle Title
                       const SizedBox(height: 30),
-                      Text("Lifestyle", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
+                      const Text("Lifestyle", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
                       const SizedBox(height: 10),
 
                       const SizedBox(
@@ -848,9 +848,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Row(
                           children: [
-                            Icon(Icons.local_bar_outlined, color: Colors.grey),
-                            SizedBox(width: 10),
-                            Expanded(child: Text("Drink", style: const TextStyle(color: Colors.white, fontSize: 16))),
+                            const Icon(Icons.local_bar_outlined, color: Colors.grey),
+                            const SizedBox(width: 10),
+                            const Expanded(child: Text("Drink", style: TextStyle(color: Colors.white, fontSize: 16))),
                             Switch(
                               value: drinkSelection,
                               onChanged: (bool value) {
@@ -858,7 +858,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                   drinkSelection = value;
                                 });
                               },
-                              activeColor: Colors.blueAccent,
+                              activeThumbColor: Colors.blueAccent,
                               inactiveThumbColor: Colors.grey,
                             ),
                           ],
@@ -874,9 +874,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Row(
                           children: [
-                            Icon(Icons.smoking_rooms_outlined, color: Colors.grey),
-                            SizedBox(width: 10),
-                            Expanded(child: Text("Smoke", style: const TextStyle(color: Colors.white, fontSize: 16))),
+                            const Icon(Icons.smoking_rooms_outlined, color: Colors.grey),
+                            const SizedBox(width: 10),
+                            const Expanded(child: Text("Smoke", style: TextStyle(color: Colors.white, fontSize: 16))),
                             Switch(
                               value: smokeSelection,
                               onChanged: (bool value) {
@@ -884,7 +884,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                   smokeSelection = value;
                                 });
                               },
-                              activeColor: Colors.blueAccent,
+                              activeThumbColor: Colors.blueAccent,
                               inactiveThumbColor: Colors.grey,
                             ),
                           ],
@@ -900,9 +900,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Row(
                           children: [
-                            Icon(Icons.outdoor_grill, color: Colors.grey),
-                            SizedBox(width: 10),
-                            Expanded(child: Text("Meat", style: const TextStyle(color: Colors.white, fontSize: 16))),
+                            const Icon(Icons.outdoor_grill, color: Colors.grey),
+                            const SizedBox(width: 10),
+                            const Expanded(child: Text("Meat", style: TextStyle(color: Colors.white, fontSize: 16))),
                             Switch(
                               value: meatSelection,
                               onChanged: (bool value) {
@@ -910,7 +910,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                   meatSelection = value;
                                 });
                               },
-                              activeColor: Colors.blueAccent,
+                              activeThumbColor: Colors.blueAccent,
                               inactiveThumbColor: Colors.grey,
                             ),
                           ],
@@ -926,9 +926,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Row(
                           children: [
-                            Icon(Icons.sports_kabaddi_outlined, color: Colors.grey),
-                            SizedBox(width: 10),
-                            Expanded(child: Text("Greek", style: const TextStyle(color: Colors.white, fontSize: 16))),
+                            const Icon(Icons.sports_kabaddi_outlined, color: Colors.grey),
+                            const SizedBox(width: 10),
+                            const Expanded(child: Text("Greek", style: TextStyle(color: Colors.white, fontSize: 16))),
                             Switch(
                               value: greekSelection,
                               onChanged: (bool value) {
@@ -936,7 +936,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                   greekSelection = value;
                                 });
                               },
-                              activeColor: Colors.blueAccent,
+                              activeThumbColor: Colors.blueAccent,
                               inactiveThumbColor: Colors.grey,
                             ),
                           ],
@@ -952,9 +952,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Row(
                           children: [
-                            Icon(Icons.meeting_room_outlined, color: Colors.grey),
-                            SizedBox(width: 10),
-                            Expanded(child: Text("Hosting", style: const TextStyle(color: Colors.white, fontSize: 16))),
+                            const Icon(Icons.meeting_room_outlined, color: Colors.grey),
+                            const SizedBox(width: 10),
+                            const Expanded(child: Text("Hosting", style: TextStyle(color: Colors.white, fontSize: 16))),
                             Switch(
                               value: hostSelection,
                               onChanged: (bool value) {
@@ -962,7 +962,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                   hostSelection = value;
                                 });
                               },
-                              activeColor: Colors.blueAccent,
+                              activeThumbColor: Colors.blueAccent,
                               inactiveThumbColor: Colors.grey,
                             ),
                           ],
@@ -978,9 +978,9 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Row(
                           children: [
-                            Icon(Icons.flight_takeoff_outlined, color: Colors.grey),
-                            SizedBox(width: 10),
-                            Expanded(child: Text("Travel", style: const TextStyle(color: Colors.white, fontSize: 16))),
+                            const Icon(Icons.flight_takeoff_outlined, color: Colors.grey),
+                            const SizedBox(width: 10),
+                            const Expanded(child: Text("Travel", style: TextStyle(color: Colors.white, fontSize: 16))),
                             Switch(
                               value: travelSelection,
                               onChanged: (bool value) {
@@ -988,7 +988,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                   travelSelection = value;
                                 });
                               },
-                              activeColor: Colors.blueAccent,
+                              activeThumbColor: Colors.blueAccent,
                               inactiveThumbColor: Colors.grey,
                             ),
                           ],
@@ -1003,27 +1003,27 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       SizedBox(
                         width: MediaQuery.of(context).size.width - 40,
                         child: DropdownButtonFormField<String>(
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             prefixIcon: Icon(Icons.work_outline, color: Colors.grey),
                             hintText: "Profession",
-                            hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                            hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                              borderSide: const BorderSide(
+                              borderSide: BorderSide(
                                 color: Colors.grey,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                              borderSide: const BorderSide(
+                              borderSide: BorderSide(
                                 color: Colors.grey,
                               ),
                             ),
                             contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                           ),
-                          value: selectedProfession,
+                          initialValue: selectedProfession,
                           isExpanded: true,
-                          icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                          icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                           dropdownColor: Colors.black,
                           style: const TextStyle(color: Colors.white, fontSize: 16),
                           items: professionOptions.map((String value) {
@@ -1052,7 +1052,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 5.0),
                           child: Row(
                             children: [
-                              Icon(Icons.add_business_outlined, color: Colors.grey),
+                              const Icon(Icons.add_business_outlined, color: Colors.grey),
                               const SizedBox(width: 10),
                               const Expanded(child: Text("Other/Private Venue", style: TextStyle(color: Colors.white, fontSize: 16))),
                               Switch(
@@ -1062,7 +1062,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                                     _professionalVenueOtherSelected = value;
                                   });
                                 },
-                                activeColor: Colors.blueAccent,
+                                activeThumbColor: Colors.blueAccent,
                                 inactiveThumbColor: Colors.grey,
                               ),
                             ],
@@ -1094,23 +1094,23 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       SizedBox(
                         width: MediaQuery.of(context).size.width - 40,
                         child: DropdownButtonFormField<String>(
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             prefixIcon: Icon(Icons.attach_money_outlined, color: Colors.grey),
                             hintText: "Income Bracket",
-                            hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                            hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                              borderSide: const BorderSide(color: Colors.grey),
+                              borderSide: BorderSide(color: Colors.grey),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                              borderSide: const BorderSide(color: Colors.grey),
+                              borderSide: BorderSide(color: Colors.grey),
                             ),
                             contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                           ),
-                          value: selectedIncome, // USES THE CORRECT STATE VARIABLE
+                          initialValue: selectedIncome, // USES THE CORRECT STATE VARIABLE
                           isExpanded: true,
-                          icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                          icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                           dropdownColor: Colors.black,
                           style: const TextStyle(color: Colors.white, fontSize: 16),
                           items: AppConstants.incomeBrackets.map((String value) { // USES AppConstants
@@ -1130,7 +1130,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                       // Background Title
                       const SizedBox(height: 30),
-                      Text("Background", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
+                      const Text("Background", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
                       const SizedBox(height: 10),
 
                       const SizedBox(
@@ -1175,27 +1175,27 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                       SizedBox(
                         width: MediaQuery.of(context).size.width - 40,
                         child: DropdownButtonFormField<String>(
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             prefixIcon: Icon(Icons.group_outlined, color: Colors.grey),
                             hintText: "Ethnicity",
-                            hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+                            hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                              borderSide: const BorderSide(
+                              borderSide: BorderSide(
                                 color: Colors.grey,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.all(Radius.circular(22.0)),
-                              borderSide: const BorderSide(
+                              borderSide: BorderSide(
                                 color: Colors.grey,
                               ),
                             ),
                             contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                           ),
-                          value: selectedEthnicity,
+                          initialValue: selectedEthnicity,
                           isExpanded: true,
-                          icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
+                          icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
                           dropdownColor: Colors.black,
                           style: const TextStyle(color: Colors.white, fontSize: 16),
                           items: AppConstants.ethnicities.map((String value) {
@@ -1214,7 +1214,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                       // Social Media Title
                       const SizedBox(height: 30),
-                      Text("Social Media", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
+                      const Text("Social Media", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textGrey)),
                       const SizedBox(height: 10),
 
                       // Instagram
@@ -1518,7 +1518,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           onPressed: () {
                             Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()));
                           },
-                          child: Text(
+                          child: const Text(
                             "Login",
                             style: TextStyle(
                               fontSize: 16,

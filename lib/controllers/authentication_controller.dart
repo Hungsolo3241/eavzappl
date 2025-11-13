@@ -288,6 +288,11 @@ Future<bool> _verifyUserDocument(String uid) async {
     
     final userId = credential.user!.uid;
     log("✅ Firebase Auth user created: $userId", name: 'AuthController');
+
+    // Force a token refresh to try and stabilize the session on faulty devices
+    log("🔄 Forcing token refresh...", name: 'AuthController');
+    await credential.user!.getIdToken(true);
+    log("✅ Token refreshed.", name: 'AuthController');
     
     // Step 2: Upload profile photo FIRST (if provided)
     String? downloadUrl;
