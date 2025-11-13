@@ -27,7 +27,7 @@ class LikeSentLikeReceivedScreen extends StatelessWidget {
           bottom: TabBar(
             indicatorColor: AppTheme.primaryYellow,
             labelColor: AppTheme.primaryYellow,
-            unselectedLabelColor: Colors.white70,
+            unselectedLabelColor: AppTheme.textGrey,
             tabs: const [
               Tab(text: 'Likes Sent'),
               Tab(text: 'Likes Received'),

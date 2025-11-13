@@ -39,6 +39,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _phoneController;
   late TextEditingController _professionController;
   late TextEditingController _professionalVenueOtherNameController;
+  late TextEditingController _languagesController;
+  late TextEditingController _instagramController;
+  late TextEditingController _twitterController;
 
   // --- State Variables ---
   String? _mainProfessionCategory;
@@ -101,6 +104,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _phoneController = TextEditingController();
     _professionController = TextEditingController();
     _professionalVenueOtherNameController = TextEditingController();
+    _languagesController = TextEditingController();
+    _instagramController = TextEditingController();
+    _twitterController = TextEditingController();
 
 
     for (var venue in _professionalVenueOptions) {
@@ -120,6 +126,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _phoneController.dispose();
     _professionController.dispose();
     _professionalVenueOtherNameController.dispose();
+    _languagesController.dispose();
+    _instagramController.dispose();
+    _twitterController.dispose();
     super.dispose();
   }
 
@@ -137,6 +146,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _ageController.text = _currentUserData?.age?.toString() ?? '';
           _phoneController.text = _currentUserData?.phoneNumber ?? '';
           _currentMainProfileImageUrl = data['profilePhoto'] as String?;
+
+          _languagesController.text = _currentUserData?.languages ?? '';
+          _instagramController.text = _currentUserData?.instagram ?? '';
+          _twitterController.text = _currentUserData?.twitter ?? '';
 
           // Location
           // --- Load State for Centralized Dropdowns ---
@@ -533,7 +546,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   ) {
     final isEve = _currentUserData?.orientation?.toLowerCase() == 'eve';
     
-    return {
+    final Map<String, dynamic> dataToUpdate = {
       'name': _nameController.text.trim(),
       'age': int.tryParse(_ageController.text.trim()),
       'phoneNumber': _phoneController.text.trim(),
@@ -568,6 +581,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       'urlImage4': imageUrls.length > 3 ? imageUrls[3] : null,
       'urlImage5': imageUrls.length > 4 ? imageUrls[4] : null,
     };
+
+    if (isEve) {
+      dataToUpdate['languages'] = _languagesController.text.trim();
+      dataToUpdate['instagram'] = _instagramController.text.trim();
+      dataToUpdate['twitter'] = _twitterController.text.trim();
+    }
+
+    return dataToUpdate;
   }
 
   // ============================================================================
@@ -1045,6 +1066,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   items: AppConstants.ethnicities.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(color: Colors.white70)))).toList(),
                   onChanged: (value) => setState(() => _selectedEthnicity = value),
                 ),
+
+                if (isEveOrientation) ...[
+                  _buildTextFormField(controller: _languagesController, label: "Languages Spoken", icon: Icons.language),
+                  _buildTextFormField(controller: _instagramController, label: "Instagram Handle", icon: Icons.photo_camera),
+                  _buildTextFormField(controller: _twitterController, label: "Twitter Handle", icon: Icons.alternate_email),
+                ],
 
                 // --- PRESERVED PROFESSION LOGIC ---
                 if (isEveOrientation) ...[
