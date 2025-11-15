@@ -52,7 +52,6 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   build_runner: ^2.4.10
   json_serializable: ^6.8.0
-  flutter_launcher_icons: ^0.14.4
 
 
 flutter:
@@ -62,11 +61,3 @@ flutter:
     - images/
     - images/splashScreen/
     - .env
-
-flutter_launcher_icons:
-  android: true
-  ios: true
-  image_path: "images/branding_logo_splash.png"
-  remove_alpha_ios: true
-  adaptive_icon_background: "#000000"
-  adaptive_icon_foreground: "images/branding_logo_splash.png"
