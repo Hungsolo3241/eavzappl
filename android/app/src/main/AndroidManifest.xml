@@ -18,7 +18,7 @@
     <application
         android:label="eavzappl"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon"
+        android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/icon_logo_new_round"
         android:enableOnBackInvokedCallback="true"
         android:usesCleartextTraffic="false">

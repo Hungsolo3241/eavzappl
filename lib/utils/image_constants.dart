@@ -36,5 +36,5 @@ class ImageConstants {
   static const String likeDefault = 'images/default_like.png';
 
   // --- Messaging ---
-  static const String messageDefault = 'images/default_message.png';
+  static const String messageDefault = 'images/default_message.webp';
 }

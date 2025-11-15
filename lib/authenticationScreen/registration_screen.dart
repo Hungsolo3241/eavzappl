@@ -144,7 +144,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
           children: <Widget>[
             // Background Image
             Image.asset(
-              selectedOrientation == 'Eve' ? 'images/eves_background.jpeg' : 'images/adams_background.jpeg', // Dynamically set image
+              selectedOrientation == 'Eve' ? 'images/eves_background.webp' : 'images/adams_background.webp', // Dynamically set image
               fit: BoxFit.cover, // Use cover to fit the image, maintaining aspect ratio, cropping if necessary
               width: double.infinity,
               height: double.infinity,
