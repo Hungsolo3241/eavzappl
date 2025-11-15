@@ -506,6 +506,36 @@ class ProfileController extends GetxController {
     }
   }
 
+  Future<void> updateAvailability(bool isAvailable) async {
+    final String? currentUserId = _auth.currentUser?.uid;
+    if (currentUserId == null || _isDisposed) return;
+
+    try {
+      await _firestore
+          .collection('users')
+          .doc(currentUserId)
+          .update({'isAvailable': isAvailable});
+      
+      // Update the local user profile to reflect the change instantly
+      if (_currentUserProfile.value != null) {
+        _currentUserProfile.value = _currentUserProfile.value!.copyWith(isAvailable: isAvailable);
+      }
+      
+      Get.snackbar(
+        "Status Updated",
+        "You are now marked as ${isAvailable ? 'available' : 'unavailable'}.",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      log("Error updating availability: $e", name: "ProfileController");
+      Get.snackbar(
+        "Error",
+        "Failed to update your availability. Please try again.",
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
   Future<void> toggleFavoriteStatus(String targetUid) async {
     final String? currentUserId = _auth.currentUser?.uid;
     if (currentUserId == null || _isDisposed) return;

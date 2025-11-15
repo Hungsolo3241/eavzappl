@@ -162,6 +162,37 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
                           profileController: _profileController,
                           likeController: Get.find<LikeController>(), // <-- ADD THIS LINE
                         ),
+                      
+                      // --- AVAILABILITY TOGGLE ---
+                      if (isCurrentUserProfile && isEveProfile)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                          child: Card(
+                            color: AppTheme.backgroundDark.withOpacity(0.7),
+                            child: SwitchListTile(
+                              title: const Text(
+                                "Available for Dates",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.primaryYellow,
+                                ),
+                              ),
+                              subtitle: Text(
+                                (person.isAvailable ?? true)
+                                    ? "Your profile will show as 'Available' to Adams."
+                                    : "Your profile will show as 'Unavailable' to Adams.",
+                                style: const TextStyle(color: AppTheme.textGrey),
+                              ),
+                              value: person.isAvailable ?? true,
+                              onChanged: (bool newValue) {
+                                _profileController.updateAvailability(newValue);
+                              },
+                              activeColor: AppTheme.primaryYellow,
+                            ),
+                          ),
+                        ),
+                      // --- END OF TOGGLE ---
+
                       _DetailSection(
 // ...
 
@@ -662,7 +693,7 @@ class _DetailSection extends StatelessWidget {
                   child: Text(
                     isBoolean ? (value == 'true' ? 'Yes' : 'No') : value,
                     style: TextStyle(
-                        color: onTap != null ? AppTheme.textGrey : AppTheme.textGrey),
+                        color: onTap != null ? AppTheme.primaryYellow : AppTheme.textGrey),
                   ),
                 ),
               ],

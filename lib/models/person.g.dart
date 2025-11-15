@@ -50,6 +50,7 @@ Person _$PersonFromJson(Map json) => Person(
   urlImage4: json['urlImage4'] as String?,
   urlImage5: json['urlImage5'] as String?,
   bio: json['bio'] as String?,
+  isAvailable: json['isAvailable'] as bool?,
 );
 
 Map<String, dynamic> _$PersonToJson(Person instance) => <String, dynamic>{
@@ -94,4 +95,5 @@ Map<String, dynamic> _$PersonToJson(Person instance) => <String, dynamic>{
   'urlImage4': instance.urlImage4,
   'urlImage5': instance.urlImage5,
   'bio': instance.bio,
+  'isAvailable': instance.isAvailable,
 };

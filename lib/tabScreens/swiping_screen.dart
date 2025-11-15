@@ -254,6 +254,21 @@ class _ProfileDetails extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Define the status indicator widget
+    Widget statusIndicator = const SizedBox.shrink(); // Empty by default
+    if (person.orientation?.toLowerCase() == 'eve') {
+      statusIndicator = Container(
+        margin: const EdgeInsets.only(left: 8.0), // Margin on the left for spacing
+        width: 12.0,
+        height: 12.0,
+        decoration: BoxDecoration(
+          color: (person.isAvailable ?? true) ? Colors.greenAccent : Colors.grey,
+          shape: BoxShape.circle,
+          border: Border.all(color: AppTheme.textGrey, width: 1.5), // Use blueGrey for border
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -265,9 +280,18 @@ class _ProfileDetails extends StatelessWidget {
               Get.to(() => UserDetailsScreen(userID: person.uid!));
             }
           },
-          child: Text(
-            person.name ?? 'N/A',
-            style: AppTextStyles.heading1.copyWith(color: AppTheme.textGrey, shadows: const [Shadow(color: AppTheme.backgroundDark, blurRadius: 1.0)]),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  person.name ?? 'N/A',
+                  style: AppTextStyles.heading1.copyWith(color: AppTheme.textGrey, shadows: const [Shadow(color: AppTheme.backgroundDark, blurRadius: 1.0)]),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              statusIndicator, // Placed on the right side of the name
+            ],
           ),
         ),
         const SizedBox(height: 4.0),

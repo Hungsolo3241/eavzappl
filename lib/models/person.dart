@@ -145,6 +145,9 @@ class Person {
   @JsonKey(name: 'bio')
   final String? bio;
 
+  @JsonKey(name: 'isAvailable')
+  final bool? isAvailable;
+
   const Person({
     this.uid,
     this.profilePhoto,
@@ -187,6 +190,7 @@ class Person {
     this.urlImage4,
     this.urlImage5,
     this.bio,
+    this.isAvailable,
   });
 
   // --- START OF CHANGE ---
@@ -251,6 +255,7 @@ class Person {
     String? urlImage4,
     String? urlImage5,
     String? bio,
+    bool? isAvailable,
   }) {
     return Person(
       uid: uid ?? this.uid,
@@ -294,6 +299,7 @@ class Person {
       urlImage4: urlImage4 ?? this.urlImage4,
       urlImage5: urlImage5 ?? this.urlImage5,
       bio: bio ?? this.bio,
+      isAvailable: isAvailable ?? this.isAvailable,
     );
   }
 }
