@@ -511,15 +511,37 @@ class _ActionButtons extends StatelessWidget {
             return _buildActionButton(
               onPressed: canMessage
                   ? () => _launchWhatsApp(person.phoneNumber)
-                  : () => Get.snackbar(
-                "Message Unavailable",
-                "You can only message users after a mutual like.",
-                colorText: AppTheme.textLight,
-              ),
-              inactiveIconAsset: 'images/default_whatsapp.png',
+                  : () => ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text(
+                          "You can only message users after a mutual like.",
+                          style: TextStyle(color: AppTheme.textLight),
+                        ),
+                        backgroundColor: AppTheme.backgroundDark.withOpacity(0.8),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        margin: EdgeInsets.only(
+                          bottom: MediaQuery.of(context).size.height - 150,
+                          right: 20,
+                          left: 20,
+                        ),
+                        duration: const Duration(seconds: 3),
+                        action: SnackBarAction(
+                          label: 'DISMISS',
+                          textColor: AppTheme.primaryYellow,
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          },
+                        ),
+                      ),
+                    ),
+              inactiveIconAsset: 'images/default_message.webp',
               isActive: canMessage,
               tooltip:
               canMessage ? 'Message on WhatsApp' : 'Message (Requires Mutual Like)',
+              iconSize: 75,
             );
           }),
 

@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/scheduler.dart'; // Add this import
 
 import 'package:eavzappl/controllers/like_controller.dart';
 import 'package:eavzappl/widgets/filter_sheet_widget.dart';
@@ -59,60 +60,53 @@ class _SwipingScreenState extends State<SwipingScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final double statusBarHeight = MediaQuery.of(context).padding.top;
+ @override
+Widget build(BuildContext context) {
+  final double statusBarHeight = MediaQuery.of(context).padding.top;
 
-    // In the build method
-    return PopScope(
-        canPop: false, // Prevents automatic back navigation
-        onPopInvoked: (didPop) async {
-          if (didPop) {
-            // This case should not happen because canPop is false, but as a safeguard.
-            return;
-          }
-
-          final now = DateTime.now();
-          // If _lastPressedAt is null or it was more than 2 seconds ago
-          if (_lastPressedAt == null || now.difference(_lastPressedAt!) > const Duration(seconds: 2)) {
-            // Store the current time
-            _lastPressedAt = now;
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text(
-                  'Press back again to exit',
-                  style: TextStyle(color: AppTheme.textGrey), // Set text color to white for contrast
-                ),
-                backgroundColor: AppTheme.backgroundDark.withOpacity(0.8), // Black background with 80% opacity
-                behavior: SnackBarBehavior.floating, // Makes the SnackBar float above the content
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(24)), // Add rounded corners
-                ),
-                margin: const EdgeInsets.only(
-                    bottom: 40,
-                    right: 20,
-                    left: 20),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-
-          } else {
-            // If the back button is pressed again within 2 seconds, exit the app.
-            SystemNavigator.pop();
-          }
-        },
-        child: Scaffold(
-          body: Stack(
-          children: [
+  return PopScope(
+    canPop: false,
+    onPopInvoked: (didPop) async {
+      final now = DateTime.now();
+      if (_lastPressedAt == null || now.difference(_lastPressedAt!) > const Duration(seconds: 2)) {
+        _lastPressedAt = now;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Press back again to exit',
+              style: TextStyle(color: AppTheme.textGrey),
+            ),
+            backgroundColor: AppTheme.backgroundDark.withOpacity(0.8),
+            behavior: SnackBarBehavior.floating,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(24)),
+            ),
+            margin: const EdgeInsets.only(bottom: 40, right: 20, left: 20),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        SystemNavigator.pop();
+      }
+    },
+    child: Scaffold(
+      body: Stack(
+        children: [
           Obx(() {
-            if (profileController.loadingStatus.value == ProfileLoadingStatus.loading ||
+            if (!likeController.isInitialized.value ||
+                profileController.loadingStatus.value == ProfileLoadingStatus.loading ||
                 profileController.loadingStatus.value == ProfileLoadingStatus.initial) {
-
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (profileController.swipingProfileList.isEmpty) {
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Loading profiles...', style: TextStyle(color: AppTheme.textGrey)),
+                  ],
+                ),
+              );
+            } else if (profileController.swipingProfileList.isEmpty) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -123,7 +117,6 @@ class _SwipingScreenState extends State<SwipingScreen> {
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      // This re-uses the exact same method as the filter icon!
                       onPressed: _showFilterModalBottomSheet,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryYellow,
@@ -134,74 +127,72 @@ class _SwipingScreenState extends State<SwipingScreen> {
                   ],
                 ),
               );
-            }
-
-
-            return RefreshIndicator(
-              // Call the new method in your ProfileController
+            } else {
+              return RefreshIndicator(
                 onRefresh: () => profileController.refreshSwipingProfiles(),
-                // Optional: Style the loading spinner to match your app's theme
                 color: AppTheme.primaryYellow,
                 child: PageView.builder(
                   itemCount: profileController.swipingProfileList.length,
                   scrollDirection: Axis.horizontal,
                   itemBuilder: (context, index) {
-                // Pre-cache the next 2-3 images for a smoother swiping experience
-                for (int i = 1; i <= 3; i++) {
-                  if ((index + i) < profileController.swipingProfileList.length) {
-                    final nextPerson = profileController.swipingProfileList[index + i];
-                    if (nextPerson.profilePhoto != null && nextPerson.profilePhoto!.isNotEmpty) {
-                      precacheImage(
-                        CachedNetworkImageProvider(nextPerson.profilePhoto!),
-                        context,
-                      );
+                    // Pre-cache the next 2-3 images for a smoother swiping experience
+                    for (int i = 1; i <= 3; i++) {
+                      if ((index + i) < profileController.swipingProfileList.length) {
+                        final nextPerson = profileController.swipingProfileList[index + i];
+                        if (nextPerson.profilePhoto != null && nextPerson.profilePhoto!.isNotEmpty) {
+                          precacheImage(
+                            CachedNetworkImageProvider(nextPerson.profilePhoto!),
+                            context,
+                          );
+                        }
+                      }
                     }
-                  }
-                }
-                final Person person = profileController.swipingProfileList[index];
-                final String placeholderAsset = (person.orientation?.toLowerCase() == 'adam')
-                    ? ImageConstants.adamAvatar
-                    : ImageConstants.eveAvatar;
-                final String? imageUrl = person.profilePhoto;
+                    final Person person = profileController.swipingProfileList[index];
+                    final String placeholderAsset = (person.orientation?.toLowerCase() == 'adam')
+                        ? ImageConstants.adamAvatar
+                        : ImageConstants.eveAvatar;
+                    final String? imageUrl = person.profilePhoto;
 
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    CachedNetworkImage(
-                      imageUrl: imageUrl ?? '',
-                      fit: BoxFit.cover,
-                      memCacheWidth: 800,
-                      placeholder: (context, url) => Container(color: AppTheme.backgroundDark),
-                      errorWidget: (context, url, error) => Image.asset(
-                        placeholderAsset,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    const _GradientOverlay(),
-                    Positioned(
-                      bottom: 20.0,
-                      left: 16.0,
-                      right: 16.0,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _ProfileDetails(person: person),
-                          const SizedBox(height: 16.0),
-                          _ActionButtons(
-                            person: person,
-                            profileController: profileController,
-                            likeController: likeController,
+                    return Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CachedNetworkImage(
+                          imageUrl: imageUrl ?? '',
+                          fit: BoxFit.cover,
+                          memCacheWidth: 800,
+                          placeholder: (context, url) => Container(color: AppTheme.backgroundDark),
+                          errorWidget: (context, url, error) => Image.asset(
+                            placeholderAsset,
+                            fit: BoxFit.cover,
                           ),
-                          const SizedBox(height: 16.0),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              },
-            )
-            );
+                        ),
+                        const _GradientOverlay(),
+                        Positioned(
+                          bottom: 20.0,
+                          left: 16.0,
+                          right: 16.0,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _ProfileDetails(person: person),
+                              const SizedBox(height: 16.0),
+                              _ActionButtons(
+                                person: person,
+                                profileController: profileController,
+                                likeController: likeController,
+                              ),
+                              const SizedBox(height: 16.0),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              );
+            }
           }),
+          
           Positioned(
             top: statusBarHeight + 8.0,
             right: 8.0,
@@ -218,9 +209,9 @@ class _SwipingScreenState extends State<SwipingScreen> {
           ),
         ],
       ),
-    )
-    );
-  }
+    ),
+  );
+}
 }
 
 // This widget is already const, which is perfect.
@@ -355,7 +346,7 @@ class _ActionButtons extends StatelessWidget {
           return _buildActionButton(
             isLoading: profileController.isTogglingFavorite.value,
             onPressed: () {
-              HapticFeedback.lightImpact();
+              HapticFeedback.mediumImpact();
               if (person.uid != null) {
                 profileController.toggleFavoriteStatus(person.uid!);
               }
@@ -371,11 +362,37 @@ class _ActionButtons extends StatelessWidget {
           final bool canMessage = likeStatus == LikeStatus.mutualLike;
           return _buildActionButton(
             onPressed: () {
-              HapticFeedback.lightImpact();
+              HapticFeedback.mediumImpact();
               if (canMessage) {
                 _launchWhatsApp(person.phoneNumber);
               } else {
-                Get.snackbar("Message Unavailable", "You can only message users after a mutual like.", colorText: AppTheme.textLight);
+                // Use ScaffoldMessenger to show the snackbar
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text(
+                      "You can only message users after a mutual like.",
+                      style: TextStyle(color: AppTheme.textLight),
+                    ),
+                    backgroundColor: AppTheme.backgroundDark.withOpacity(0.8),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    margin: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).size.height - 150,
+                      right: 20,
+                      left: 20,
+                    ),
+                    duration: const Duration(seconds: 3),
+                    action: SnackBarAction(
+                      label: 'DISMISS',
+                      textColor: AppTheme.primaryYellow,
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                      },
+                    ),
+                  ),
+                );
               }
             },
             inactiveIconAsset: ImageConstants.messageDefault,
@@ -391,7 +408,7 @@ class _ActionButtons extends StatelessWidget {
           return _buildActionButton(
             isLoading: likeController.isTogglingLike.value,
             onPressed: () {
-              HapticFeedback.lightImpact();
+              HapticFeedback.mediumImpact();
               if (person.uid != null) {
                 likeController.toggleLike(person.uid!);
               }

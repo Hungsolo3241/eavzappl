@@ -119,8 +119,11 @@ class ProfileController extends GetxController {
 
     loadingStatus.value = ProfileLoadingStatus.loading;
     await _loadFiltersFromPrefs();
+    
+    // ✅ NEW: Initialize LikeController BEFORE any streams
+    final likeController = Get.find<LikeController>();
+    await likeController.initializeLikeData(userId);
 
-    // Single user document listener with retry logic
     _listenToUserDocument(userId);
   }
 
