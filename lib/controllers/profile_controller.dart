@@ -45,6 +45,7 @@ class ProfileController extends GetxController {
   // --- LOADING STATE ---
   final Rx<ProfileLoadingStatus> loadingStatus = Rx(ProfileLoadingStatus.initial);
   final RxBool isTogglingFavorite = false.obs;
+  final RxBool isLoadingLikeStatuses = false.obs;
 
   // --- PUBLIC GETTERS ---
   String? get currentUserOrientation => _currentUserProfile.value?.orientation;
@@ -206,9 +207,6 @@ class ProfileController extends GetxController {
       targetOrientation = 'adam';
     }
 
-
-
-
     if (targetOrientation != null) {
       query = query.where("orientation", isEqualTo: targetOrientation);
     } else {
@@ -275,12 +273,18 @@ class ProfileController extends GetxController {
             return Person.fromJson(data);
           }).toList();
 
-
+          // ✅ FIX: Preload like statuses BEFORE updating UI
+          isLoadingLikeStatuses.value = true;
+          
           final userIds = profiles.map((p) => p.uid!).toList();
           if (userIds.isNotEmpty) {
             await likeController.preloadLikeStatuses(userIds);
           }
-
+          
+          // Small delay to ensure statuses are fully calculated
+          await Future.delayed(const Duration(milliseconds: 100));
+          
+          isLoadingLikeStatuses.value = false;
           swipingProfileList.assignAll(profiles);
 
           if (loadingStatus.value != ProfileLoadingStatus.done) {
@@ -292,6 +296,7 @@ class ProfileController extends GetxController {
               name: 'ProfileController',
               error: error,
               stackTrace: stackTrace);
+          isLoadingLikeStatuses.value = false;
           loadingStatus.value = ProfileLoadingStatus.error;
         },
         cancelOnError: false,
