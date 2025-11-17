@@ -519,7 +519,7 @@ class _ActionButtons extends StatelessWidget {
                         label: 'DISMISS',
                         textColor: AppTheme.primaryYellow,
                         onPressed: () {
-                          ScaffoldMessenger.of(Get.context!).hideCurrentSnackBar();
+                          SnackbarHelper.hideCurrentSnackBar();
                         },
                       ),
                     ),

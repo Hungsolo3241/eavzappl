@@ -32,4 +32,10 @@ class SnackbarHelper {
       ScaffoldMessenger.of(Get.context!).showSnackBar(snackBar);
     }
   }
+
+  static void hideCurrentSnackBar() {
+    if (Get.context != null) {
+      ScaffoldMessenger.of(Get.context!).hideCurrentSnackBar();
+    }
+  }
 }
