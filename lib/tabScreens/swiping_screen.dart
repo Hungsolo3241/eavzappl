@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:eavzappl/utils/snackbar_helper.dart';
 import 'package:flutter/scheduler.dart'; // Add this import
 
 import 'package:eavzappl/controllers/like_controller.dart';
@@ -473,7 +474,10 @@ class _ActionButtons extends StatelessWidget {
 
   Future<void> _launchWhatsApp(String? phoneNumber) async {
     if (phoneNumber?.isNotEmpty != true) {
-      Get.snackbar("Message Error", "User's phone number is not available.", colorText: AppTheme.textLight);
+      SnackbarHelper.show(
+        message: "User's phone number is not available.",
+        isError: true,
+      );
       return;
     }
     try {
@@ -481,11 +485,17 @@ class _ActionButtons extends StatelessWidget {
       if (await canLaunchUrl(whatsappUri)) {
         await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
       } else {
-        Get.snackbar("WhatsApp Error", "Could not open WhatsApp.", colorText: AppTheme.textLight);
+        SnackbarHelper.show(
+          message: "Could not open WhatsApp.",
+          isError: true,
+        );
       }
     } catch (e) {
       log('Could not launch WhatsApp', name: 'SwipingScreen', error: e);
-      Get.snackbar("WhatsApp Error", "An error occurred trying to open WhatsApp.", colorText: AppTheme.textLight);
+      SnackbarHelper.show(
+        message: "An error occurred trying to open WhatsApp.",
+        isError: true,
+      );
     }
   }
 }

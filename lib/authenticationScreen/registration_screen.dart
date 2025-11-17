@@ -7,6 +7,7 @@ import 'package:eavzappl/authenticationScreen/login_screen.dart';
 import 'package:intl_phone_field/intl_phone_field.dart'; // Added for IntlPhoneField
 import 'package:eavzappl/controllers/location_controller.dart';
 import 'package:eavzappl/utils/app_constants.dart';
+import 'package:eavzappl/utils/snackbar_helper.dart';
 import 'package:eavzappl/utils/app_theme.dart';
 
 import '../controllers/authentication_controller.dart';
@@ -1265,91 +1266,89 @@ class _RegistrationScreenState extends State<RegistrationScreen>
 
                           // 1. Validation
                           if (authenticationController.profilePhoto == null) {
-                            Get.snackbar("Missing Field", "Please select a profile photo.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                            SnackbarHelper.show(message: "Please select a profile photo.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (emailController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field", "Please enter your email.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                            SnackbarHelper.show(message: "Please enter your email.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (passwordController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field", "Please enter your password.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                            SnackbarHelper.show(message: "Please enter your password.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (nameController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field", "Please enter your name.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                            SnackbarHelper.show(message: "Please enter your name.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (ageController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field", "Please enter your age.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                            SnackbarHelper.show(message: "Please enter your age.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           int? age = int.tryParse(ageController.text.trim());
                           if (age == null) {
-                            Get.snackbar(
-                                "Validation Error",
-                                "Please enter a valid number for age.",
-                                backgroundColor: AppTheme.textGrey,
-                                colorText: Colors.white);
+                            SnackbarHelper.show(
+                                message: "Please enter a valid number for age.",
+                                isError: true,
+                                backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                             setState(() {
                               showProgressBar = false;
                             });
                             return;
                           }
                           if (age < 18) {
-                            Get.snackbar(
-                                "Validation Error",
-                                "You must be at least 18 years old to register.",
-                                backgroundColor: Colors.redAccent,
-                                colorText: Colors.white);
+                            SnackbarHelper.show(
+                                message: "You must be at least 18 years old to register.",
+                                isError: true,
+                                backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                             setState(() {
                               showProgressBar = false;
                             });
                             return;
                           }
                           if (selectedGender == null) {
-                            Get.snackbar("Missing Field", "Please select your gender.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                            SnackbarHelper.show(message: "Please select your gender.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (selectedRelationshipStatus == null) {
-                            Get.snackbar("Missing Field", "Please select your relationship status.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                            SnackbarHelper.show(message: "Please select your relationship status.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (selectedOrientation == null) {
-                            Get.snackbar("Missing Field", "Please select your orientation.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                            SnackbarHelper.show(message: "Please select your orientation.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (usernameController.text.trim().isEmpty) {
-                            Get.snackbar("Missing Field", "Please enter your username.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                            SnackbarHelper.show(message: "Please enter your username.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           // UPDATED phone number validation
                           if (normalizedPhoneNumber == null || normalizedPhoneNumber!.isEmpty) {
-                            Get.snackbar("Missing Field", "Please enter your phone number.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                            SnackbarHelper.show(message: "Please enter your phone number.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (selectedCountry == null) {
-                            Get.snackbar("Missing Field", "Please select your country.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                            SnackbarHelper.show(message: "Please select your country.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (selectedProvince == null) {
-                            Get.snackbar("Missing Field", "Please select your province/state.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                            SnackbarHelper.show(message: "Please select your province/state.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                             setState(() { showProgressBar = false; });
                             return;
                           }
                           if (selectedCity == null) {
-                            Get.snackbar("Missing Field", "Please select your city/town.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                            SnackbarHelper.show(message: "Please select your city/town.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                             setState(() { showProgressBar = false; });
                             return;
                           }
@@ -1357,37 +1356,37 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           // Eve-specific field validation
                           if (selectedOrientation == 'Eve') {
                             if (selectedHeight == null) {
-                              Get.snackbar("Missing Field (Eve Profile)", "Please select your height.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                              SnackbarHelper.show(message: "Please select your height.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                               setState(() { showProgressBar = false; });
                               return;
                             }
                             if (selectedBodyType == null) {
-                              Get.snackbar("Missing Field (Eve Profile)", "Please select your body type.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                              SnackbarHelper.show(message: "Please select your body type.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                               setState(() { showProgressBar = false; });
                               return;
                             }
                             if (selectedProfession == null) {
-                              Get.snackbar("Missing Field (Eve Profile)", "Please select your profession.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                              SnackbarHelper.show(message: "Please select your profession.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                               setState(() { showProgressBar = false; });
                               return;
                             }
                             if (selectedIncome == null) {
-                              Get.snackbar("Missing Field (Eve Profile)", "Please select your income bracket.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                              SnackbarHelper.show(message: "Please select your income bracket.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                               setState(() { showProgressBar = false; });
                               return;
                             }
                             if (nationalityController.text.trim().isEmpty) {
-                              Get.snackbar("Missing Field (Eve Profile)", "Please enter your nationality.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                              SnackbarHelper.show(message: "Please enter your nationality.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                               setState(() { showProgressBar = false; });
                               return;
                             }
                             if (languagesController.text.trim().isEmpty) {
-                              Get.snackbar("Missing Field (Eve Profile)", "Please enter languages spoken.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                              SnackbarHelper.show(message: "Please enter languages spoken.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                               setState(() { showProgressBar = false; });
                               return;
                             }
                             if (selectedEthnicity == null) {
-                              Get.snackbar("Missing Field (Eve Profile)", "Please select your ethnicity.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                              SnackbarHelper.show(message: "Please select your ethnicity.", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                               setState(() { showProgressBar = false; });
                               return;
                             }
@@ -1475,7 +1474,7 @@ class _RegistrationScreenState extends State<RegistrationScreen>
                           } catch (error) {
                             // This catch block is for unexpected errors not caught by the controller,
                             // or if createAccountAndSaveData itself threw something despite its own catches.
-                            Get.snackbar("Registration Failed", "An unexpected error occurred: ${error.toString()}", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+                            SnackbarHelper.show(message: "An unexpected error occurred: ${error.toString()}", isError: true, backgroundColor: AppTheme.textGrey.withOpacity(0.8));
                             if (mounted) { // Check if the widget is still in the tree
                               setState(() {
                                 showProgressBar = false;

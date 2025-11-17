@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:eavzappl/controllers/authentication_controller.dart';
+import 'package:eavzappl/utils/snackbar_helper.dart';
 import 'package:flutter/services.dart';
 import 'package:eavzappl/controllers/like_controller.dart';
 import 'package:eavzappl/utils/app_theme.dart';
@@ -511,30 +512,15 @@ class _ActionButtons extends StatelessWidget {
             return _buildActionButton(
               onPressed: canMessage
                   ? () => _launchWhatsApp(person.phoneNumber)
-                  : () => ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text(
-                          "You can only message users after a mutual like.",
-                          style: TextStyle(color: AppTheme.textLight),
-                        ),
-                        backgroundColor: AppTheme.backgroundDark.withOpacity(0.8),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        margin: EdgeInsets.only(
-                          bottom: MediaQuery.of(context).size.height - 150,
-                          right: 20,
-                          left: 20,
-                        ),
-                        duration: const Duration(seconds: 3),
-                        action: SnackBarAction(
-                          label: 'DISMISS',
-                          textColor: AppTheme.primaryYellow,
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                          },
-                        ),
+                  : () => SnackbarHelper.show(
+                      
+                      message: "You can only message users after a mutual like.",
+                      action: SnackBarAction(
+                        label: 'DISMISS',
+                        textColor: AppTheme.primaryYellow,
+                        onPressed: () {
+                          ScaffoldMessenger.of(Get.context!).hideCurrentSnackBar();
+                        },
                       ),
                     ),
               inactiveIconAsset: 'images/default_message.webp',
@@ -618,17 +604,28 @@ class _ActionButtons extends StatelessWidget {
 
   Future<void> _launchWhatsApp(String? phoneNumber) async {
     if (phoneNumber?.isNotEmpty != true) {
-      Get.snackbar("Message Error", "User's phone number is not available.", colorText: AppTheme.textLight);
+      SnackbarHelper.show(
+        
+        message: "User's phone number is not available.",
+        isError: true,
+      );
       return;
     }
     final Uri whatsappUri = Uri.parse("https://wa.me/$phoneNumber");
     try {
       if (!await launchUrl(whatsappUri, mode: LaunchMode.externalApplication)) {
-        Get.snackbar("WhatsApp Error", "Could not open WhatsApp.", colorText: AppTheme.textLight);
+        SnackbarHelper.show(
+          
+          message: "Could not open WhatsApp.",
+          isError: true,
+        );
       }
     } catch (e) {
       log('WhatsApp Launch Error', name: 'UserDetailsScreen', error: e);
-      Get.snackbar("WhatsApp Error", "An error occurred trying to open WhatsApp.", colorText: AppTheme.textLight);
+      SnackbarHelper.show(
+        message: "An error occurred trying to open WhatsApp.",
+        isError: true,
+      );
     }
   }
 }
@@ -657,7 +654,11 @@ class _SocialLinks extends StatelessWidget {
   Future<void> _launchUrlFromString(String urlString) async {
     final Uri url = Uri.parse(urlString);
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      Get.snackbar('Error', 'Could not launch $urlString', colorText: AppTheme.textLight);
+      SnackbarHelper.show(
+        
+        message: 'Could not launch $urlString',
+        isError: true,
+      );
     }
   }
 }
@@ -706,7 +707,7 @@ class _DetailSection extends StatelessWidget {
                   flex: 2,
                   child: Text(
                     key,
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontWeight: FontWeight.bold, color: AppTheme.textGrey),
                   ),
                 ),
@@ -765,11 +766,9 @@ class _EditableBioState extends State<_EditableBio> {
   Future<void> _saveBio() async {
     final newBio = _bioController.text.trim();
     if (newBio.length > 140) {
-      Get.snackbar(
-        "Error",
-        "Bio cannot be more than 140 characters.",
-        backgroundColor: Colors.redAccent,
-        colorText: AppTheme.textLight,
+      SnackbarHelper.show(
+        message: "Bio cannot be more than 140 characters.",
+        isError: true,
       );
       return;
     }
@@ -782,18 +781,13 @@ class _EditableBioState extends State<_EditableBio> {
       setState(() {
         _isEditing = false;
       });
-      Get.snackbar(
-        "Success",
-        "Bio updated successfully.",
-        backgroundColor: Colors.green,
-        colorText: AppTheme.textLight,
+      SnackbarHelper.show(
+        message: "Bio updated successfully.",
       );
     } catch (e) {
-      Get.snackbar(
-        "Error",
-        "Failed to update bio: ${e.toString()}",
-        backgroundColor: Colors.redAccent,
-        colorText: AppTheme.textLight,
+      SnackbarHelper.show(
+        message: "Failed to update bio: ${e.toString()}",
+        isError: true,
       );
     }
   }
@@ -823,13 +817,13 @@ class _EditableBioState extends State<_EditableBio> {
               maxLength: 140,
               maxLines: null,
               style: const TextStyle(color: AppTheme.textGrey),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: "Write a short bio...",
                 hintStyle: TextStyle(color: AppTheme.textGrey),
-                enabledBorder: const UnderlineInputBorder(
+                enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: AppTheme.textGrey),
                 ),
-                focusedBorder: const UnderlineInputBorder(
+                focusedBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: AppTheme.textGrey),
                 ),
                 counterStyle: TextStyle(color: AppTheme.textGrey),

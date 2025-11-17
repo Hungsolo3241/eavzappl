@@ -13,7 +13,7 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
-  get: ^4.6.6
+  get: ^4.7.2
   image_picker: ^1.1.2
   firebase_core: ^2.27.0
   firebase_auth: ^4.17.8
@@ -70,3 +70,4 @@ flutter_launcher_icons:
   remove_alpha_ios: true
   adaptive_icon_background: "#000000"
   adaptive_icon_foreground: "images/eavzappl_logo.png"
+

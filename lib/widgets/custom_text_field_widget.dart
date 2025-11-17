@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:eavzappl/utils/app_theme.dart';
 
 /// A custom text field widget with consistent styling.
 class CustomTextFieldWidget extends StatelessWidget {
@@ -30,7 +31,7 @@ class CustomTextFieldWidget extends StatelessWidget {
     const OutlineInputBorder borderStyle = OutlineInputBorder(
       borderRadius: BorderRadius.all(Radius.circular(22.0)),
       borderSide: BorderSide(
-        color: Colors.grey,
+        color: AppTheme.textGrey,
         width: 1,
       ),
     );
@@ -44,14 +45,14 @@ class CustomTextFieldWidget extends StatelessWidget {
         labelText: labelText,
         // Use a more readable conditional for the prefix icon.
         prefixIcon: iconData != null
-            ? Icon(iconData)
+            ? Icon(iconData, color: AppTheme.textGrey)
             : Padding(
                 padding: const EdgeInsets.all(8),
                 child: Image.asset(assetRef!), // Now safe due to the assert
               ),
         labelStyle: const TextStyle(
           fontSize: 16,
-          color: Colors.grey,
+          color: AppTheme.textGrey,
         ),
         enabledBorder: borderStyle,
         focusedBorder: borderStyle,

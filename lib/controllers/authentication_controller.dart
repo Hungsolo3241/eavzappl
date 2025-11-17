@@ -18,6 +18,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart'; // <-- FIX: For getTemporaryDirectory
 import 'package:eavzappl/utils/app_theme.dart';
 import 'dart:convert';
+import 'package:eavzappl/utils/snackbar_helper.dart';
 import 'package:http/http.dart' as http;
 import 'package:eavzappl/firebase_options.dart';
 
@@ -51,8 +52,18 @@ class AuthenticationController extends GetxController {
       _firebaseUser.value = user;
     });
 
-    ever(_firebaseUser, _setInitialScreen);
-    _setInitialScreen(_firebaseUser.value);
+    // ONLY use ever, but with a delay for overlay readiness
+    ever(_firebaseUser, (user) {
+      // Ensure overlay exists before navigation
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _setInitialScreen(user);
+      });
+    });
+    
+    // Trigger initial screen check ONCE after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _setInitialScreen(_firebaseUser.value);
+    });
   }
 
   void _setInitialScreen(User? user) async {
@@ -78,12 +89,19 @@ class AuthenticationController extends GetxController {
         Get.find<ProfileController>().clearAllSubscriptions();
       }
 
+      // FIX: Use microtask to ensure overlay is ready
+      await Future.microtask(() {});
       Get.offAll(() => const LoginScreen());
+      
     } else {
       if (_hasInitialized) return;
 
       log("User authenticated: ${user.uid}, initializing app");
+      
+      // FIX: Use microtask to ensure overlay is ready
+      await Future.microtask(() {});
       Get.offAll(() => const SplashScreen());
+      
       _hasInitialized = true;
 
       final profileController = Get.find<ProfileController>();
@@ -117,6 +135,9 @@ class AuthenticationController extends GetxController {
       ]);
 
       log("Initialization complete, navigating to HomeScreen");
+      
+      // FIX: Use microtask to ensure overlay is ready
+      await Future.microtask(() {});
       Get.offAll(() => const HomeScreen());
     }
   } catch (e, stackTrace) {
@@ -125,16 +146,13 @@ class AuthenticationController extends GetxController {
         stackTrace: stackTrace, 
         name: "AuthenticationController");
     
-    // ✅ Show error to user
-    Get.snackbar(
-      "Initialization Error",
-      "Failed to load profile. Please restart the app.",
-      backgroundColor: Colors.red,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 5),
+    // FIX: Delay snackbar
+    await Future.microtask(() {});
+    SnackbarHelper.show(
+      message: "Failed to load profile. Please restart the app.",
+      isError: true,
     );
     
-    // ✅ FIX: Instead of fallback navigation, sign out and go to login
     await signOutUser();
   } finally {
     _isAuthOperationInProgress = false;
@@ -168,7 +186,10 @@ Future<bool> _verifyUserDocument(String uid) async {
           await signInWithPhoneCredential(credential);
         },
         verificationFailed: (FirebaseAuthException e) {
-          Get.snackbar("Verification Failed", e.message ?? "An unknown error occurred.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+          SnackbarHelper.show(
+            message: e.message ?? "An unknown error occurred.",
+            isError: true,
+          );
           onCodeSent(false);
         },
         codeSent: (String verificationId, int? resendToken) {
@@ -180,14 +201,20 @@ Future<bool> _verifyUserDocument(String uid) async {
         },
       );
     } catch (e) {
-      Get.snackbar("Error", "Failed to start phone number verification: ${e.toString()}", backgroundColor: Colors.redAccent, colorText: Colors.white);
+      SnackbarHelper.show(
+        message: "Failed to start phone number verification: ${e.toString()}",
+        isError: true,
+      );
       onCodeSent(false);
     }
   }
 
   Future<bool> signInWithSmsCode(String smsCode) async {
     if (verificationId.value.isEmpty) {
-      Get.snackbar("Error", "Verification ID is missing. Please try sending the code again.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+      SnackbarHelper.show(
+        message: "Verification ID is missing. Please try sending the code again.",
+        isError: true,
+      );
       return false;
     }
     try {
@@ -198,10 +225,16 @@ Future<bool> _verifyUserDocument(String uid) async {
       await signInWithPhoneCredential(credential);
       return true;
     } on FirebaseAuthException catch (e) {
-      Get.snackbar("Sign-in Failed", e.message ?? "Invalid code or an error occurred.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+      SnackbarHelper.show(
+        message: e.message ?? "Invalid code or an error occurred.",
+        isError: true,
+      );
       return false;
     } catch (e) {
-      Get.snackbar("Error", "An unexpected error occurred: ${e.toString()}", backgroundColor: Colors.redAccent, colorText: Colors.white);
+      SnackbarHelper.show(
+        message: "An unexpected error occurred: ${e.toString()}",
+        isError: true,
+      );
       return false;
     }
   }
@@ -223,20 +256,24 @@ Future<bool> _verifyUserDocument(String uid) async {
           // This is a login screen, so we should not create a new user.
           // We should sign out the newly created Firebase Auth user and show an error.
           await FirebaseAuth.instance.signOut();
-          Get.snackbar(
-            "Login Failed",
-            "No account found for this phone number. Please register first.",
-            backgroundColor: Colors.redAccent,
-            colorText: Colors.white,
+          SnackbarHelper.show(
+            message: "No account found for this phone number. Please register first.",
+            isError: true,
           );
         }
         // If a user is found, we do nothing. The user is already logged in,
         // and the auth state listener will handle the navigation.
       }
     } on FirebaseAuthException catch (e) {
-      Get.snackbar("Sign-in Failed", e.message ?? "An error occurred during sign-in.", backgroundColor: Colors.redAccent, colorText: Colors.white);
+      SnackbarHelper.show(
+        message: e.message ?? "An error occurred during sign-in.",
+        isError: true,
+      );
     } catch (e) {
-      Get.snackbar("Error", "An unexpected error occurred: ${e.toString()}", backgroundColor: Colors.redAccent, colorText: Colors.white);
+      SnackbarHelper.show(
+        message: "An unexpected error occurred: ${e.toString()}",
+        isError: true,
+      );
     }
   }
 
@@ -249,10 +286,18 @@ Future<bool> _verifyUserDocument(String uid) async {
       String errorMessage = "Invalid credentials. Please try again.";
       if (e.code == 'invalid-email') { errorMessage = 'The email address is not valid.'; }
       else if (e.code == 'user-disabled') { errorMessage = 'This user account has been disabled.'; }
-      Get.snackbar("Login Failed", errorMessage, backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+      SnackbarHelper.show(
+        message: errorMessage,
+        isError: true,
+        backgroundColor: AppTheme.textGrey.withOpacity(0.8),
+      );
       return false;
     } catch (error) {
-      Get.snackbar("Login Failed", "An unexpected error occurred.", backgroundColor: AppTheme.textGrey, colorText: Colors.white);
+      SnackbarHelper.show(
+        message: "An unexpected error occurred.",
+        isError: true,
+        backgroundColor: AppTheme.textGrey.withOpacity(0.8),
+      );
       return false;
     }
   }
@@ -482,13 +527,8 @@ Future<bool> createAccountAndSaveData(
     }
     
     // Success!
-    Get.snackbar(
-      "Success",
-      "Account created successfully!",
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.TOP,
-      duration: const Duration(seconds: 3),
+    SnackbarHelper.show(
+      message: "Account created successfully!",
     );
     
     log("Registration completed successfully", name: 'AuthController');
@@ -506,13 +546,9 @@ Future<bool> createAccountAndSaveData(
       errorMessage = 'Invalid email address.';
     }
     
-    Get.snackbar(
-      "Registration Failed",
-      errorMessage,
-      backgroundColor: Colors.red,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.TOP,
-      duration: const Duration(seconds: 4),
+    SnackbarHelper.show(
+      message: errorMessage,
+      isError: true,
     );
     
     // Only clean up if user was created but data save failed
@@ -528,13 +564,9 @@ Future<bool> createAccountAndSaveData(
         stackTrace: stackTrace,
         name: 'AuthController');
     
-    Get.snackbar(
-      "Registration Failed",
-      "An unexpected error occurred. Please try again.",
-      backgroundColor: Colors.red,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.TOP,
-      duration: const Duration(seconds: 4),
+    SnackbarHelper.show(
+      message: "An unexpected error occurred. Please try again.",
+      isError: true,
     );
     
     // Only clean up if user was created

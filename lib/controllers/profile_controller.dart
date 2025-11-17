@@ -7,8 +7,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eavzappl/models/filter_preferences.dart';
 import 'package:eavzappl/models/person.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:eavzappl/controllers/like_controller.dart';
+import 'package:eavzappl/utils/snackbar_helper.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -502,7 +504,7 @@ class ProfileController extends GetxController {
       final prefs = await SharedPreferences.getInstance();
       final String? filtersJsonString = prefs.getString('user_filters');
       if (filtersJsonString != null) {
-        final Map<String, dynamic> filtersMap = json.decode(filtersJsonString);
+        final Map<String, dynamic> filtersMap = jsonDecode(filtersJsonString);
         activeFilters.value = FilterPreferences.fromJson(filtersMap);
         log('Filters loaded from local storage.', name: 'ProfileController');
       } else {
@@ -529,17 +531,16 @@ class ProfileController extends GetxController {
         _currentUserProfile.value = _currentUserProfile.value!.copyWith(isAvailable: isAvailable);
       }
       
-      Get.snackbar(
-        "Status Updated",
-        "You are now marked as ${isAvailable ? 'available' : 'unavailable'}.",
-        snackPosition: SnackPosition.BOTTOM,
+      SnackbarHelper.show(
+        message: "You are now marked as ${isAvailable ? 'available' : 'unavailable'}.",
       );
     } catch (e) {
       log("Error updating availability: $e", name: "ProfileController");
-      Get.snackbar(
-        "Error",
-        "Failed to update your availability. Please try again.",
-        snackPosition: SnackPosition.BOTTOM,
+      
+      SnackbarHelper.show(
+
+        message: "Failed to update your availability. Please try again.",
+        isError: true,
       );
     }
   }

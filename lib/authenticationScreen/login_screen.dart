@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:eavzappl/widgets/custom_text_field_widget.dart';
 import 'package:get/get.dart';
 import 'package:eavzappl/controllers/authentication_controller.dart';
+import 'package:eavzappl/utils/snackbar_helper.dart';
 import 'package:eavzappl/utils/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -23,18 +24,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _performLogin() async {
     // Basic client-side validation
-    if (emailController.text
-        .trim()
-        .isEmpty) {
-      Get.snackbar("Validation Error", "Please enter your email.",
-          backgroundColor: Colors.redAccent, colorText: AppTheme.textLight);
+    if (emailController.text.trim().isEmpty) {
+      SnackbarHelper.show(
+        message: "Please enter your email.",
+        isError: true,
+        backgroundColor: AppTheme.textGrey.withOpacity(0.8),
+      );
       return;
     }
-    if (passwordController.text
-        .trim()
-        .isEmpty) {
-      Get.snackbar("Validation Error", "Please enter your password.",
-          backgroundColor: Colors.redAccent, colorText: AppTheme.textLight);
+    if (passwordController.text.trim().isEmpty) {
+      SnackbarHelper.show(
+        message: "Please enter your password.",
+        isError: true,
+        backgroundColor: AppTheme.textGrey.withOpacity(0.8),
+      );
       return;
     }
 
@@ -81,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  "come inside",
+                  "",
                   style: AppTextStyles.heading1.copyWith(color: AppTheme.primaryYellow),
                 ),
                 const SizedBox(height: 30),
@@ -110,9 +113,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   width: MediaQuery.of(context).size.width - 40,
                   height: 35,
-                  decoration: const BoxDecoration(
-                    color: AppTheme.primaryYellow,
-                    borderRadius: BorderRadius.all(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppTheme.primaryYellow, width: 2),
+                    borderRadius: const BorderRadius.all(
                       Radius.circular(25),
                     ),
                   ),
@@ -121,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Center(
                       child: Text(
                         "Login",
-                        style: AppTextStyles.heading2.copyWith(color: Colors.black),
+                        style: AppTextStyles.body1.copyWith(color: AppTheme.primaryYellow, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -129,12 +132,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 Row(
                   children: [
-                    const Expanded(child: Divider(color: Colors.grey)),
+                    const Expanded(child: Divider(color: AppTheme.textGrey)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: Text("OR", style: AppTextStyles.body1.copyWith(color: AppTheme.textGrey)),
                     ),
-                    const Expanded(child: Divider(color: Colors.grey)),
+                    const Expanded(child: Divider(color: AppTheme.textGrey)),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -173,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                       child: Text(
                         " Register",
-                        style: AppTextStyles.body1.copyWith(color: AppTheme.primaryYellow, fontSize: 18, fontWeight: FontWeight.bold),
+                        style: AppTextStyles.body1.copyWith(color: AppTheme.primaryYellow, fontSize: 18, fontWeight: FontWeight.normal),
                       ),
                     ),
                   ],
